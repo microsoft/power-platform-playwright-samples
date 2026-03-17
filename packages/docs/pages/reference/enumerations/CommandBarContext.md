@@ -1,6 +1,6 @@
 [**Power Platform Playwright Toolkit v0.0.4**](../README.md)
 
-***
+---
 
 [Power Platform Playwright Toolkit](../README.md) / CommandBarContext
 
@@ -20,7 +20,7 @@ Defined in: components/model-driven/commanding.component.ts:32
 
 Form page command bar
 
-***
+---
 
 ### Grid
 
@@ -30,7 +30,7 @@ Defined in: components/model-driven/commanding.component.ts:34
 
 Grid/View page command bar
 
-***
+---
 
 ### SubGrid
 

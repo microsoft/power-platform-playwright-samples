@@ -1,6 +1,6 @@
 [**Power Platform Playwright Toolkit v0.0.4**](../README.md)
 
-***
+---
 
 [Power Platform Playwright Toolkit](../README.md) / authenticateToMicrosoft
 
@@ -36,6 +36,7 @@ This function uses playwright-ms-auth v0.0.16+ which automatically waits for
 MSAL tokens to be stored in localStorage before saving the storage state.
 
 Configuration options:
+
 - MS_AUTH_WAIT_FOR_MSAL_TOKENS: Enable/disable MSAL token waiting (default: true)
 - MS_AUTH_MSAL_TOKEN_TIMEOUT: Timeout in milliseconds (default: 30000)
 

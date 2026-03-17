@@ -1,6 +1,6 @@
 [**Power Platform Playwright Toolkit v0.0.4**](../README.md)
 
-***
+---
 
 [Power Platform Playwright Toolkit](../README.md) / buildCanvasAppUrlFromEnv
 
@@ -12,6 +12,7 @@ Defined in: utils/app-helpers.ts:184
 
 Build Canvas App Play URL from environment variables
 Reads from process.env:
+
 - CANVAS_APP_URL (direct URL), OR
 - POWER_APPS_ENVIRONMENT_ID + CANVAS_APP_ID + CANVAS_APP_TENANT_ID
 

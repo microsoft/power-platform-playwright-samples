@@ -1,6 +1,6 @@
 [**Power Platform Playwright Toolkit v0.0.4**](../README.md)
 
-***
+---
 
 [Power Platform Playwright Toolkit](../README.md) / PowerAppsPage
 
@@ -34,7 +34,7 @@ Defined in: pages/power-apps.page.ts:25
 
 Defined in: pages/power-apps.page.ts:19
 
-***
+---
 
 ### locators
 
@@ -42,7 +42,7 @@ Defined in: pages/power-apps.page.ts:19
 
 Defined in: pages/power-apps.page.ts:20
 
-***
+---
 
 ### canvas
 
@@ -50,7 +50,7 @@ Defined in: pages/power-apps.page.ts:20
 
 Defined in: pages/power-apps.page.ts:21
 
-***
+---
 
 ### modelDriven
 
@@ -81,7 +81,7 @@ Navigation options
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### navigateToApps()
 
@@ -104,7 +104,7 @@ Navigation options
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### navigateToSolutions()
 
@@ -127,7 +127,7 @@ Navigation options
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### navigateToAppsViaMenu()
 
@@ -151,7 +151,7 @@ Navigation options
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### navigateToSolutionsViaMenu()
 
@@ -175,7 +175,7 @@ Navigation options
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### navigateToPowerAppsHomePage()
 
@@ -198,7 +198,7 @@ Base URL to navigate to
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### navigateToAppsPage()
 
@@ -221,7 +221,7 @@ Base URL to navigate to
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### launchApplication()
 
@@ -247,7 +247,7 @@ Name of the app to launch
 
 Error if app is not found
 
-***
+---
 
 ### waitForCanvasAppLaunch()
 
@@ -262,7 +262,7 @@ Waits for PowerApps logo to disappear and clicks skip button
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### waitForHomePageLoad()
 
@@ -285,7 +285,7 @@ Timeout in milliseconds
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### waitForAppsPageLoad()
 
@@ -308,7 +308,7 @@ Timeout in milliseconds
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### waitForSolutionsPageLoad()
 
@@ -331,7 +331,7 @@ Timeout in milliseconds
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### findApp()
 
@@ -362,7 +362,7 @@ Search options
 
 Locator for the app
 
-***
+---
 
 ### findSolution()
 
@@ -392,7 +392,7 @@ Search options
 
 Locator for the solution
 
-***
+---
 
 ### openDefaultSolution()
 
@@ -406,7 +406,7 @@ Open the default solution
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### createApp()
 
@@ -434,7 +434,7 @@ Name for the new app
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### deleteApp()
 
@@ -462,7 +462,7 @@ Name of the app to delete
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### openApp()
 
@@ -496,7 +496,7 @@ Type of app
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### openModelDrivenAppInNewWindow()
 
@@ -520,7 +520,7 @@ Name of the app
 
 New page object
 
-***
+---
 
 ### dismissTeachingBubble()
 
@@ -534,7 +534,7 @@ Dismiss teaching bubble if present
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### isEnvironmentErrorPage()
 
@@ -550,7 +550,7 @@ Check if current page is an environment error page
 
 True if error page is detected
 
-***
+---
 
 ### isHomePage()
 
@@ -564,7 +564,7 @@ Check if currently on home page
 
 `Promise`\<`boolean`\>
 
-***
+---
 
 ### isAppsPage()
 
@@ -578,7 +578,7 @@ Check if currently on apps page
 
 `Promise`\<`boolean`\>
 
-***
+---
 
 ### isSolutionsPage()
 
@@ -592,7 +592,7 @@ Check if currently on solutions page
 
 `Promise`\<`boolean`\>
 
-***
+---
 
 ### takeScreenshot()
 
@@ -614,7 +614,7 @@ Name for the screenshot file
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### signOut()
 
@@ -628,7 +628,7 @@ Sign out from Power Apps
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### searchApps()
 
@@ -650,7 +650,7 @@ Search query
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### searchSolutions()
 
@@ -672,7 +672,7 @@ Search query
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### verifyHomePageLoaded()
 
@@ -686,7 +686,7 @@ Verify home page loaded successfully
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### verifyAppsPageLoaded()
 
@@ -700,7 +700,7 @@ Verify apps page loaded successfully
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### verifySolutionsPageLoaded()
 
@@ -714,7 +714,7 @@ Verify solutions page loaded successfully
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### verifyAppExists()
 
@@ -736,7 +736,7 @@ Name of the app
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### verifySolutionExists()
 

@@ -1,6 +1,6 @@
 [**Power Platform Playwright Toolkit v0.0.4**](../README.md)
 
-***
+---
 
 [Power Platform Playwright Toolkit](../README.md) / CanvasAppUrlOptions
 
@@ -20,7 +20,7 @@ Defined in: utils/app-helpers.ts:98
 
 Direct Canvas App URL (if provided, other options are ignored)
 
-***
+---
 
 ### environmentId?
 
@@ -30,7 +30,7 @@ Defined in: utils/app-helpers.ts:100
 
 Power Apps environment ID
 
-***
+---
 
 ### appId?
 
@@ -40,7 +40,7 @@ Defined in: utils/app-helpers.ts:102
 
 Canvas App ID
 
-***
+---
 
 ### tenantId?
 

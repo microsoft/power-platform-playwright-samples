@@ -1,6 +1,6 @@
 [**Power Platform Playwright Toolkit v0.0.4**](../README.md)
 
-***
+---
 
 [Power Platform Playwright Toolkit](../README.md) / HomePageWaiter
 
@@ -61,6 +61,7 @@ Defined in: core/page-waiters/home-page-waiter.ts:46
 
 Wait for Home page to fully load
 Flexible wait strategy:
+
 1. Root element (required)
 2. Page header (required)
 3. Main navigation (optional - tries multiple selectors)
@@ -87,7 +88,7 @@ If critical elements fail to load within timeout
 
 [`IPageWaiter`](../interfaces/IPageWaiter.md).[`waitForPageLoad`](../interfaces/IPageWaiter.md#waitforpageload)
 
-***
+---
 
 ### isPageLoaded()
 

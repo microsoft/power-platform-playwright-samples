@@ -1,6 +1,6 @@
 [**Power Platform Playwright Toolkit v0.0.4**](../README.md)
 
-***
+---
 
 [Power Platform Playwright Toolkit](../README.md) / PageWaiterFactory
 
@@ -82,7 +82,7 @@ const waiter = factory.getWaiter('apps');
 await waiter.waitForPageLoad(30000);
 ```
 
-***
+---
 
 ### clearCache()
 
@@ -97,7 +97,7 @@ Useful when page context changes
 
 `void`
 
-***
+---
 
 ### hasWaiter()
 

@@ -1,6 +1,6 @@
 [**Power Platform Playwright Toolkit v0.0.4**](../README.md)
 
-***
+---
 
 [Power Platform Playwright Toolkit](../README.md) / LaunchAppConfig
 
@@ -20,7 +20,7 @@ Defined in: core/app-provider.ts:26
 
 App identifier - either name or ID
 
-***
+---
 
 ### type
 
@@ -30,7 +30,7 @@ Defined in: core/app-provider.ts:28
 
 Type of app to launch
 
-***
+---
 
 ### mode?
 
@@ -40,7 +40,7 @@ Defined in: core/app-provider.ts:30
 
 Launch mode (play, edit, preview)
 
-***
+---
 
 ### baseUrl?
 
@@ -50,7 +50,7 @@ Defined in: core/app-provider.ts:32
 
 Base URL for maker portal navigation
 
-***
+---
 
 ### options?
 
@@ -60,7 +60,7 @@ Defined in: core/app-provider.ts:34
 
 Additional launch options
 
-***
+---
 
 ### skipMakerPortal?
 
@@ -70,7 +70,7 @@ Defined in: core/app-provider.ts:36
 
 Skip maker portal navigation and open app directly
 
-***
+---
 
 ### directUrl?
 
@@ -80,7 +80,7 @@ Defined in: core/app-provider.ts:38
 
 Direct URL to the app (requires skipMakerPortal: true)
 
-***
+---
 
 ### context?
 

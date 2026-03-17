@@ -1,6 +1,6 @@
 [**Power Platform Playwright Toolkit v0.0.4**](../README.md)
 
-***
+---
 
 [Power Platform Playwright Toolkit](../README.md) / TimeOut
 
@@ -28,7 +28,7 @@ Defined in: utils/config.ts:25
 
 5 seconds - Default loop wait time
 
-***
+---
 
 ### DefaultWaitTime
 
@@ -38,7 +38,7 @@ Defined in: utils/config.ts:27
 
 30 seconds - Default wait time
 
-***
+---
 
 ### DefaultMaxWaitTime
 
@@ -48,7 +48,7 @@ Defined in: utils/config.ts:29
 
 3 minutes - Default maximum wait time
 
-***
+---
 
 ### DefaultWaitTimeForValidation
 
@@ -58,7 +58,7 @@ Defined in: utils/config.ts:31
 
 30 seconds - Default wait time for validation
 
-***
+---
 
 ### ElementWaitTime
 
@@ -68,7 +68,7 @@ Defined in: utils/config.ts:33
 
 2 seconds - Element wait time
 
-***
+---
 
 ### FiveMinutesTimeout
 
@@ -78,7 +78,7 @@ Defined in: utils/config.ts:35
 
 5 minutes - Five minutes timeout
 
-***
+---
 
 ### LoadTimeOut
 
@@ -88,7 +88,7 @@ Defined in: utils/config.ts:37
 
 1 minute - Load timeout
 
-***
+---
 
 ### NavigationTimeout
 
@@ -98,7 +98,7 @@ Defined in: utils/config.ts:39
 
 1 minute - Navigation timeout
 
-***
+---
 
 ### OneMinuteTimeOut
 
@@ -108,7 +108,7 @@ Defined in: utils/config.ts:41
 
 1 minute - One minute timeout
 
-***
+---
 
 ### OptionalElementTimeout
 
@@ -118,7 +118,7 @@ Defined in: utils/config.ts:43
 
 5 seconds - Optional element timeout
 
-***
+---
 
 ### PageLoadTimeOut
 
@@ -128,7 +128,7 @@ Defined in: utils/config.ts:45
 
 30 seconds - Page load timeout
 
-***
+---
 
 ### TestTimeout
 
@@ -138,7 +138,7 @@ Defined in: utils/config.ts:47
 
 6 minutes - Test timeout
 
-***
+---
 
 ### TestTimeoutMax
 
@@ -148,7 +148,7 @@ Defined in: utils/config.ts:49
 
 10 minutes - Maximum test timeout
 
-***
+---
 
 ### TwoMinutesTimeout
 
@@ -158,7 +158,7 @@ Defined in: utils/config.ts:51
 
 2 minutes - Two minutes timeout
 
-***
+---
 
 ### FifteenMinutesTimeout
 

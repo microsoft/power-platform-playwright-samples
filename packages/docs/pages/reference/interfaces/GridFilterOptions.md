@@ -1,6 +1,6 @@
 [**Power Platform Playwright Toolkit v0.0.4**](../README.md)
 
-***
+---
 
 [Power Platform Playwright Toolkit](../README.md) / GridFilterOptions
 
@@ -20,7 +20,7 @@ Defined in: components/model-driven/types.ts:33
 
 Column name to filter
 
-***
+---
 
 ### operator
 
@@ -30,7 +30,7 @@ Defined in: components/model-driven/types.ts:35
 
 Filter operator
 
-***
+---
 
 ### value
 

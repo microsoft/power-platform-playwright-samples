@@ -1,6 +1,6 @@
 [**Power Platform Playwright Toolkit v0.0.4**](../README.md)
 
-***
+---
 
 [Power Platform Playwright Toolkit](../README.md) / findWithFallback
 
@@ -51,7 +51,7 @@ Error if none of the selectors match
 const login = await findWithFallback(page, [
   '#login',
   'button:has-text("Log In")',
-  '[data-test="btn-login"]'
+  '[data-test="btn-login"]',
 ]);
 await login.click();
 ```

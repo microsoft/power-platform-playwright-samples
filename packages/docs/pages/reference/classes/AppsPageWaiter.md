@@ -1,6 +1,6 @@
 [**Power Platform Playwright Toolkit v0.0.4**](../README.md)
 
-***
+---
 
 [Power Platform Playwright Toolkit](../README.md) / AppsPageWaiter
 
@@ -61,6 +61,7 @@ Defined in: core/page-waiters/apps-page-waiter.ts:46
 
 Wait for Apps page to fully load
 Implements multi-stage wait strategy:
+
 1. Critical elements (sidebar, command bar)
 2. VPN error detection
 3. Data load error detection and retry
@@ -87,7 +88,7 @@ If VPN connectivity is required or page fails to load
 
 [`IPageWaiter`](../interfaces/IPageWaiter.md).[`waitForPageLoad`](../interfaces/IPageWaiter.md#waitforpageload)
 
-***
+---
 
 ### isPageLoaded()
 

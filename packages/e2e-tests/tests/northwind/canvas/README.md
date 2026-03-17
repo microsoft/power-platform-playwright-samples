@@ -4,8 +4,8 @@ End-to-end tests for the **Northwind Orders Canvas App**.
 
 ## Test Files
 
-| File | What it tests |
-|------|--------------|
+| File                      | What it tests                                                         |
+| ------------------------- | --------------------------------------------------------------------- |
 | `canvas-app-crud.test.ts` | Full CRUD — create, read, update, delete order records in the gallery |
 
 ## Environment Variables

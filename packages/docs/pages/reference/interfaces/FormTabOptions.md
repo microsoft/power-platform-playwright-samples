@@ -1,6 +1,6 @@
 [**Power Platform Playwright Toolkit v0.0.4**](../README.md)
 
-***
+---
 
 [Power Platform Playwright Toolkit](../README.md) / FormTabOptions
 
@@ -20,7 +20,7 @@ Defined in: components/model-driven/form.component.ts:58
 
 Tab data-id or label
 
-***
+---
 
 ### expand?
 

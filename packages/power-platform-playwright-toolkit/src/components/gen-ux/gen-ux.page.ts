@@ -125,10 +125,7 @@ export class GenUxPage {
   public async navigateToStartWithPageDesign(): Promise<void> {
     // The "+ New app" command bar element is a Fluent UI SplitButton — its accessible role
     // varies by version. getByText() targets the visible label directly, which is stable.
-    await this.page
-      .getByText('New app')
-      .first()
-      .click({ timeout: Timeout.default });
+    await this.page.getByText('New app').first().click({ timeout: Timeout.default });
 
     // getByRole('menuitem') — "Start with a page design" in the New app dropdown
     await this.page
@@ -136,9 +133,7 @@ export class GenUxPage {
       .click({ timeout: Timeout.default });
 
     // getByText() — template option card (not a button role in the DOM)
-    await this.page
-      .getByText('Blank page with navigation')
-      .click({ timeout: Timeout.default });
+    await this.page.getByText('Blank page with navigation').click({ timeout: Timeout.default });
   }
 
   /**
@@ -254,25 +249,35 @@ export class GenUxPage {
     const frame = this.uciPreviewFrame;
 
     // Soft-check transient indicators — log rather than throw when already gone
-    const checkTransient = async (locatorName: string, loc: ReturnType<FrameLocator['getByText']>) => {
+    const checkTransient = async (
+      locatorName: string,
+      loc: ReturnType<FrameLocator['getByText']>
+    ) => {
       const visible = await loc
         .waitFor({ state: 'visible', timeout: 15_000 })
         .then(() => true)
         .catch(() => false);
       if (!visible) {
-        console.warn(`[GenUxPage] ⚠️  Transient indicator "${locatorName}" not visible — generation may have completed quickly`);
+        console.warn(
+          `[GenUxPage] ⚠️  Transient indicator "${locatorName}" not visible — generation may have completed quickly`
+        );
       }
     };
 
-    await checkTransient('Sure! I\'ll start by planning', frame.getByText(/Sure! I'll start by planning/i).last());
+    await checkTransient(
+      "Sure! I'll start by planning",
+      frame.getByText(/Sure! I'll start by planning/i).last()
+    );
     await checkTransient('Working on it', frame.getByText(/Working on it/).last());
-    await checkTransient('Stop generating', frame.getByRole('button', { name: /stop generating/i }).last());
+    await checkTransient(
+      'Stop generating',
+      frame.getByRole('button', { name: /stop generating/i }).last()
+    );
     await checkTransient('Agent Thoughts', frame.getByText(/Agent Thoughts/).last());
     await checkTransient('Summary', frame.getByText(/Summary/).last());
 
     // Hard assertion: either streaming is in progress OR generation already completed
-    const streamingOrDone =
-      frame.getByText(/Working on it|Your page is now generated/i).last();
+    const streamingOrDone = frame.getByText(/Working on it|Your page is now generated/i).last();
     await expect(streamingOrDone).toBeVisible({ timeout: Timeout.generation });
   }
 
@@ -307,9 +312,9 @@ export class GenUxPage {
     // getByText() — wait for generation to complete (may take > 1 minute).
     // Intermediate state assertions (Code tab selected, buttons disabled) are omitted
     // because their timing is non-deterministic — generation may complete before we check.
-    await expect(
-      frame.getByText(/Your page is now generated/)
-    ).toBeVisible({ timeout: Timeout.generation });
+    await expect(frame.getByText(/Your page is now generated/)).toBeVisible({
+      timeout: Timeout.generation,
+    });
   }
 
   // ── INSPECTION (for test generation) ─────────────────────────────────────
@@ -399,10 +404,7 @@ export class GenUxPage {
    */
   public async getCodeTabContent(): Promise<string> {
     return (
-      (await this.uciPreviewFrame
-        .locator('.monaco-editor, pre, code')
-        .first()
-        .textContent()) ?? ''
+      (await this.uciPreviewFrame.locator('.monaco-editor, pre, code').first().textContent()) ?? ''
     );
   }
 
@@ -447,9 +449,7 @@ export class GenUxPage {
     await publishBtn.first().click();
 
     // Some designer versions show a confirmation dialog — dismiss it if present
-    const confirmBtn = this.page
-      .getByRole('dialog')
-      .getByRole('button', { name: /publish/i });
+    const confirmBtn = this.page.getByRole('dialog').getByRole('button', { name: /publish/i });
     const hasDialog = await confirmBtn
       .waitFor({ state: 'visible', timeout: 5_000 })
       .then(() => true)
@@ -589,9 +589,7 @@ export class GenUxPage {
    */
   public async searchAndPlayApp(appName: string, context: BrowserContext): Promise<Page | null> {
     // getByRole('searchbox') — search/filter input in the Apps command bar
-    const searchBox = this.page
-      .getByRole('searchbox')
-      .or(this.page.getByPlaceholder(/search/i));
+    const searchBox = this.page.getByRole('searchbox').or(this.page.getByPlaceholder(/search/i));
     await searchBox.first().fill(appName, { timeout: Timeout.default });
     // Brief pause for the list to filter before asserting the row
     await this.page.waitForTimeout(1500);
@@ -670,9 +668,7 @@ export class GenUxPage {
     console.log(`[GenUxPage] Searching for apps matching prefix "${prefix}"...`);
 
     // Filter the list to only show matching apps
-    const searchBox = this.page
-      .getByRole('searchbox')
-      .or(this.page.getByPlaceholder(/search/i));
+    const searchBox = this.page.getByRole('searchbox').or(this.page.getByPlaceholder(/search/i));
     await searchBox.first().fill(prefix, { timeout: Timeout.default });
     await this.page.waitForTimeout(1500);
 
@@ -696,15 +692,9 @@ export class GenUxPage {
       await firstRow.scrollIntoViewIfNeeded();
       await firstRow.getByRole('button', { name: 'Commands' }).click();
 
-      await this.page
-        .getByRole('menu')
-        .getByRole('menuitem', { name: 'Delete' })
-        .click();
+      await this.page.getByRole('menu').getByRole('menuitem', { name: 'Delete' }).click();
 
-      await this.page
-        .getByRole('dialog')
-        .getByRole('button', { name: 'Delete' })
-        .click();
+      await this.page.getByRole('dialog').getByRole('button', { name: 'Delete' }).click();
 
       // Wait for the success toast — soft failure so stale/unavailable apps don't abort cleanup
       const toastVisible = await this.page
@@ -723,10 +713,14 @@ export class GenUxPage {
         console.warn(`[GenUxPage] ⚠️  No success toast for "${appName}"`);
         const rowStillExists = await firstRow.isVisible({ timeout: 2000 }).catch(() => false);
         if (rowStillExists) {
-          console.warn(`[GenUxPage] Row still visible — skipping "${appName}" to prevent infinite loop`);
+          console.warn(
+            `[GenUxPage] Row still visible — skipping "${appName}" to prevent infinite loop`
+          );
         } else {
           deleted++;
-          console.log(`[GenUxPage] Row gone (silent delete) — counted "${appName}" (${deleted} total)`);
+          console.log(
+            `[GenUxPage] Row gone (silent delete) — counted "${appName}" (${deleted} total)`
+          );
         }
       }
       await this.page.waitForTimeout(500);
@@ -769,21 +763,15 @@ export class GenUxPage {
     await commandsBtn.click();
 
     // getByRole('menu') → getByRole('menuitem') — Delete option in the context menu
-    await this.page
-      .getByRole('menu')
-      .getByRole('menuitem', { name: 'Delete' })
-      .click();
+    await this.page.getByRole('menu').getByRole('menuitem', { name: 'Delete' }).click();
 
     // getByRole('dialog') → getByRole('button') — confirm Delete in the dialog
-    await this.page
-      .getByRole('dialog')
-      .getByRole('button', { name: 'Delete' })
-      .click();
+    await this.page.getByRole('dialog').getByRole('button', { name: 'Delete' }).click();
 
     // getByText() — success toast; no status role on this Fluent UI toast
-    await expect(
-      this.page.getByText(/Successfully deleted app/)
-    ).toBeVisible({ timeout: Timeout.default });
+    await expect(this.page.getByText(/Successfully deleted app/)).toBeVisible({
+      timeout: Timeout.default,
+    });
 
     console.log(`[GenUxPage] Successfully deleted app: "${appName}"`);
   }

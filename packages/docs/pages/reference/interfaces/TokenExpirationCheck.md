@@ -1,6 +1,6 @@
 [**Power Platform Playwright Toolkit v0.0.4**](../README.md)
 
-***
+---
 
 [Power Platform Playwright Toolkit](../README.md) / TokenExpirationCheck
 
@@ -20,7 +20,7 @@ Defined in: utils/auth-helpers.ts:40
 
 Whether the token has expired
 
-***
+---
 
 ### expiresOn?
 
@@ -30,7 +30,7 @@ Defined in: utils/auth-helpers.ts:42
 
 Expiration timestamp in seconds (if found)
 
-***
+---
 
 ### token?
 

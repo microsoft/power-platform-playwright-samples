@@ -1,6 +1,6 @@
 [**Power Platform Playwright Toolkit v0.0.4**](../README.md)
 
-***
+---
 
 [Power Platform Playwright Toolkit](../README.md) / CanvasControlType
 
@@ -18,7 +18,7 @@ Canvas App Control Types
 
 Defined in: types/index.ts:10
 
-***
+---
 
 ### TextInput
 
@@ -26,7 +26,7 @@ Defined in: types/index.ts:10
 
 Defined in: types/index.ts:11
 
-***
+---
 
 ### Label
 
@@ -34,7 +34,7 @@ Defined in: types/index.ts:11
 
 Defined in: types/index.ts:12
 
-***
+---
 
 ### Dropdown
 
@@ -42,7 +42,7 @@ Defined in: types/index.ts:12
 
 Defined in: types/index.ts:13
 
-***
+---
 
 ### Gallery
 
@@ -50,7 +50,7 @@ Defined in: types/index.ts:13
 
 Defined in: types/index.ts:14
 
-***
+---
 
 ### Form
 
@@ -58,7 +58,7 @@ Defined in: types/index.ts:14
 
 Defined in: types/index.ts:15
 
-***
+---
 
 ### Icon
 
@@ -66,7 +66,7 @@ Defined in: types/index.ts:15
 
 Defined in: types/index.ts:16
 
-***
+---
 
 ### Image
 
@@ -74,7 +74,7 @@ Defined in: types/index.ts:16
 
 Defined in: types/index.ts:17
 
-***
+---
 
 ### Checkbox
 
@@ -82,7 +82,7 @@ Defined in: types/index.ts:17
 
 Defined in: types/index.ts:18
 
-***
+---
 
 ### Toggle
 
@@ -90,7 +90,7 @@ Defined in: types/index.ts:18
 
 Defined in: types/index.ts:19
 
-***
+---
 
 ### Slider
 
@@ -98,7 +98,7 @@ Defined in: types/index.ts:19
 
 Defined in: types/index.ts:20
 
-***
+---
 
 ### DatePicker
 
@@ -106,7 +106,7 @@ Defined in: types/index.ts:20
 
 Defined in: types/index.ts:21
 
-***
+---
 
 ### Timer
 
@@ -114,7 +114,7 @@ Defined in: types/index.ts:21
 
 Defined in: types/index.ts:22
 
-***
+---
 
 ### HTMLText
 
@@ -122,7 +122,7 @@ Defined in: types/index.ts:22
 
 Defined in: types/index.ts:23
 
-***
+---
 
 ### Camera
 
@@ -130,7 +130,7 @@ Defined in: types/index.ts:23
 
 Defined in: types/index.ts:24
 
-***
+---
 
 ### Microphone
 
@@ -138,7 +138,7 @@ Defined in: types/index.ts:24
 
 Defined in: types/index.ts:25
 
-***
+---
 
 ### BarcodeScanner
 
@@ -146,7 +146,7 @@ Defined in: types/index.ts:25
 
 Defined in: types/index.ts:26
 
-***
+---
 
 ### DataTable
 
@@ -154,7 +154,7 @@ Defined in: types/index.ts:26
 
 Defined in: types/index.ts:27
 
-***
+---
 
 ### Chart
 
@@ -162,7 +162,7 @@ Defined in: types/index.ts:27
 
 Defined in: types/index.ts:28
 
-***
+---
 
 ### Shape
 
@@ -170,7 +170,7 @@ Defined in: types/index.ts:28
 
 Defined in: types/index.ts:29
 
-***
+---
 
 ### ComboBox
 

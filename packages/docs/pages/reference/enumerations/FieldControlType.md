@@ -1,6 +1,6 @@
 [**Power Platform Playwright Toolkit v0.0.4**](../README.md)
 
-***
+---
 
 [Power Platform Playwright Toolkit](../README.md) / FieldControlType
 
@@ -18,7 +18,7 @@ Field control types in Model-Driven Apps
 
 Defined in: components/model-driven/form.component.ts:77
 
-***
+---
 
 ### Number
 
@@ -26,7 +26,7 @@ Defined in: components/model-driven/form.component.ts:77
 
 Defined in: components/model-driven/form.component.ts:78
 
-***
+---
 
 ### Date
 
@@ -34,7 +34,7 @@ Defined in: components/model-driven/form.component.ts:78
 
 Defined in: components/model-driven/form.component.ts:79
 
-***
+---
 
 ### DateTime
 
@@ -42,7 +42,7 @@ Defined in: components/model-driven/form.component.ts:79
 
 Defined in: components/model-driven/form.component.ts:80
 
-***
+---
 
 ### Lookup
 
@@ -50,7 +50,7 @@ Defined in: components/model-driven/form.component.ts:80
 
 Defined in: components/model-driven/form.component.ts:81
 
-***
+---
 
 ### OptionSet
 
@@ -58,7 +58,7 @@ Defined in: components/model-driven/form.component.ts:81
 
 Defined in: components/model-driven/form.component.ts:82
 
-***
+---
 
 ### TwoOptions
 
@@ -66,7 +66,7 @@ Defined in: components/model-driven/form.component.ts:82
 
 Defined in: components/model-driven/form.component.ts:83
 
-***
+---
 
 ### MultiSelectOptionSet
 
@@ -74,7 +74,7 @@ Defined in: components/model-driven/form.component.ts:83
 
 Defined in: components/model-driven/form.component.ts:84
 
-***
+---
 
 ### Currency
 
@@ -82,7 +82,7 @@ Defined in: components/model-driven/form.component.ts:84
 
 Defined in: components/model-driven/form.component.ts:85
 
-***
+---
 
 ### Decimal
 
@@ -90,7 +90,7 @@ Defined in: components/model-driven/form.component.ts:85
 
 Defined in: components/model-driven/form.component.ts:86
 
-***
+---
 
 ### WholeNumber
 
@@ -98,7 +98,7 @@ Defined in: components/model-driven/form.component.ts:86
 
 Defined in: components/model-driven/form.component.ts:87
 
-***
+---
 
 ### FloatingPoint
 
@@ -106,7 +106,7 @@ Defined in: components/model-driven/form.component.ts:87
 
 Defined in: components/model-driven/form.component.ts:88
 
-***
+---
 
 ### Duration
 
@@ -114,7 +114,7 @@ Defined in: components/model-driven/form.component.ts:88
 
 Defined in: components/model-driven/form.component.ts:89
 
-***
+---
 
 ### Phone
 
@@ -122,7 +122,7 @@ Defined in: components/model-driven/form.component.ts:89
 
 Defined in: components/model-driven/form.component.ts:90
 
-***
+---
 
 ### Email
 
@@ -130,7 +130,7 @@ Defined in: components/model-driven/form.component.ts:90
 
 Defined in: components/model-driven/form.component.ts:91
 
-***
+---
 
 ### URL
 
@@ -138,7 +138,7 @@ Defined in: components/model-driven/form.component.ts:91
 
 Defined in: components/model-driven/form.component.ts:92
 
-***
+---
 
 ### Ticker
 
@@ -146,7 +146,7 @@ Defined in: components/model-driven/form.component.ts:92
 
 Defined in: components/model-driven/form.component.ts:93
 
-***
+---
 
 ### RichText
 
@@ -154,7 +154,7 @@ Defined in: components/model-driven/form.component.ts:93
 
 Defined in: components/model-driven/form.component.ts:94
 
-***
+---
 
 ### MultiLine
 

@@ -1,6 +1,6 @@
 [**Power Platform Playwright Toolkit v0.0.4**](../README.md)
 
-***
+---
 
 [Power Platform Playwright Toolkit](../README.md) / StorageState
 
@@ -50,7 +50,7 @@ Defined in: utils/auth-helpers.ts:16
 
 > **sameSite**: `"Strict"` \| `"Lax"` \| `"None"`
 
-***
+---
 
 ### origins
 

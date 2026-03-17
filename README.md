@@ -18,11 +18,11 @@
 
 This monorepo contains three packages:
 
-| Package | Description |
-|---------|-------------|
+| Package                                                                                      | Description                                                          |
+| -------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
 | [`packages/power-platform-playwright-toolkit/`](packages/power-platform-playwright-toolkit/) | Core library — publish to npm as `power-platform-playwright-toolkit` |
-| [`packages/e2e-tests/`](packages/e2e-tests/) | Sample tests demonstrating real-world usage patterns |
-| [`packages/docs/`](packages/docs/) | Documentation site (Nextra/Next.js) |
+| [`packages/e2e-tests/`](packages/e2e-tests/)                                                 | Sample tests demonstrating real-world usage patterns                 |
+| [`packages/docs/`](packages/docs/)                                                           | Documentation site (Nextra/Next.js)                                  |
 
 ---
 
@@ -86,11 +86,11 @@ test('open account record', async ({ page, context }) => {
 
 ### Supported app types
 
-| `AppType` | Description |
-|-----------|-------------|
-| `AppType.ModelDriven` | Dynamics 365 / Model-Driven Apps |
-| `AppType.Canvas` | Power Apps Canvas Apps |
-| `AppType.PowerApps` | Maker Portal (`make.powerapps.com`) — also used for Gen UX |
+| `AppType`             | Description                                                |
+| --------------------- | ---------------------------------------------------------- |
+| `AppType.ModelDriven` | Dynamics 365 / Model-Driven Apps                           |
+| `AppType.Canvas`      | Power Apps Canvas Apps                                     |
+| `AppType.PowerApps`   | Maker Portal (`make.powerapps.com`) — also used for Gen UX |
 
 ---
 
@@ -178,6 +178,7 @@ power-platform-playwright-samples/
 Full documentation: **https://microsoft.github.io/power-platform-playwright-samples/**
 
 Key guides:
+
 - [Getting Started](https://microsoft.github.io/power-platform-playwright-samples/guide/getting-started)
 - [Project Setup](https://microsoft.github.io/power-platform-playwright-samples/guide/setup)
 - [Authentication](https://microsoft.github.io/power-platform-playwright-samples/guide/authentication)

@@ -1,6 +1,6 @@
 [**Power Platform Playwright Toolkit v0.0.4**](../README.md)
 
-***
+---
 
 [Power Platform Playwright Toolkit](../README.md) / CommandingComponent
 
@@ -70,7 +70,7 @@ await commanding.clickButton('Delete', { checkOverflow: true });
 await commanding.clickButton('Save', { waitForEnabled: true });
 ```
 
-***
+---
 
 ### refresh()
 
@@ -90,7 +90,7 @@ Click the Refresh button to reload the page
 await commanding.refresh();
 ```
 
-***
+---
 
 ### clickNew()
 
@@ -112,7 +112,7 @@ await commanding.clickNew();
 await page.waitForTimeout(3000);
 ```
 
-***
+---
 
 ### save()
 
@@ -141,7 +141,7 @@ await commanding.save();
 await commanding.save({ waitForSave: true });
 ```
 
-***
+---
 
 ### saveAndClose()
 
@@ -161,7 +161,7 @@ Click the Save & Close button
 await commanding.saveAndClose();
 ```
 
-***
+---
 
 ### clickDelete()
 
@@ -184,7 +184,7 @@ await commanding.clickDelete();
 await page.getByRole('button', { name: 'Delete' }).click();
 ```
 
-***
+---
 
 ### share()
 
@@ -205,7 +205,7 @@ await commanding.share();
 // Handle share dialog
 ```
 
-***
+---
 
 ### assign()
 
@@ -226,7 +226,7 @@ await commanding.assign();
 // Handle assign dialog
 ```
 
-***
+---
 
 ### deactivate()
 
@@ -247,7 +247,7 @@ await commanding.deactivate();
 // Confirm in dialog if needed
 ```
 
-***
+---
 
 ### activate()
 
@@ -267,7 +267,7 @@ Click the Activate button
 await commanding.activate();
 ```
 
-***
+---
 
 ### openOverflowMenu()
 
@@ -295,7 +295,7 @@ Command bar context
 await commanding.openOverflowMenu();
 ```
 
-***
+---
 
 ### isButtonVisible()
 
@@ -334,7 +334,7 @@ if (isDeleteVisible) {
 }
 ```
 
-***
+---
 
 ### isButtonEnabled()
 
@@ -370,7 +370,7 @@ true if button is enabled, false otherwise
 const isSaveEnabled = await commanding.isButtonEnabled('Save');
 ```
 
-***
+---
 
 ### waitForButton()
 
@@ -404,7 +404,7 @@ Timeout in milliseconds
 await commanding.waitForButton('Save', 10000);
 ```
 
-***
+---
 
 ### executeCommand()
 
@@ -433,7 +433,7 @@ The data-id attribute of the command button
 await commanding.executeCommand('mycompany.custombutton');
 ```
 
-***
+---
 
 ### getCommandBar()
 

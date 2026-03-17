@@ -1,6 +1,6 @@
 [**Power Platform Playwright Toolkit v0.0.4**](../README.md)
 
-***
+---
 
 [Power Platform Playwright Toolkit](../README.md) / IAppLauncher
 
@@ -62,7 +62,7 @@ Additional launch options
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### launchById()
 
@@ -103,7 +103,7 @@ Additional launch options
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### waitForAppLoad()
 
@@ -125,7 +125,7 @@ Wait options
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### isAppReady()
 
@@ -141,7 +141,7 @@ Check if app is ready for interaction
 
 true if app is ready
 
-***
+---
 
 ### getAppId()
 
@@ -157,7 +157,7 @@ Get the current app ID
 
 App ID or null if not set
 
-***
+---
 
 ### getAppUrl()
 
@@ -173,7 +173,7 @@ Get the current app URL
 
 App URL or null if not set
 
-***
+---
 
 ### getControl()
 
@@ -197,7 +197,7 @@ Control options
 
 Locator for the control
 
-***
+---
 
 ### clickControl()
 
@@ -219,7 +219,7 @@ Control options
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### fillControl()
 
@@ -247,7 +247,7 @@ Value to fill
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### fillForm()
 
@@ -269,7 +269,7 @@ Key-value pairs of field names and values
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### assertControlVisible()
 
@@ -297,7 +297,7 @@ Assertion options
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### assertControlText()
 
@@ -331,7 +331,7 @@ Assertion options
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### closeApp()
 
@@ -345,7 +345,7 @@ Close the app
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### reset()
 

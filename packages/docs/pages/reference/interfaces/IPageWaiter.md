@@ -1,6 +1,6 @@
 [**Power Platform Playwright Toolkit v0.0.4**](../README.md)
 
-***
+---
 
 [Power Platform Playwright Toolkit](../README.md) / IPageWaiter
 
@@ -61,7 +61,7 @@ const waiter = new AppsPageWaiter(page, locators);
 await waiter.waitForPageLoad(30000);
 ```
 
-***
+---
 
 ### isPageLoaded()
 

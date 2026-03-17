@@ -58,9 +58,9 @@ jobs:
           echo "## 📦 Package Sizes" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
-          if [ -d "packages/playwright-power-platform-toolkit/dist" ]; then
-            toolkit_size=$(du -sh packages/playwright-power-platform-toolkit/dist | cut -f1)
-            echo "- **playwright-power-platform-toolkit**: \`$toolkit_size\`" >> $GITHUB_STEP_SUMMARY
+          if [ -d "packages/power-platform-playwright-toolkit/dist" ]; then
+            toolkit_size=$(du -sh packages/power-platform-playwright-toolkit/dist | cut -f1)
+            echo "- **power-platform-playwright-toolkit**: \`$toolkit_size\`" >> $GITHUB_STEP_SUMMARY
           fi
 
           if [ -d "packages/docs/.next" ]; then

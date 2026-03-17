@@ -1,6 +1,6 @@
 [**Power Platform Playwright Toolkit v0.0.4**](../README.md)
 
-***
+---
 
 [Power Platform Playwright Toolkit](../README.md) / GenUxPage
 
@@ -11,6 +11,7 @@ Defined in: components/gen-ux/gen-ux.page.ts:49
 Page object for the Power Apps Maker Portal GenUX AI designer.
 
 Handles two workflows:
+
 - **App Generation**: submit prompts to the GenUX AI, verify generation progress
 - **Inspection**: read Preview tab DOM and Code tab content for test generation
 
@@ -89,7 +90,7 @@ environment ID is configured.
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### navigateToStartWithPageDesign()
 
@@ -112,7 +113,7 @@ and `getByText()` to click the template card.
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### createAppWithName()
 
@@ -137,7 +138,7 @@ Display name for the new app (use a timestamp suffix to avoid collisions)
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### addNewPage()
 
@@ -154,7 +155,7 @@ has no semantic role so falls back to `locator()` with its stable ID.
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### waitForUCIPreviewFrameAndFillPrompt()
 
@@ -183,7 +184,7 @@ The AI generation prompt string to submit
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### waitForUCIPreviewFrameAndSelectTemplate()
 
@@ -210,7 +211,7 @@ Partial or full text of the template carousel card to click
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### verifyThoughtStreaming()
 
@@ -237,7 +238,7 @@ for the interactive Stop button.
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### verifyCodeAndPreviewTabsAvailable()
 
@@ -254,7 +255,7 @@ Uses `getByRole('tab')` — tabs have an explicit ARIA tab role.
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### verifyCodeStreaming()
 
@@ -263,6 +264,7 @@ Uses `getByRole('tab')` — tabs have an explicit ARIA tab role.
 Defined in: components/gen-ux/gen-ux.page.ts:304
 
 Verify the full code streaming lifecycle:
+
 1. "Your page is being generated" visible (Code tab auto-selected)
 2. Attachment and Send buttons disabled during generation
 3. "Your page is now generated" visible (Preview tab auto-selected)
@@ -276,7 +278,7 @@ Generation can take up to 2 minutes — this method waits accordingly.
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### clickPreviewTab()
 
@@ -291,7 +293,7 @@ Uses `getByRole('tab')`.
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### clickCodeTab()
 
@@ -306,7 +308,7 @@ Uses `getByRole('tab')`.
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### waitForGeneratedContent()
 
@@ -328,7 +330,7 @@ timeout, so the test can still proceed and let subsequent assertions catch failu
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### waitForCodeTabContent()
 
@@ -345,7 +347,7 @@ class name is the only stable approach.
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### getPreviewTabDom()
 
@@ -364,7 +366,7 @@ Use this during test generation to discover exact selectors (`data-control-name`
 
 Raw HTML string from the preview frame body
 
-***
+---
 
 ### getCodeTabContent()
 
@@ -383,7 +385,7 @@ collections, and data sources.
 
 Raw code text from the editor
 
-***
+---
 
 ### publishApp()
 
@@ -411,7 +413,7 @@ visible label in all Maker Portal locales.
 
 If the Publish button is not found or the success indicator does not appear
 
-***
+---
 
 ### buildCanvasPlayUrl()
 
@@ -430,7 +432,7 @@ configuration to produce a playable URL.
 
 Canvas App play URL string
 
-***
+---
 
 ### submitForm()
 
@@ -444,9 +446,10 @@ GenUX forms render a primary action button (commonly "Submit" or "Save")
 that triggers the Power Fx `Patch()` call to persist the record.
 
 Strategy (tries in order):
-  1. `getByRole('button', { name: /submit/i })` — most common generated label
-  2. `getByRole('button', { name: /save/i })`   — alternative label
-  3. `getByTestId('submit-button')`              — data-testid fallback
+
+1. `getByRole('button', { name: /submit/i })` — most common generated label
+2. `getByRole('button', { name: /save/i })` — alternative label
+3. `getByTestId('submit-button')` — data-testid fallback
 
 Searches inside the UCI Preview iframe where the generated form is rendered.
 
@@ -458,7 +461,7 @@ Searches inside the UCI Preview iframe where the generated form is rendered.
 
 If no submit/save button is found within the default timeout
 
-***
+---
 
 ### waitForSubmitSuccess()
 
@@ -492,7 +495,7 @@ How long to wait in ms (default: 30 s)
 
 If no success indicator is found within the timeout
 
-***
+---
 
 ### getAppIdFromUrl()
 
@@ -518,7 +521,7 @@ App ID as a lowercase GUID string
 
 If no app ID GUID is found in the current URL
 
-***
+---
 
 ### searchAndPlayApp()
 
@@ -552,7 +555,7 @@ BrowserContext used to capture the new tab opened by Play
 
 The new Page where the app is playing, or `null` if Play is disabled
 
-***
+---
 
 ### deleteAppsMatchingPrefix()
 
@@ -582,7 +585,7 @@ Display name prefix to match (e.g. "GenUX BasicForm")
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### deleteAppFromAppListIfFound()
 

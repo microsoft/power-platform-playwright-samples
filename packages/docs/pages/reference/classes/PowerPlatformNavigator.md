@@ -1,6 +1,6 @@
 [**Power Platform Playwright Toolkit v0.0.4**](../README.md)
 
-***
+---
 
 [Power Platform Playwright Toolkit](../README.md) / PowerPlatformNavigator
 
@@ -93,7 +93,7 @@ await navigator.navigateToApps();
 // Apps page is now loaded and ready
 ```
 
-***
+---
 
 ### navigateToSolutions()
 
@@ -126,7 +126,7 @@ await navigator.navigateToSolutions({ timeout: 30000 });
 // Solutions page is now loaded
 ```
 
-***
+---
 
 ### navigateToHome()
 
@@ -159,7 +159,7 @@ await navigator.navigateToHome();
 // Home page is now loaded
 ```
 
-***
+---
 
 ### navigateToFlows()
 
@@ -185,7 +185,7 @@ Navigation options
 
 If navigation fails
 
-***
+---
 
 ### navigateToTables()
 
@@ -211,7 +211,7 @@ Navigation options
 
 If navigation fails
 
-***
+---
 
 ### navigateToConnections()
 
@@ -237,7 +237,7 @@ Navigation options
 
 If navigation fails
 
-***
+---
 
 ### getURLBuilder()
 
@@ -262,7 +262,7 @@ const appsUrl = urlBuilder.buildAppsPageUrl();
 console.log('Apps URL:', appsUrl);
 ```
 
-***
+---
 
 ### getWaiterFactory()
 
@@ -279,7 +279,7 @@ Useful for accessing waiters directly
 
 PageWaiterFactory instance
 
-***
+---
 
 ### setEnvironment()
 
@@ -308,7 +308,7 @@ navigator.setEnvironment('env-123');
 await navigator.navigateToApps(); // Will use env-123
 ```
 
-***
+---
 
 ### isOnPage()
 

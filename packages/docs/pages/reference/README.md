@@ -1,6 +1,6 @@
 **Power Platform Playwright Toolkit v0.0.4**
 
-***
+---
 
 # Power Platform Playwright Toolkit v0.0.4
 

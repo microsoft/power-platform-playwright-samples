@@ -1,6 +1,6 @@
 [**Power Platform Playwright Toolkit v0.0.4**](../README.md)
 
-***
+---
 
 [Power Platform Playwright Toolkit](../README.md) / CommandBarButtonOptions
 
@@ -20,7 +20,7 @@ Defined in: components/model-driven/commanding.component.ts:44
 
 Check overflow menu if button not found in main command bar
 
-***
+---
 
 ### timeout?
 
@@ -30,7 +30,7 @@ Defined in: components/model-driven/commanding.component.ts:46
 
 Timeout for waiting for button (milliseconds)
 
-***
+---
 
 ### waitForEnabled?
 
@@ -40,7 +40,7 @@ Defined in: components/model-driven/commanding.component.ts:48
 
 Wait for button to be enabled before clicking
 
-***
+---
 
 ### context?
 

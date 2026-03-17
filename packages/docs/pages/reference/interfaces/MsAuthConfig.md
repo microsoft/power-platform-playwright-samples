@@ -1,6 +1,6 @@
 [**Power Platform Playwright Toolkit v0.0.4**](../README.md)
 
-***
+---
 
 [Power Platform Playwright Toolkit](../README.md) / MsAuthConfig
 
@@ -23,7 +23,7 @@ MSAL token waiting options specific to Power Platform SPAs.
 
 Defined in: auth/MsAuthHelper.ts:25
 
-***
+---
 
 ### credentialType?
 
@@ -31,7 +31,7 @@ Defined in: auth/MsAuthHelper.ts:25
 
 Defined in: auth/MsAuthHelper.ts:26
 
-***
+---
 
 ### credentialProvider?
 
@@ -39,7 +39,7 @@ Defined in: auth/MsAuthHelper.ts:26
 
 Defined in: auth/MsAuthHelper.ts:27
 
-***
+---
 
 ### providerConfig?
 
@@ -47,7 +47,7 @@ Defined in: auth/MsAuthHelper.ts:27
 
 Defined in: auth/MsAuthHelper.ts:28
 
-***
+---
 
 ### envVariableName?
 
@@ -55,7 +55,7 @@ Defined in: auth/MsAuthHelper.ts:28
 
 Defined in: auth/MsAuthHelper.ts:29
 
-***
+---
 
 ### localFilePath?
 
@@ -63,7 +63,7 @@ Defined in: auth/MsAuthHelper.ts:29
 
 Defined in: auth/MsAuthHelper.ts:30
 
-***
+---
 
 ### certificatePassword?
 
@@ -71,7 +71,7 @@ Defined in: auth/MsAuthHelper.ts:30
 
 Defined in: auth/MsAuthHelper.ts:31
 
-***
+---
 
 ### headless?
 
@@ -79,7 +79,7 @@ Defined in: auth/MsAuthHelper.ts:31
 
 Defined in: auth/MsAuthHelper.ts:32
 
-***
+---
 
 ### timeout?
 
@@ -87,7 +87,7 @@ Defined in: auth/MsAuthHelper.ts:32
 
 Defined in: auth/MsAuthHelper.ts:33
 
-***
+---
 
 ### waitForMsalTokens?
 
@@ -97,7 +97,7 @@ Defined in: auth/MsAuthHelper.ts:35
 
 Wait for MSAL tokens to be stored in localStorage (default: true)
 
-***
+---
 
 ### msalTokenTimeout?
 

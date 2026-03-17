@@ -1,6 +1,6 @@
 [**Power Platform Playwright Toolkit v0.0.4**](../README.md)
 
-***
+---
 
 [Power Platform Playwright Toolkit](../README.md) / NavigationOptions
 
@@ -23,10 +23,10 @@ Maximum wait time in milliseconds
 #### Default
 
 ```ts
-60000
+60000;
 ```
 
-***
+---
 
 ### waitForLoad?
 
@@ -39,10 +39,10 @@ Whether to wait for page load after navigation
 #### Default
 
 ```ts
-true
+true;
 ```
 
-***
+---
 
 ### waitForNetworkIdle?
 

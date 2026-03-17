@@ -1,6 +1,6 @@
 [**Power Platform Playwright Toolkit v0.0.4**](../README.md)
 
-***
+---
 
 [Power Platform Playwright Toolkit](../README.md) / WaitOptions
 
@@ -20,7 +20,7 @@ Defined in: types/index.ts:155
 
 Timeout in milliseconds
 
-***
+---
 
 ### state?
 

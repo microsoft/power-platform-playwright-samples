@@ -1,6 +1,6 @@
 [**Power Platform Playwright Toolkit v0.0.4**](../README.md)
 
-***
+---
 
 [Power Platform Playwright Toolkit](../README.md) / AppRuntimeWaiter
 
@@ -87,7 +87,7 @@ const waiter = new AppRuntimeWaiter(page, AppType.Canvas);
 await waiter.waitForAppLoad(30000);
 ```
 
-***
+---
 
 ### isAppLoaded()
 

@@ -1,6 +1,6 @@
 [**Power Platform Playwright Toolkit v0.0.4**](../README.md)
 
-***
+---
 
 [Power Platform Playwright Toolkit](../README.md) / PageWaiterOptions
 
@@ -23,10 +23,10 @@ Maximum wait time in milliseconds
 #### Default
 
 ```ts
-60000
+60000;
 ```
 
-***
+---
 
 ### retryOnError?
 
@@ -39,10 +39,10 @@ Whether to retry on error
 #### Default
 
 ```ts
-true
+true;
 ```
 
-***
+---
 
 ### maxRetries?
 
@@ -55,10 +55,10 @@ Maximum number of retries
 #### Default
 
 ```ts
-3
+3;
 ```
 
-***
+---
 
 ### throwOnTimeout?
 
@@ -72,5 +72,5 @@ If false, will log warning and continue
 #### Default
 
 ```ts
-true
+true;
 ```

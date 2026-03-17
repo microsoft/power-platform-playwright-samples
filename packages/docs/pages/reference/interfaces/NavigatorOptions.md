@@ -1,6 +1,6 @@
 [**Power Platform Playwright Toolkit v0.0.4**](../README.md)
 
-***
+---
 
 [Power Platform Playwright Toolkit](../README.md) / NavigatorOptions
 
@@ -23,10 +23,10 @@ Base URL for Power Apps maker portal
 #### Default
 
 ```ts
-ConfigHelper.getBaseUrl()
+ConfigHelper.getBaseUrl();
 ```
 
-***
+---
 
 ### environmentId?
 
@@ -39,5 +39,5 @@ Environment ID to include in URLs
 #### Default
 
 ```ts
-ConfigHelper.getEnvironmentId()
+ConfigHelper.getEnvironmentId();
 ```

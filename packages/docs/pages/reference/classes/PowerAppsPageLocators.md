@@ -1,6 +1,6 @@
 [**Power Platform Playwright Toolkit v0.0.4**](../README.md)
 
-***
+---
 
 [Power Platform Playwright Toolkit](../README.md) / PowerAppsPageLocators
 
@@ -43,7 +43,7 @@ Defined in: locators/power-apps.locators.ts:142
 
 `Locator`
 
-***
+---
 
 ### pageHeader
 
@@ -57,7 +57,7 @@ Defined in: locators/power-apps.locators.ts:146
 
 `Locator`
 
-***
+---
 
 ### mainNavigation
 
@@ -71,7 +71,7 @@ Defined in: locators/power-apps.locators.ts:150
 
 `Locator`
 
-***
+---
 
 ### homePageMainContainer
 
@@ -85,7 +85,7 @@ Defined in: locators/power-apps.locators.ts:155
 
 `Locator`
 
-***
+---
 
 ### homePageMainContent
 
@@ -99,7 +99,7 @@ Defined in: locators/power-apps.locators.ts:159
 
 `Locator`
 
-***
+---
 
 ### homePageContainer
 
@@ -113,7 +113,7 @@ Defined in: locators/power-apps.locators.ts:163
 
 `Locator`
 
-***
+---
 
 ### homePageHeaderRegion
 
@@ -127,7 +127,7 @@ Defined in: locators/power-apps.locators.ts:167
 
 `Locator`
 
-***
+---
 
 ### homePagePlansSection
 
@@ -141,7 +141,7 @@ Defined in: locators/power-apps.locators.ts:171
 
 `Locator`
 
-***
+---
 
 ### homePageAppsSection
 
@@ -155,7 +155,7 @@ Defined in: locators/power-apps.locators.ts:175
 
 `Locator`
 
-***
+---
 
 ### homePageLearningSection
 
@@ -169,7 +169,7 @@ Defined in: locators/power-apps.locators.ts:179
 
 `Locator`
 
-***
+---
 
 ### errorPageContainer
 
@@ -183,7 +183,7 @@ Defined in: locators/power-apps.locators.ts:184
 
 `Locator`
 
-***
+---
 
 ### errorPageTitle
 
@@ -197,7 +197,7 @@ Defined in: locators/power-apps.locators.ts:188
 
 `Locator`
 
-***
+---
 
 ### errorPageMessage
 
@@ -211,7 +211,7 @@ Defined in: locators/power-apps.locators.ts:192
 
 `Locator`
 
-***
+---
 
 ### errorPageHomeButton
 
@@ -225,7 +225,7 @@ Defined in: locators/power-apps.locators.ts:196
 
 `Locator`
 
-***
+---
 
 ### appsPageMainContainer
 
@@ -239,7 +239,7 @@ Defined in: locators/power-apps.locators.ts:201
 
 `Locator`
 
-***
+---
 
 ### appsPageContainer
 
@@ -253,7 +253,7 @@ Defined in: locators/power-apps.locators.ts:205
 
 `Locator`
 
-***
+---
 
 ### sidebar
 
@@ -267,7 +267,7 @@ Defined in: locators/power-apps.locators.ts:209
 
 `Locator`
 
-***
+---
 
 ### commandBar
 
@@ -281,7 +281,7 @@ Defined in: locators/power-apps.locators.ts:213
 
 `Locator`
 
-***
+---
 
 ### appsPageCommandBar
 
@@ -295,7 +295,7 @@ Defined in: locators/power-apps.locators.ts:217
 
 `Locator`
 
-***
+---
 
 ### appListsGridContainer
 
@@ -309,7 +309,7 @@ Defined in: locators/power-apps.locators.ts:221
 
 `Locator`
 
-***
+---
 
 ### newAppButton
 
@@ -323,7 +323,7 @@ Defined in: locators/power-apps.locators.ts:225
 
 `Locator`
 
-***
+---
 
 ### allAppsButton
 
@@ -337,7 +337,7 @@ Defined in: locators/power-apps.locators.ts:229
 
 `Locator`
 
-***
+---
 
 ### canvasAppButton
 
@@ -351,7 +351,7 @@ Defined in: locators/power-apps.locators.ts:233
 
 `Locator`
 
-***
+---
 
 ### modelAppButton
 
@@ -365,7 +365,7 @@ Defined in: locators/power-apps.locators.ts:237
 
 `Locator`
 
-***
+---
 
 ### editAppButton
 
@@ -379,7 +379,7 @@ Defined in: locators/power-apps.locators.ts:241
 
 `Locator`
 
-***
+---
 
 ### deleteAppButton
 
@@ -393,7 +393,7 @@ Defined in: locators/power-apps.locators.ts:245
 
 `Locator`
 
-***
+---
 
 ### appListGrid
 
@@ -407,7 +407,7 @@ Defined in: locators/power-apps.locators.ts:249
 
 `Locator`
 
-***
+---
 
 ### contextualMenu
 
@@ -421,7 +421,7 @@ Defined in: locators/power-apps.locators.ts:253
 
 `Locator`
 
-***
+---
 
 ### solutionsSidebar
 
@@ -435,7 +435,7 @@ Defined in: locators/power-apps.locators.ts:276
 
 `Locator`
 
-***
+---
 
 ### solutionsCommandBar
 
@@ -449,7 +449,7 @@ Defined in: locators/power-apps.locators.ts:280
 
 `Locator`
 
-***
+---
 
 ### solutionsSearchBox
 
@@ -463,7 +463,7 @@ Defined in: locators/power-apps.locators.ts:284
 
 `Locator`
 
-***
+---
 
 ### solutionsListContainer
 
@@ -477,7 +477,7 @@ Defined in: locators/power-apps.locators.ts:288
 
 `Locator`
 
-***
+---
 
 ### componentTypesList
 
@@ -491,7 +491,7 @@ Defined in: locators/power-apps.locators.ts:292
 
 `Locator`
 
-***
+---
 
 ### solutionsComponentTypesList
 
@@ -505,7 +505,7 @@ Defined in: locators/power-apps.locators.ts:296
 
 `Locator`
 
-***
+---
 
 ### defaultSolutionGrid
 
@@ -519,7 +519,7 @@ Defined in: locators/power-apps.locators.ts:300
 
 `Locator`
 
-***
+---
 
 ### solutionPreviewToggle
 
@@ -533,7 +533,7 @@ Defined in: locators/power-apps.locators.ts:304
 
 `Locator`
 
-***
+---
 
 ### canvasAndPanes
 
@@ -547,7 +547,7 @@ Defined in: locators/power-apps.locators.ts:319
 
 `Locator`
 
-***
+---
 
 ### canvasPlaceholderNewPage
 
@@ -561,7 +561,7 @@ Defined in: locators/power-apps.locators.ts:323
 
 `Locator`
 
-***
+---
 
 ### previewPlaceholder
 
@@ -575,7 +575,7 @@ Defined in: locators/power-apps.locators.ts:327
 
 `Locator`
 
-***
+---
 
 ### saveButton
 
@@ -589,7 +589,7 @@ Defined in: locators/power-apps.locators.ts:331
 
 `Locator`
 
-***
+---
 
 ### publishButton
 
@@ -603,7 +603,7 @@ Defined in: locators/power-apps.locators.ts:335
 
 `Locator`
 
-***
+---
 
 ### playButton
 
@@ -617,7 +617,7 @@ Defined in: locators/power-apps.locators.ts:339
 
 `Locator`
 
-***
+---
 
 ### closeButton
 
@@ -631,7 +631,7 @@ Defined in: locators/power-apps.locators.ts:343
 
 `Locator`
 
-***
+---
 
 ### canvasAppManagementPage
 
@@ -645,7 +645,7 @@ Defined in: locators/power-apps.locators.ts:347
 
 `Locator`
 
-***
+---
 
 ### backstageRootComponent
 
@@ -659,7 +659,7 @@ Defined in: locators/power-apps.locators.ts:351
 
 `Locator`
 
-***
+---
 
 ### applicationShell
 
@@ -673,7 +673,7 @@ Defined in: locators/power-apps.locators.ts:356
 
 `Locator`
 
-***
+---
 
 ### appTitle
 
@@ -687,7 +687,7 @@ Defined in: locators/power-apps.locators.ts:360
 
 `Locator`
 
-***
+---
 
 ### globalCommandBar
 
@@ -701,7 +701,7 @@ Defined in: locators/power-apps.locators.ts:364
 
 `Locator`
 
-***
+---
 
 ### mainContent
 
@@ -715,7 +715,7 @@ Defined in: locators/power-apps.locators.ts:368
 
 `Locator`
 
-***
+---
 
 ### teachingBubble
 
@@ -729,7 +729,7 @@ Defined in: locators/power-apps.locators.ts:373
 
 `Locator`
 
-***
+---
 
 ### teachingBubbleCloseButton
 
@@ -743,7 +743,7 @@ Defined in: locators/power-apps.locators.ts:377
 
 `Locator`
 
-***
+---
 
 ### teachingBubblePrimaryButton
 
@@ -757,7 +757,7 @@ Defined in: locators/power-apps.locators.ts:381
 
 `Locator`
 
-***
+---
 
 ### modalFocusTrapZone
 
@@ -771,7 +771,7 @@ Defined in: locators/power-apps.locators.ts:386
 
 `Locator`
 
-***
+---
 
 ### dialogAcceptButton
 
@@ -785,7 +785,7 @@ Defined in: locators/power-apps.locators.ts:390
 
 `Locator`
 
-***
+---
 
 ### dialogCancelButton
 
@@ -799,7 +799,7 @@ Defined in: locators/power-apps.locators.ts:394
 
 `Locator`
 
-***
+---
 
 ### canvasDesignerIframe
 
@@ -813,7 +813,7 @@ Defined in: locators/power-apps.locators.ts:399
 
 `Locator`
 
-***
+---
 
 ### canvasPlayerIframe
 
@@ -827,7 +827,7 @@ Defined in: locators/power-apps.locators.ts:403
 
 `Locator`
 
-***
+---
 
 ### meInitialsButton
 
@@ -841,7 +841,7 @@ Defined in: locators/power-apps.locators.ts:408
 
 `Locator`
 
-***
+---
 
 ### signOutButton
 
@@ -855,7 +855,7 @@ Defined in: locators/power-apps.locators.ts:412
 
 `Locator`
 
-***
+---
 
 ### signOutLink
 
@@ -869,7 +869,7 @@ Defined in: locators/power-apps.locators.ts:416
 
 `Locator`
 
-***
+---
 
 ### searchTextBox
 
@@ -903,7 +903,7 @@ Get app by name using a link locator
 
 `Locator`
 
-***
+---
 
 ### getAppRowByName()
 
@@ -923,7 +923,7 @@ Get app row container by name
 
 `Locator`
 
-***
+---
 
 ### getSolutionByName()
 
@@ -941,7 +941,7 @@ Defined in: locators/power-apps.locators.ts:308
 
 `Locator`
 
-***
+---
 
 ### getSitemapById()
 

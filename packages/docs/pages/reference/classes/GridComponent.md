@@ -1,6 +1,6 @@
 [**Power Platform Playwright Toolkit v0.0.4**](../README.md)
 
-***
+---
 
 [Power Platform Playwright Toolkit](../README.md) / GridComponent
 
@@ -62,11 +62,11 @@ await grid.openRecord({ rowNumber: 0 });
 // Open record by column value
 await grid.openRecord({
   columnValue: 'TEST-123',
-  columnName: 'Order Number'
+  columnName: 'Order Number',
 });
 ```
 
-***
+---
 
 ### selectRow()
 
@@ -89,7 +89,7 @@ Row index (0-based)
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### selectRows()
 
@@ -111,7 +111,7 @@ Array of row indices to select
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### getCellValue()
 
@@ -144,7 +144,7 @@ Column schema name (col-id, e.g. 'nwind_ordernumber') or display name
 
 Cell text content
 
-***
+---
 
 ### getRowCount()
 
@@ -160,7 +160,7 @@ Get total number of rows in the grid (excluding header)
 
 Number of data rows
 
-***
+---
 
 ### sortByColumn()
 
@@ -188,7 +188,7 @@ Sort direction ('asc' or 'desc')
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### waitForGridLoad()
 
@@ -203,7 +203,7 @@ Waits for grid container to be visible and loading indicator to disappear
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### isGridEmpty()
 
@@ -219,7 +219,7 @@ Check if grid is empty (has no data rows)
 
 true if grid has no records
 
-***
+---
 
 ### filterByColumn()
 
@@ -240,7 +240,7 @@ is then filled and submitted.
 `string`
 
 Column label as it appears in the filter searchbox
-  (e.g. `'Order'` for the aria-label `"Order Filter by keyword"`)
+(e.g. `'Order'` for the aria-label `"Order Filter by keyword"`)
 
 ##### value
 
@@ -259,7 +259,7 @@ Value to filter by
 await grid.filterByColumn('Order', '0915');
 ```
 
-***
+---
 
 ### filterByKeyword()
 
@@ -282,7 +282,7 @@ The keyword to search for
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### getGrid()
 

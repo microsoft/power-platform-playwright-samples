@@ -1,6 +1,6 @@
 [**Power Platform Playwright Toolkit v0.0.4**](../README.md)
 
-***
+---
 
 [Power Platform Playwright Toolkit](../README.md) / LocatorUtils
 
@@ -53,10 +53,10 @@ Formatted string
 #### Example
 
 ```ts
-LocatorUtils.formatSelector('[data-id="{0}"]', 'myId') // => '[data-id="myId"]'
+LocatorUtils.formatSelector('[data-id="{0}"]', 'myId'); // => '[data-id="myId"]'
 ```
 
-***
+---
 
 ### dataTestId()
 
@@ -80,7 +80,7 @@ Test ID value
 
 CSS selector string
 
-***
+---
 
 ### id()
 
@@ -104,7 +104,7 @@ Element ID
 
 CSS selector string
 
-***
+---
 
 ### className()
 
@@ -131,11 +131,11 @@ CSS selector string
 #### Example
 
 ```ts
-LocatorUtils.className('my-class') // => '.my-class'
-LocatorUtils.className('*-button') // => '[class*="-button"]'
+LocatorUtils.className('my-class'); // => '.my-class'
+LocatorUtils.className('*-button'); // => '[class*="-button"]'
 ```
 
-***
+---
 
 ### automationId()
 
@@ -159,7 +159,7 @@ Automation ID value
 
 CSS selector string
 
-***
+---
 
 ### automationKey()
 
@@ -183,7 +183,7 @@ Automation key value
 
 CSS selector string
 
-***
+---
 
 ### ariaLabel()
 

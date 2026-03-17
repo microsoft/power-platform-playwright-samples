@@ -27,7 +27,10 @@ export { GenUxConstants };
  * @returns Resolved Locator pointing to the visible input element
  * @throws If no matching input is found after exhausting all strategies
  */
-export async function findFormInput(root: Page | FrameLocator, fieldName: string): Promise<Locator> {
+export async function findFormInput(
+  root: Page | FrameLocator,
+  fieldName: string
+): Promise<Locator> {
   const namePattern = new RegExp(fieldName, 'i');
 
   // Strategy 1: getByLabel() — checks aria-label, <label> text, and aria-labeled-by.
@@ -58,9 +61,7 @@ export async function findFormInput(root: Page | FrameLocator, fieldName: string
     if (pattern) {
       // getByLabel(pattern) — most accurate for regex-matched accessible names
       // getByRole('textbox', { name: pattern }) — accessible name fallback
-      const byPattern = root
-        .getByLabel(pattern)
-        .or(root.getByRole('textbox', { name: pattern }));
+      const byPattern = root.getByLabel(pattern).or(root.getByRole('textbox', { name: pattern }));
 
       try {
         await byPattern.first().waitFor({ state: 'visible', timeout: 5000 });

@@ -1,6 +1,6 @@
 [**Power Platform Playwright Toolkit v0.0.4**](../README.md)
 
-***
+---
 
 [Power Platform Playwright Toolkit](../README.md) / GenUxConstants
 
@@ -14,64 +14,64 @@ GenUX constants — test data and field detection patterns for generated Power A
 
 ## Type Declaration
 
-### FIELD\_PATTERNS
+### FIELD_PATTERNS
 
-> `readonly` **FIELD\_PATTERNS**: `object`
+> `readonly` **FIELD_PATTERNS**: `object`
 
 Regex patterns for detecting common form field names in generated apps
 
-#### FIELD\_PATTERNS.FIRSTNAME
+#### FIELD_PATTERNS.FIRSTNAME
 
 > `readonly` **FIRSTNAME**: `RegExp`
 
-#### FIELD\_PATTERNS.LASTNAME
+#### FIELD_PATTERNS.LASTNAME
 
 > `readonly` **LASTNAME**: `RegExp`
 
-#### FIELD\_PATTERNS.EMAIL
+#### FIELD_PATTERNS.EMAIL
 
 > `readonly` **EMAIL**: `RegExp`
 
-#### FIELD\_PATTERNS.PHONE
+#### FIELD_PATTERNS.PHONE
 
 > `readonly` **PHONE**: `RegExp`
 
-#### FIELD\_PATTERNS.ADDRESS
+#### FIELD_PATTERNS.ADDRESS
 
 > `readonly` **ADDRESS**: `RegExp`
 
-### VALID\_FORM\_DATA
+### VALID_FORM_DATA
 
-> `readonly` **VALID\_FORM\_DATA**: `object`
+> `readonly` **VALID_FORM_DATA**: `object`
 
 Standard valid test data for form filling
 
-#### VALID\_FORM\_DATA.firstName
+#### VALID_FORM_DATA.firstName
 
 > `readonly` **firstName**: `"John"` = `'John'`
 
-#### VALID\_FORM\_DATA.lastName
+#### VALID_FORM_DATA.lastName
 
 > `readonly` **lastName**: `"Doe"` = `'Doe'`
 
-#### VALID\_FORM\_DATA.email
+#### VALID_FORM_DATA.email
 
 > `readonly` **email**: `"john.doe@example.com"` = `'john.doe@example.com'`
 
-### EDGE\_CASE\_DATA
+### EDGE_CASE_DATA
 
-> `readonly` **EDGE\_CASE\_DATA**: `object`
+> `readonly` **EDGE_CASE_DATA**: `object`
 
 Edge case data: unicode, apostrophes, plus-addressing
 
-#### EDGE\_CASE\_DATA.firstName
+#### EDGE_CASE_DATA.firstName
 
 > `readonly` **firstName**: `"José María"` = `'José María'`
 
-#### EDGE\_CASE\_DATA.lastName
+#### EDGE_CASE_DATA.lastName
 
 > `readonly` **lastName**: `"O'Connor-Smith"` = `"O'Connor-Smith"`
 
-#### EDGE\_CASE\_DATA.email
+#### EDGE_CASE_DATA.email
 
 > `readonly` **email**: `"test.email+tag@example.co.uk"` = `'test.email+tag@example.co.uk'`

@@ -1,6 +1,6 @@
 [**Power Platform Playwright Toolkit v0.0.4**](../README.md)
 
-***
+---
 
 [Power Platform Playwright Toolkit](../README.md) / EndPointURL
 
@@ -18,7 +18,7 @@ Power Platform Endpoint URLs
 
 Defined in: types/index.ts:57
 
-***
+---
 
 ### apps
 
@@ -26,7 +26,7 @@ Defined in: types/index.ts:57
 
 Defined in: types/index.ts:58
 
-***
+---
 
 ### solutions
 
@@ -34,7 +34,7 @@ Defined in: types/index.ts:58
 
 Defined in: types/index.ts:59
 
-***
+---
 
 ### flows
 
@@ -42,7 +42,7 @@ Defined in: types/index.ts:59
 
 Defined in: types/index.ts:60
 
-***
+---
 
 ### connectionEndPoint
 
@@ -50,7 +50,7 @@ Defined in: types/index.ts:60
 
 Defined in: types/index.ts:61
 
-***
+---
 
 ### tablesEndPoint
 
@@ -58,7 +58,7 @@ Defined in: types/index.ts:61
 
 Defined in: types/index.ts:62
 
-***
+---
 
 ### discoverAll
 
@@ -66,7 +66,7 @@ Defined in: types/index.ts:62
 
 Defined in: types/index.ts:63
 
-***
+---
 
 ### cards
 
@@ -74,7 +74,7 @@ Defined in: types/index.ts:63
 
 Defined in: types/index.ts:64
 
-***
+---
 
 ### chatBot
 
@@ -82,7 +82,7 @@ Defined in: types/index.ts:64
 
 Defined in: types/index.ts:65
 
-***
+---
 
 ### aiBuilderHub
 
@@ -90,7 +90,7 @@ Defined in: types/index.ts:65
 
 Defined in: types/index.ts:66
 
-***
+---
 
 ### websites
 

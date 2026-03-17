@@ -1,6 +1,6 @@
 [**Power Platform Playwright Toolkit v0.0.4**](../README.md)
 
-***
+---
 
 [Power Platform Playwright Toolkit](../README.md) / AppPlayerOptions
 
@@ -20,7 +20,7 @@ Defined in: types/index.ts:75
 
 Wait for app to be ready (default: true)
 
-***
+---
 
 ### timeout?
 
@@ -30,7 +30,7 @@ Defined in: types/index.ts:77
 
 Timeout in milliseconds (default: 30000)
 
-***
+---
 
 ### hideHeader?
 
@@ -40,7 +40,7 @@ Defined in: types/index.ts:79
 
 Hide Power Apps header (default: false)
 
-***
+---
 
 ### source?
 

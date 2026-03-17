@@ -9,7 +9,13 @@
 
 import { Locator, Page } from '@playwright/test';
 import { IAppLauncher } from './app-launcher.interface';
-import { AppLaunchMode, AppPlayerOptions, AppType, AssertionOptions, ControlOptions } from '../types';
+import {
+  AppLaunchMode,
+  AppPlayerOptions,
+  AppType,
+  AssertionOptions,
+  ControlOptions,
+} from '../types';
 import { PowerAppsPage } from '../pages/power-apps.page';
 
 const NOT_SUPPORTED =
@@ -41,7 +47,7 @@ export class PowerAppsLauncher implements IAppLauncher {
   ): Promise<void> {
     throw new Error(
       'launchByName is not supported for PowerApps maker portal. ' +
-      'Use AppProvider.launch({ type: AppType.PowerApps, skipMakerPortal: true, directUrl: MAKER_PORTAL_URL })'
+        'Use AppProvider.launch({ type: AppType.PowerApps, skipMakerPortal: true, directUrl: MAKER_PORTAL_URL })'
     );
   }
 
@@ -53,7 +59,7 @@ export class PowerAppsLauncher implements IAppLauncher {
   ): Promise<void> {
     throw new Error(
       'launchById is not supported for PowerApps maker portal. ' +
-      'Use AppProvider.launch({ type: AppType.PowerApps, skipMakerPortal: true, directUrl: MAKER_PORTAL_URL })'
+        'Use AppProvider.launch({ type: AppType.PowerApps, skipMakerPortal: true, directUrl: MAKER_PORTAL_URL })'
     );
   }
 

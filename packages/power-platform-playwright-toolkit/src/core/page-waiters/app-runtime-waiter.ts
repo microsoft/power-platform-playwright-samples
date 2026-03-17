@@ -129,7 +129,9 @@ export class AppRuntimeWaiter {
 
     await this.page
       .waitForFunction(
-        () => window.location.hostname.includes('make') && window.location.hostname.includes('powerapps.com'),
+        () =>
+          window.location.hostname.includes('make') &&
+          window.location.hostname.includes('powerapps.com'),
         { timeout: 60000 }
       )
       .catch(() => {

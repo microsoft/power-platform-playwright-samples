@@ -50,11 +50,13 @@ function makeAppName(): string {
 async function fillAndSubmitForm(formPage: Page): Promise<void> {
   console.log('[fillAndSubmitForm] Locating form fields...');
   const firstNameInput = await findFormInput(formPage, 'firstName');
-  const lastNameInput  = await findFormInput(formPage, 'lastName');
-  const emailInput     = await findFormInput(formPage, 'email');
+  const lastNameInput = await findFormInput(formPage, 'lastName');
+  const emailInput = await findFormInput(formPage, 'email');
   console.log('[fillAndSubmitForm] All three fields located');
 
-  console.log(`[fillAndSubmitForm] Filling firstName: "${GenUxConstants.VALID_FORM_DATA.firstName}"`);
+  console.log(
+    `[fillAndSubmitForm] Filling firstName: "${GenUxConstants.VALID_FORM_DATA.firstName}"`
+  );
   await firstNameInput.fill(GenUxConstants.VALID_FORM_DATA.firstName);
 
   console.log(`[fillAndSubmitForm] Filling lastName: "${GenUxConstants.VALID_FORM_DATA.lastName}"`);
@@ -124,7 +126,10 @@ test.describe.serial('GenUX — Basic Form Generation', () => {
     // Rename video to include test number prefix (e.g. "1_<uuid>.webm")
     const videoPath = await video?.path().catch(() => null);
     if (videoPath) {
-      const numbered = path.join(path.dirname(videoPath), `${testNumber}_${path.basename(videoPath)}`);
+      const numbered = path.join(
+        path.dirname(videoPath),
+        `${testNumber}_${path.basename(videoPath)}`
+      );
       fs.renameSync(videoPath, numbered);
       console.log(`[afterEach] Video saved: ${numbered}`);
     }
@@ -185,8 +190,8 @@ test.describe.serial('GenUX — Basic Form Generation', () => {
     await test.step('Verify fields, fill with valid data and submit', async () => {
       console.log('[Test 1] Verifying firstName, lastName, email fields are visible...');
       const firstNameInput = await findFormInput(genUxPage.previewFrame, 'firstName');
-      const lastNameInput  = await findFormInput(genUxPage.previewFrame, 'lastName');
-      const emailInput     = await findFormInput(genUxPage.previewFrame, 'email');
+      const lastNameInput = await findFormInput(genUxPage.previewFrame, 'lastName');
+      const emailInput = await findFormInput(genUxPage.previewFrame, 'email');
 
       await expect(firstNameInput).toBeVisible();
       await expect(lastNameInput).toBeVisible();
@@ -196,7 +201,9 @@ test.describe.serial('GenUX — Basic Form Generation', () => {
       await firstNameInput.fill(GenUxConstants.VALID_FORM_DATA.firstName);
       await lastNameInput.fill(GenUxConstants.VALID_FORM_DATA.lastName);
       await emailInput.fill(GenUxConstants.VALID_FORM_DATA.email);
-      console.log(`[Test 1] Filled: firstName="${GenUxConstants.VALID_FORM_DATA.firstName}", lastName="${GenUxConstants.VALID_FORM_DATA.lastName}", email="${GenUxConstants.VALID_FORM_DATA.email}"`);
+      console.log(
+        `[Test 1] Filled: firstName="${GenUxConstants.VALID_FORM_DATA.firstName}", lastName="${GenUxConstants.VALID_FORM_DATA.lastName}", email="${GenUxConstants.VALID_FORM_DATA.email}"`
+      );
 
       console.log('[Test 1] Submitting form in Preview...');
       await genUxPage.submitForm();
@@ -239,8 +246,8 @@ test.describe.serial('GenUX — Basic Form Generation', () => {
 
     await test.step('Fill form with edge case data', async () => {
       const firstNameInput = await findFormInput(genUxPage.previewFrame, 'firstName');
-      const lastNameInput  = await findFormInput(genUxPage.previewFrame, 'lastName');
-      const emailInput     = await findFormInput(genUxPage.previewFrame, 'email');
+      const lastNameInput = await findFormInput(genUxPage.previewFrame, 'lastName');
+      const emailInput = await findFormInput(genUxPage.previewFrame, 'email');
 
       await firstNameInput.fill(GenUxConstants.EDGE_CASE_DATA.firstName);
       await lastNameInput.fill(GenUxConstants.EDGE_CASE_DATA.lastName);
@@ -281,8 +288,8 @@ test.describe.serial('GenUX — Basic Form Generation', () => {
       await genUxPage.waitForGeneratedContent();
 
       const firstNameInput = await findFormInput(genUxPage.previewFrame, 'firstName');
-      const lastNameInput  = await findFormInput(genUxPage.previewFrame, 'lastName');
-      const emailInput     = await findFormInput(genUxPage.previewFrame, 'email');
+      const lastNameInput = await findFormInput(genUxPage.previewFrame, 'lastName');
+      const emailInput = await findFormInput(genUxPage.previewFrame, 'email');
 
       await firstNameInput.fill(GenUxConstants.VALID_FORM_DATA.firstName);
       await lastNameInput.fill(GenUxConstants.VALID_FORM_DATA.lastName);

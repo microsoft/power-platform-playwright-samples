@@ -59,15 +59,15 @@ Triggered on push to `main` when docs or toolkit source changes.
 
 Configure in Settings → Secrets and variables → Actions:
 
-| Secret | Description |
-|--------|-------------|
-| `MS_AUTH_EMAIL` | Microsoft account email for E2E tests |
-| `CERTIFICATE_BASE64` | Certificate `.pfx` encoded as base64 |
-| `CERTIFICATE_PASSWORD` | Certificate password |
-| `NPM_TOKEN` | npm publish token (for `publish-npm.yml` only) |
-| `MODEL_DRIVEN_APP_URL` | MDA test URL |
-| `CANVAS_APP_URL` | Canvas app play URL |
-| `POWER_APPS_ENVIRONMENT_ID` | Environment GUID |
+| Secret                      | Description                                    |
+| --------------------------- | ---------------------------------------------- |
+| `MS_AUTH_EMAIL`             | Microsoft account email for E2E tests          |
+| `CERTIFICATE_BASE64`        | Certificate `.pfx` encoded as base64           |
+| `CERTIFICATE_PASSWORD`      | Certificate password                           |
+| `NPM_TOKEN`                 | npm publish token (for `publish-npm.yml` only) |
+| `MODEL_DRIVEN_APP_URL`      | MDA test URL                                   |
+| `CANVAS_APP_URL`            | Canvas app play URL                            |
+| `POWER_APPS_ENVIRONMENT_ID` | Environment GUID                               |
 
 ## Encode a certificate as base64
 

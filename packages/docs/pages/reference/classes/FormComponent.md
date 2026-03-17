@@ -1,6 +1,6 @@
 [**Power Platform Playwright Toolkit v0.0.4**](../README.md)
 
-***
+---
 
 [Power Platform Playwright Toolkit](../README.md) / FormComponent
 
@@ -52,7 +52,7 @@ console.log('Record ID:', context.entityId);
 console.log('Is Dirty:', context.isDirty);
 ```
 
-***
+---
 
 ### getAttribute()
 
@@ -84,7 +84,7 @@ const status = await form.getAttribute('statuscode');
 const customer = await form.getAttribute('customerid'); // Returns lookup object
 ```
 
-***
+---
 
 ### setAttribute()
 
@@ -119,20 +119,22 @@ Value to set
 await form.setAttribute('nwind_ordernumber', 'TEST-12345');
 
 // Set number field
-await form.setAttribute('nwind_orderamount', 1500.50);
+await form.setAttribute('nwind_orderamount', 1500.5);
 
 // Set date field
 await form.setAttribute('nwind_orderdate', new Date());
 
 // Set lookup field
-await form.setAttribute('customerid', [{
-  id: 'guid-here',
-  name: 'Customer Name',
-  entityType: 'account'
-}]);
+await form.setAttribute('customerid', [
+  {
+    id: 'guid-here',
+    name: 'Customer Name',
+    entityType: 'account',
+  },
+]);
 ```
 
-***
+---
 
 ### getAllAttributes()
 
@@ -156,7 +158,7 @@ console.log('Order Number:', allData.nwind_ordernumber);
 console.log('Status:', allData.statuscode);
 ```
 
-***
+---
 
 ### save()
 
@@ -191,7 +193,7 @@ await form.save({ saveMode: 'saveandclose' });
 await form.save({ saveMode: 'saveandnew' });
 ```
 
-***
+---
 
 ### isDirty()
 
@@ -216,7 +218,7 @@ if (hasChanges) {
 }
 ```
 
-***
+---
 
 ### isValid()
 
@@ -241,7 +243,7 @@ if (!valid) {
 }
 ```
 
-***
+---
 
 ### refresh()
 
@@ -273,7 +275,7 @@ await form.refresh();
 await form.refresh(true);
 ```
 
-***
+---
 
 ### execute()
 
@@ -320,7 +322,7 @@ await form.execute((Xrm) => {
 });
 ```
 
-***
+---
 
 ### navigateToTab()
 
@@ -352,7 +354,7 @@ await form.navigateToTab({ tab: 'DETAILS_TAB' });
 await form.navigateToTab({ tab: 'Details' });
 ```
 
-***
+---
 
 ### navigateToSection()
 
@@ -381,7 +383,7 @@ Section navigation options
 await form.navigateToSection({ section: 'ACCOUNT_INFORMATION' });
 ```
 
-***
+---
 
 ### waitForLoad()
 
@@ -409,7 +411,7 @@ Maximum wait time in milliseconds (default: 30000)
 await form.waitForLoad();
 ```
 
-***
+---
 
 ### getFieldControlType()
 
@@ -440,7 +442,7 @@ const controlType = await form.getFieldControlType('nwind_ordernumber');
 console.log('Control type:', controlType);
 ```
 
-***
+---
 
 ### getFieldRequiredLevel()
 
@@ -471,7 +473,7 @@ const requiredLevel = await form.getFieldRequiredLevel('nwind_ordernumber');
 console.log('Required level:', requiredLevel);
 ```
 
-***
+---
 
 ### setFieldRequiredLevel()
 
@@ -505,7 +507,7 @@ Required level: 'none', 'required', or 'recommended'
 await form.setFieldRequiredLevel('nwind_ordernumber', 'required');
 ```
 
-***
+---
 
 ### setFieldVisibility()
 
@@ -539,7 +541,7 @@ true to show, false to hide
 await form.setFieldVisibility('nwind_ordernumber', false);
 ```
 
-***
+---
 
 ### setFieldDisabled()
 
@@ -573,7 +575,7 @@ true to disable, false to enable
 await form.setFieldDisabled('nwind_ordernumber', true);
 ```
 
-***
+---
 
 ### showNotification()
 
@@ -613,7 +615,7 @@ Unique identifier for the notification
 await form.showNotification('Record updated successfully', 'INFO', 'update-notification');
 ```
 
-***
+---
 
 ### clearNotification()
 
@@ -641,7 +643,7 @@ Unique identifier of the notification to clear
 await form.clearNotification('update-notification');
 ```
 
-***
+---
 
 ### getFormType()
 

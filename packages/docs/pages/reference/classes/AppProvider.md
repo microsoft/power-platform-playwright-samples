@@ -1,6 +1,6 @@
 [**Power Platform Playwright Toolkit v0.0.4**](../README.md)
 
-***
+---
 
 [Power Platform Playwright Toolkit](../README.md) / AppProvider
 
@@ -12,6 +12,7 @@ App Provider - High-level API for app testing
 Provides simplified interface for customers to launch and test their apps
 
 Handles complex scenarios:
+
 - Apps opening in new tabs (Play mode)
 - Direct URL navigation with OAuth redirects
 - Proper page tracking and context management
@@ -28,7 +29,7 @@ await provider.launch({
   type: AppType.Canvas,
   mode: AppLaunchMode.Play,
   baseUrl: 'https://make.powerapps.com',
-  context: context  // Required for Play mode
+  context: context, // Required for Play mode
 });
 
 // Launch by direct URL (fastest, no maker portal)
@@ -37,7 +38,7 @@ await provider.launch({
   type: AppType.ModelDriven,
   mode: AppLaunchMode.Play,
   skipMakerPortal: true,
-  directUrl: 'https://org.crm.dynamics.com/main.aspx?appid=abc-123'
+  directUrl: 'https://org.crm.dynamics.com/main.aspx?appid=abc-123',
 });
 
 // Get the actual app page (might be different from original page)
@@ -88,7 +89,7 @@ Get the page where the app is actually running
 
 The app page (might be a new tab or the original page)
 
-***
+---
 
 ### getModelDrivenAppPage()
 
@@ -119,14 +120,14 @@ await appProvider.launch({
   type: AppType.ModelDriven,
   mode: AppLaunchMode.Play,
   skipMakerPortal: true,
-  directUrl: 'https://org.crm.dynamics.com/main.aspx?appid=abc-123'
+  directUrl: 'https://org.crm.dynamics.com/main.aspx?appid=abc-123',
 });
 
 const modelDrivenApp = appProvider.getModelDrivenAppPage();
 await modelDrivenApp.navigateToGridView('nwind_order');
 ```
 
-***
+---
 
 ### getCanvasAppPage()
 
@@ -157,14 +158,14 @@ await appProvider.launch({
   type: AppType.Canvas,
   mode: AppLaunchMode.Play,
   skipMakerPortal: true,
-  directUrl: 'https://apps.powerapps.com/play/e/env-id/a/app-id?tenantId=tenant-id'
+  directUrl: 'https://apps.powerapps.com/play/e/env-id/a/app-id?tenantId=tenant-id',
 });
 
 const canvasApp = appProvider.getCanvasAppPage();
 const gallery = await canvasApp.getControl({ name: 'Gallery1' });
 ```
 
-***
+---
 
 ### getPowerAppsPage()
 
@@ -191,7 +192,7 @@ await powerAppsPage.navigateToApps();
 await powerAppsPage.searchApps('My App');
 ```
 
-***
+---
 
 ### getGenUxPage()
 
@@ -223,7 +224,7 @@ const genUxPage = appProvider.getGenUxPage();
 await performGenUxBasicSetup(genUxPage, appName, { aiPrompt: '...' });
 ```
 
-***
+---
 
 ### launch()
 
@@ -247,7 +248,7 @@ Launch configuration
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### getControl()
 
@@ -271,7 +272,7 @@ Control options
 
 Locator for the control
 
-***
+---
 
 ### click()
 
@@ -293,7 +294,7 @@ Control options
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### fill()
 
@@ -321,7 +322,7 @@ Value to fill
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### fillForm()
 
@@ -343,7 +344,7 @@ Key-value pairs of field names and values
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### assertVisible()
 
@@ -365,7 +366,7 @@ Control options
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### assertText()
 
@@ -393,7 +394,7 @@ Expected text
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### close()
 
@@ -408,7 +409,7 @@ Handles cleanup based on launch mode
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### isReady()
 
@@ -424,7 +425,7 @@ Check if an app is currently launched and ready
 
 true if app is ready
 
-***
+---
 
 ### getCurrentAppType()
 
@@ -440,7 +441,7 @@ Get the current app type
 
 Current app type or null
 
-***
+---
 
 ### getCurrentAppId()
 
@@ -456,7 +457,7 @@ Get the current app ID
 
 Current app ID or null
 
-***
+---
 
 ### getCurrentAppUrl()
 
@@ -472,7 +473,7 @@ Get the current app URL
 
 Current app URL or null
 
-***
+---
 
 ### getLaunchedApps()
 
@@ -488,7 +489,7 @@ Get metadata for all launched apps
 
 Array of app metadata
 
-***
+---
 
 ### reset()
 

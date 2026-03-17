@@ -1,6 +1,6 @@
 [**Power Platform Playwright Toolkit v0.0.4**](../README.md)
 
-***
+---
 
 [Power Platform Playwright Toolkit](../README.md) / ModelDrivenAppPage
 
@@ -38,7 +38,7 @@ Defined in: pages/model-driven-app.page.ts:33
 
 Defined in: pages/model-driven-app.page.ts:16
 
-***
+---
 
 ### appType
 
@@ -72,7 +72,7 @@ const value = await modelDrivenApp.grid.getCellValue(0, 'Order Number');
 
 [`GridComponent`](GridComponent.md)
 
-***
+---
 
 ### form
 
@@ -101,7 +101,7 @@ await modelDrivenApp.form.save();
 
 [`FormComponent`](FormComponent.md)
 
-***
+---
 
 ### commanding
 
@@ -149,7 +149,7 @@ Base URL of the Model-Driven App (e.g., 'https://org.crm.dynamics.com/main.aspx?
 
 `void`
 
-***
+---
 
 ### getBaseAppUrl()
 
@@ -164,7 +164,7 @@ Falls back to current page URL origin if not set
 
 `string`
 
-***
+---
 
 ### navigateToHome()
 
@@ -178,7 +178,7 @@ Navigate to Power Apps home page
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### navigateToGridView()
 
@@ -230,7 +230,7 @@ await modelDrivenApp.navigateToGridView('nwind_order');
 await modelDrivenApp.navigateToGridView('account', { viewId: 'view-guid' });
 ```
 
-***
+---
 
 ### navigateToFormView()
 
@@ -288,7 +288,7 @@ await modelDrivenApp.navigateToFormView('account', { recordId: 'record-guid' });
 await modelDrivenApp.navigateToFormView('contact', { formId: 'form-guid' });
 ```
 
-***
+---
 
 ### waitForHomePageLoad()
 
@@ -302,7 +302,7 @@ Wait for home page to load
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### waitForDesignerLoad()
 
@@ -316,7 +316,7 @@ Wait for App Designer to load
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### waitForLoadingComplete()
 
@@ -330,7 +330,7 @@ Wait for loading spinner to disappear
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### waitForRuntimeLoad()
 
@@ -344,7 +344,7 @@ Wait for app runtime to load
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### openRecordFromGrid()
 
@@ -376,11 +376,11 @@ await modelDrivenApp.openRecordFromGrid({ rowNumber: 0 });
 // Open record by column value
 await modelDrivenApp.openRecordFromGrid({
   columnValue: 'TEST-123',
-  columnName: 'Order Number'
+  columnName: 'Order Number',
 });
 ```
 
-***
+---
 
 ### selectGridRow()
 
@@ -403,7 +403,7 @@ Row index (0-based)
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### getGridCellValue()
 
@@ -434,7 +434,7 @@ Column name
 
 Cell text content
 
-***
+---
 
 ### createBlankModelDrivenApp()
 
@@ -456,7 +456,7 @@ Name for the app
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### createFromSolution()
 
@@ -484,7 +484,7 @@ Name for the app
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### filterByModelDrivenApps()
 
@@ -498,7 +498,7 @@ Filter apps by Model Driven type
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### setAppName()
 
@@ -520,7 +520,7 @@ Name for the app
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### saveApp()
 
@@ -534,7 +534,7 @@ Save the Model Driven app
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### publishApp()
 
@@ -548,7 +548,7 @@ Publish the Model Driven app
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### waitForPublishComplete()
 
@@ -562,7 +562,7 @@ Wait for publish operation to complete
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### playApp()
 
@@ -576,7 +576,7 @@ Play/Open the app in runtime
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### validateApp()
 
@@ -590,7 +590,7 @@ Validate the app
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### addTableBasedPage()
 
@@ -624,7 +624,7 @@ Array of view names to include
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### addDashboardPage()
 
@@ -638,7 +638,7 @@ Add a dashboard page
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### addCustomPage()
 
@@ -652,7 +652,7 @@ Add a custom page
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### deletePage()
 
@@ -674,7 +674,7 @@ Name of the page to delete
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### addNavigationGroup()
 
@@ -696,7 +696,7 @@ Name for the group
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### addNavigationSubArea()
 
@@ -730,7 +730,7 @@ Optional table to link to
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### addTable()
 
@@ -752,7 +752,7 @@ Name of the table
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### createNewTable()
 
@@ -780,7 +780,7 @@ Plural name for the table
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### openSettings()
 
@@ -794,7 +794,7 @@ Open app settings
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### setAppDescription()
 
@@ -816,7 +816,7 @@ Description for the app
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### enableMobile()
 
@@ -830,7 +830,7 @@ Enable mobile for the app
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### enableOfflineMode()
 
@@ -844,7 +844,7 @@ Enable offline mode
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### navigateToRuntimeItem()
 
@@ -866,7 +866,7 @@ Name of the navigation item
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### expandNavigationGroup()
 
@@ -888,7 +888,7 @@ Name of the group
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### createNewRecord()
 
@@ -902,7 +902,7 @@ Create new record in runtime
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### saveRecord()
 
@@ -916,7 +916,7 @@ Save record in runtime
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### fillFormField()
 
@@ -944,7 +944,7 @@ Value to fill
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### clickCommandButton()
 
@@ -966,7 +966,7 @@ Label of the button
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### switchFormTab()
 
@@ -988,7 +988,7 @@ Name of the tab
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### shareApp()
 
@@ -1016,7 +1016,7 @@ Security role to assign
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### searchApp()
 
@@ -1038,7 +1038,7 @@ Name of the app
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### openAppForEdit()
 
@@ -1060,7 +1060,7 @@ Name of the app
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### openAppForPlay()
 
@@ -1082,7 +1082,7 @@ Name of the app
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### deleteApp()
 
@@ -1104,7 +1104,7 @@ Name of the app to delete
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### verifyAppExists()
 
@@ -1126,7 +1126,7 @@ Name of the app
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### verifyAppPublished()
 
@@ -1140,7 +1140,7 @@ Verify app is published
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### verifyPageExists()
 
@@ -1162,7 +1162,7 @@ Name of the page
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### verifyNavigationItemExists()
 
@@ -1184,7 +1184,7 @@ Name of the navigation item
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### verifyTableAdded()
 
@@ -1206,7 +1206,7 @@ Name of the table
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### verifyNoValidationErrors()
 
@@ -1220,7 +1220,7 @@ Verify validation has no errors
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### verifyRuntimeLoaded()
 
@@ -1234,7 +1234,7 @@ Verify runtime loaded successfully
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### verifyRecordSaved()
 
@@ -1248,7 +1248,7 @@ Verify record saved in runtime
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### launchById()
 
@@ -1280,7 +1280,7 @@ Launch app by ID (IAppLauncher interface)
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### launchByName()
 
@@ -1313,7 +1313,7 @@ Note: Navigation is handled by AppProvider, this just marks the launcher as read
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### waitForAppLoad()
 
@@ -1333,7 +1333,7 @@ Wait for app to load (IAppLauncher interface)
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### isAppReady()
 
@@ -1347,7 +1347,7 @@ Check if app is ready (IAppLauncher interface)
 
 `boolean`
 
-***
+---
 
 ### getAppId()
 
@@ -1361,7 +1361,7 @@ Get app ID (IAppLauncher interface)
 
 `string` \| `null`
 
-***
+---
 
 ### getAppUrl()
 
@@ -1375,7 +1375,7 @@ Get app URL (IAppLauncher interface)
 
 `string` \| `null`
 
-***
+---
 
 ### getControl()
 
@@ -1395,7 +1395,7 @@ Get control (IAppLauncher interface)
 
 `any`
 
-***
+---
 
 ### clickControl()
 
@@ -1415,7 +1415,7 @@ Click control (IAppLauncher interface)
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### fillControl()
 
@@ -1439,7 +1439,7 @@ Fill control (IAppLauncher interface)
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### fillForm()
 
@@ -1459,7 +1459,7 @@ Fill form (IAppLauncher interface)
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### assertControlVisible()
 
@@ -1483,7 +1483,7 @@ Assert control visible (IAppLauncher interface)
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### assertControlText()
 
@@ -1511,7 +1511,7 @@ Assert control text (IAppLauncher interface)
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### closeApp()
 
@@ -1525,7 +1525,7 @@ Close app (IAppLauncher interface)
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### reset()
 

@@ -1,6 +1,6 @@
 [**Power Platform Playwright Toolkit v0.0.4**](../README.md)
 
-***
+---
 
 [Power Platform Playwright Toolkit](../README.md) / setEntityAttribute
 
@@ -43,15 +43,17 @@ Value to set (type depends on attribute type)
 await setEntityAttribute(page, 'nwind_ordernumber', 'TEST-12345');
 
 // Set number field
-await setEntityAttribute(page, 'nwind_orderamount', 1500.50);
+await setEntityAttribute(page, 'nwind_orderamount', 1500.5);
 
 // Set date field
 await setEntityAttribute(page, 'nwind_orderdate', new Date());
 
 // Set lookup field
-await setEntityAttribute(page, 'customerid', [{
-  id: 'guid-here',
-  name: 'Customer Name',
-  entityType: 'account'
-}]);
+await setEntityAttribute(page, 'customerid', [
+  {
+    id: 'guid-here',
+    name: 'Customer Name',
+    entityType: 'account',
+  },
+]);
 ```

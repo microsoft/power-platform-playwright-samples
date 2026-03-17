@@ -180,10 +180,7 @@ export class GridComponent {
       const ariaLabel = await header.getAttribute('aria-label');
       const text = (await header.textContent())?.trim() ?? '';
 
-      if (
-        (ariaLabel && ariaLabel.includes(displayName)) ||
-        text.includes(displayName)
-      ) {
+      if ((ariaLabel && ariaLabel.includes(displayName)) || text.includes(displayName)) {
         return (await header.getAttribute('col-id')) ?? '';
       }
     }

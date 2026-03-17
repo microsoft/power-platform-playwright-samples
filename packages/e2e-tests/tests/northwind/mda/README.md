@@ -4,13 +4,13 @@ End-to-end tests for the **Northwind Orders Model-Driven App**.
 
 ## Test Files
 
-| File | What it tests |
-|------|--------------|
-| `model-driven-crud.test.ts` | Full CRUD lifecycle — create, read, update, delete order records |
-| `model-driven-direct-url.test.ts` | Direct URL navigation to grid/form views |
-| `form-context.test.ts` | FormContext API — read/write entity attributes, save, dirty/valid state |
-| `custom-page.test.ts` | Custom Page embedded in the MDA |
-| `custom-page-crud.test.ts` | CRUD operations on a Custom Page |
+| File                              | What it tests                                                           |
+| --------------------------------- | ----------------------------------------------------------------------- |
+| `model-driven-crud.test.ts`       | Full CRUD lifecycle — create, read, update, delete order records        |
+| `model-driven-direct-url.test.ts` | Direct URL navigation to grid/form views                                |
+| `form-context.test.ts`            | FormContext API — read/write entity attributes, save, dirty/valid state |
+| `custom-page.test.ts`             | Custom Page embedded in the MDA                                         |
+| `custom-page-crud.test.ts`        | CRUD operations on a Custom Page                                        |
 
 ## Environment Variables
 
@@ -68,7 +68,12 @@ await app.grid.openRecord({ rowNumber: 0 });
 ### FormContext API
 
 ```typescript
-import { getFormContext, getEntityAttribute, setEntityAttribute, saveForm } from 'power-platform-playwright-toolkit';
+import {
+  getFormContext,
+  getEntityAttribute,
+  setEntityAttribute,
+  saveForm,
+} from 'power-platform-playwright-toolkit';
 
 const ctx = await getFormContext(page);
 const value = await getEntityAttribute(page, 'nwind_ordernumber');

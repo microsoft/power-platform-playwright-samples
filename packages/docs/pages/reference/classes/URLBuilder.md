@@ -1,6 +1,6 @@
 [**Power Platform Playwright Toolkit v0.0.4**](../README.md)
 
-***
+---
 
 [Power Platform Playwright Toolkit](../README.md) / URLBuilder
 
@@ -70,7 +70,7 @@ const url = builder.buildAppsPageUrl();
 // https://make.powerapps.com/environments/{envId}/apps
 ```
 
-***
+---
 
 ### buildSolutionsPageUrl()
 
@@ -93,7 +93,7 @@ const url = builder.buildSolutionsPageUrl();
 // https://make.powerapps.com/environments/{envId}/solutions
 ```
 
-***
+---
 
 ### buildHomePageUrl()
 
@@ -116,7 +116,7 @@ const url = builder.buildHomePageUrl();
 // https://make.powerapps.com/environments/{envId}/home
 ```
 
-***
+---
 
 ### buildFlowsPageUrl()
 
@@ -132,7 +132,7 @@ Build URL for Flows page
 
 URL for the Flows page
 
-***
+---
 
 ### buildTablesPageUrl()
 
@@ -148,7 +148,7 @@ Build URL for Tables page
 
 URL for the Tables page
 
-***
+---
 
 ### buildConnectionsPageUrl()
 
@@ -164,7 +164,7 @@ Build URL for Connections page
 
 URL for the Connections page
 
-***
+---
 
 ### setEnvironment()
 
@@ -193,7 +193,7 @@ builder.setEnvironment('env-123');
 const url = builder.buildAppsPageUrl(); // Will include env-123
 ```
 
-***
+---
 
 ### getBaseUrl()
 
@@ -209,7 +209,7 @@ Get current base URL
 
 Current base URL
 
-***
+---
 
 ### getEnvironmentId()
 

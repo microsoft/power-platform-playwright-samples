@@ -1,6 +1,6 @@
 [**Power Platform Playwright Toolkit v0.0.4**](../README.md)
 
-***
+---
 
 [Power Platform Playwright Toolkit](../README.md) / BaseLocators
 
@@ -61,7 +61,7 @@ The data-test-id value
 
 Playwright Locator
 
-***
+---
 
 ### getByRole()
 
@@ -101,7 +101,7 @@ Additional options like name, exact, etc.
 
 Playwright Locator
 
-***
+---
 
 ### getByText()
 
@@ -133,7 +133,7 @@ Additional options
 
 Playwright Locator
 
-***
+---
 
 ### getByLabel()
 
@@ -165,7 +165,7 @@ Additional options
 
 Playwright Locator
 
-***
+---
 
 ### getByPlaceholder()
 
@@ -189,7 +189,7 @@ Placeholder text
 
 Playwright Locator
 
-***
+---
 
 ### getByAriaLabel()
 
@@ -213,7 +213,7 @@ ARIA label text
 
 Playwright Locator
 
-***
+---
 
 ### locator()
 
@@ -238,7 +238,7 @@ CSS selector
 
 Playwright Locator
 
-***
+---
 
 ### chain()
 

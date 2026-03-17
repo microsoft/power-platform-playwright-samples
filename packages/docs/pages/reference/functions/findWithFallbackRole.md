@@ -1,6 +1,6 @@
 [**Power Platform Playwright Toolkit v0.0.4**](../README.md)
 
-***
+---
 
 [Power Platform Playwright Toolkit](../README.md) / findWithFallbackRole
 
@@ -50,7 +50,7 @@ Error if none of the role queries match
 ```typescript
 const apps = await findWithFallbackRole(page, [
   { role: 'menuitem', name: 'Apps' },
-  { role: 'link', name: 'Apps' }
+  { role: 'link', name: 'Apps' },
 ]);
 await apps.click();
 ```

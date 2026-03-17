@@ -1,6 +1,6 @@
 [**Power Platform Playwright Toolkit v0.0.4**](../README.md)
 
-***
+---
 
 [Power Platform Playwright Toolkit](../README.md) / SolutionsPageWaiter
 
@@ -61,6 +61,7 @@ Defined in: core/page-waiters/solutions-page-waiter.ts:44
 
 Wait for Solutions page to fully load
 Simple wait strategy:
+
 1. Solutions sidebar
 2. Command bar
 3. Solutions list container
@@ -86,7 +87,7 @@ If page fails to load within timeout
 
 [`IPageWaiter`](../interfaces/IPageWaiter.md).[`waitForPageLoad`](../interfaces/IPageWaiter.md#waitforpageload)
 
-***
+---
 
 ### isPageLoaded()
 

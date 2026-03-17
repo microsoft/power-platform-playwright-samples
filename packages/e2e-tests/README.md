@@ -142,11 +142,11 @@ npx playwright test --ui
 
 Defined in `playwright.config.ts`:
 
-| Project | Test directory | Auth storage state |
-|---------|---------------|-------------------|
-| `mda` | `tests/northwind/mda/` | `state-mda-{email}.json` |
-| `canvas` | `tests/northwind/canvas/` | `state-{email}.json` |
-| `gen-ux` | `tests/gen-ux/` | `state-{email}.json` |
+| Project  | Test directory            | Auth storage state       |
+| -------- | ------------------------- | ------------------------ |
+| `mda`    | `tests/northwind/mda/`    | `state-mda-{email}.json` |
+| `canvas` | `tests/northwind/canvas/` | `state-{email}.json`     |
+| `gen-ux` | `tests/gen-ux/`           | `state-{email}.json`     |
 
 ## What the Tests Cover
 
@@ -170,14 +170,14 @@ Defined in `playwright.config.ts`:
 
 ## Troubleshooting
 
-| Problem | Fix |
-|---------|-----|
-| Auth errors / token expired | Delete `state-*.json` and re-run `npm run auth:headful` |
-| MDA tests fail auth | Run `npm run auth:mda:headful` |
-| `MODEL_DRIVEN_APP_URL` not set | Set it in `.env` |
-| Canvas app not loading | Increase `timeout` in `playwright.config.ts`; Canvas apps take 5–10s to load |
-| `Cannot find module 'power-platform-playwright-toolkit'` | Run `rush build` from repo root |
-| Gen UX tests slow / timeout | AI generation takes up to 120s — this is expected |
+| Problem                                                  | Fix                                                                          |
+| -------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| Auth errors / token expired                              | Delete `state-*.json` and re-run `npm run auth:headful`                      |
+| MDA tests fail auth                                      | Run `npm run auth:mda:headful`                                               |
+| `MODEL_DRIVEN_APP_URL` not set                           | Set it in `.env`                                                             |
+| Canvas app not loading                                   | Increase `timeout` in `playwright.config.ts`; Canvas apps take 5–10s to load |
+| `Cannot find module 'power-platform-playwright-toolkit'` | Run `rush build` from repo root                                              |
+| Gen UX tests slow / timeout                              | AI generation takes up to 120s — this is expected                            |
 
 ## Learn More
 

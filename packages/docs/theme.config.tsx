@@ -12,11 +12,7 @@ const config: DocsThemeConfig = {
   docsRepositoryBase:
     'https://github.com/microsoft/power-platform-playwright-samples/tree/main/packages/docs',
   footer: {
-    content: (
-      <span>
-        {new Date().getFullYear()} © Microsoft Corporation. Licensed under MIT.
-      </span>
-    ),
+    content: <span>{new Date().getFullYear()} © Microsoft Corporation. Licensed under MIT.</span>,
   },
   head: (
     <>

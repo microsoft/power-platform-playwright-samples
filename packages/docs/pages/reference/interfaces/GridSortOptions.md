@@ -1,6 +1,6 @@
 [**Power Platform Playwright Toolkit v0.0.4**](../README.md)
 
-***
+---
 
 [Power Platform Playwright Toolkit](../README.md) / GridSortOptions
 
@@ -20,7 +20,7 @@ Defined in: components/model-driven/types.ts:23
 
 Column name to sort by
 
-***
+---
 
 ### direction?
 

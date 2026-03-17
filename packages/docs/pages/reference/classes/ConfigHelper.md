@@ -1,6 +1,6 @@
 [**Power Platform Playwright Toolkit v0.0.4**](../README.md)
 
-***
+---
 
 [Power Platform Playwright Toolkit](../README.md) / ConfigHelper
 
@@ -48,10 +48,10 @@ Base URL from environment variable or default
 #### Default
 
 ```ts
-'https://make.powerapps.com'
+'https://make.powerapps.com';
 ```
 
-***
+---
 
 ### getBapApiUrl()
 
@@ -71,10 +71,10 @@ BAP API URL from environment variable or default
 #### Default
 
 ```ts
-'https://api.bap.microsoft.com'
+'https://api.bap.microsoft.com';
 ```
 
-***
+---
 
 ### getCanvasDesignerUrl()
 
@@ -93,10 +93,10 @@ Canvas designer URL from environment variable or default
 #### Default
 
 ```ts
-'https://apps.powerapps.com/'
+'https://apps.powerapps.com/';
 ```
 
-***
+---
 
 ### getCanvasAppId()
 
@@ -110,7 +110,7 @@ Get Canvas app ID from environment
 
 `string` \| `undefined`
 
-***
+---
 
 ### getModelAppId()
 
@@ -124,7 +124,7 @@ Get Model-Driven app ID from environment
 
 `string` \| `undefined`
 
-***
+---
 
 ### getAuthEndpoint()
 
@@ -143,10 +143,10 @@ Auth endpoint from environment variable or default
 #### Default
 
 ```ts
-'https://login.microsoftonline.com'
+'https://login.microsoftonline.com';
 ```
 
-***
+---
 
 ### getEnvironmentId()
 
@@ -162,7 +162,7 @@ Get environment ID from environment variable
 
 Environment ID or undefined if not set
 
-***
+---
 
 ### getTenantId()
 
@@ -182,7 +182,7 @@ Tenant ID
 
 If AZURE_TENANT_ID is not set
 
-***
+---
 
 ### extractEnvironmentId()
 
@@ -215,7 +215,7 @@ const envId = ConfigHelper.extractEnvironmentId(
 // Returns: 'abc-123'
 ```
 
-***
+---
 
 ### buildUrl()
 
@@ -252,7 +252,7 @@ const url = ConfigHelper.buildUrl('/apps', 'env-123');
 // Returns: 'https://make.powerapps.com/environments/env-123/apps'
 ```
 
-***
+---
 
 ### getAuthToken()
 
@@ -292,7 +292,7 @@ const token = ConfigHelper.getAuthToken();
 const bapToken = ConfigHelper.getAuthToken(undefined, 'https://api.bap.microsoft.com');
 ```
 
-***
+---
 
 ### checkStorageStateExpiration()
 
@@ -328,7 +328,7 @@ if (check.expired) {
 }
 ```
 
-***
+---
 
 ### getDefaultUrl()
 
@@ -347,5 +347,5 @@ Default path string
 #### Default
 
 ```ts
-'/home'
+'/home';
 ```

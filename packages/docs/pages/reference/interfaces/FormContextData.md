@@ -1,6 +1,6 @@
 [**Power Platform Playwright Toolkit v0.0.4**](../README.md)
 
-***
+---
 
 [Power Platform Playwright Toolkit](../README.md) / FormContextData
 
@@ -20,7 +20,7 @@ Defined in: components/model-driven/form.context.ts:38
 
 Entity logical name (e.g., 'account', 'nwind_order')
 
-***
+---
 
 ### entityId
 
@@ -30,7 +30,7 @@ Defined in: components/model-driven/form.context.ts:40
 
 Entity GUID
 
-***
+---
 
 ### primaryAttributeValue
 
@@ -40,7 +40,7 @@ Defined in: components/model-driven/form.context.ts:42
 
 Primary attribute value (usually the record name)
 
-***
+---
 
 ### isDirty
 
@@ -50,7 +50,7 @@ Defined in: components/model-driven/form.context.ts:44
 
 Whether the form has unsaved changes
 
-***
+---
 
 ### isValid
 
@@ -60,7 +60,7 @@ Defined in: components/model-driven/form.context.ts:46
 
 Whether all form data is valid
 
-***
+---
 
 ### attributeNames
 
