@@ -1,0 +1,343 @@
+# Architecture Diagrams
+
+## System Architecture Diagram
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                                                                              │
+│                         CUSTOMER TEST CODE                                   │
+│                                                                              │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │  test('My test', async ({ page }) => {                              │   │
+│  │    const provider = new AppProvider(page);                          │   │
+│  │    await provider.launch({ app: { id: '...' }, type: Canvas });    │   │
+│  │    await provider.click({ name: 'Submit' });                        │   │
+│  │  });                                                                 │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+│                                    │                                         │
+└────────────────────────────────────┼─────────────────────────────────────────┘
+                                     │
+                                     ↓
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                                                                              │
+│                    LEVEL 1: APP PROVIDER (Recommended)                       │
+│                    lib/core/app-provider.ts                                  │
+│                                                                              │
+│  ┌──────────────────────────────────────────────────────────────────────┐  │
+│  │  export class AppProvider {                                          │  │
+│  │    async launch(config: LaunchAppConfig)                             │  │
+│  │    async click(options: ControlOptions)                              │  │
+│  │    async fill(options: ControlOptions, value: string)                │  │
+│  │    async fillForm(formData: Record<string, string>)                  │  │
+│  │    async assertVisible(options: ControlOptions)                      │  │
+│  │    async close()                                                     │  │
+│  │    isReady(): boolean                                                │  │
+│  │    getCurrentAppId(): string | null                                  │  │
+│  │    getLaunchedApps(): AppMetadata[]                                  │  │
+│  │  }                                                                   │  │
+│  └──────────────────────────────────────────────────────────────────────┘  │
+│                                    │                                         │
+└────────────────────────────────────┼─────────────────────────────────────────┘
+                                     │
+                                     ↓
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                                                                              │
+│                    LEVEL 2: APP LAUNCHER FACTORY                             │
+│                    lib/core/app-launcher.factory.ts                          │
+│                                                                              │
+│  ┌──────────────────────────────────────────────────────────────────────┐  │
+│  │  export class AppLauncherFactory {                                   │  │
+│  │    static createLauncher(page, appType): IAppLauncher {              │  │
+│  │      switch (appType) {                                              │  │
+│  │        case AppType.Canvas:                                          │  │
+│  │          return new CanvasAppPage(page);                             │  │
+│  │        case AppType.ModelDriven:                                     │  │
+│  │          return new ModelDrivenAppPage(page);                        │  │
+│  │        case AppType.Portal:                                          │  │
+│  │          return new PortalAppPage(page);  // Future                  │  │
+│  │      }                                                                │  │
+│  │    }                                                                 │  │
+│  │  }                                                                   │  │
+│  └──────────────────────────────────────────────────────────────────────┘  │
+│         │                          │                          │              │
+│         │                          │                          │              │
+└─────────┼──────────────────────────┼──────────────────────────┼──────────────┘
+          │                          │                          │
+          ↓                          ↓                          ↓
+┌──────────────────┐    ┌──────────────────────┐    ┌─────────────────────┐
+│                  │    │                      │    │                     │
+│  Canvas Apps     │    │  Model Driven Apps   │    │  Portal Apps        │
+│                  │    │                      │    │  (Future)           │
+└──────────────────┘    └──────────────────────┘    └─────────────────────┘
+          │                          │                          │
+          ↓                          ↓                          ↓
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                                                                              │
+│          LEVEL 3: PAGE OBJECTS (Implement IAppLauncher Interface)           │
+│                                                                              │
+│  ┌─────────────────────────┐  ┌────────────────────────────────────────┐   │
+│  │  CanvasAppPage          │  │  ModelDrivenAppPage                    │   │
+│  │  lib/pages/             │  │  lib/pages/                            │   │
+│  │                         │  │                                        │   │
+│  │  launchByName()         │  │  launchByName()                        │   │
+│  │  launchById()           │  │  launchById()                          │   │
+│  │  waitForAppLoad()       │  │  waitForAppLoad()                      │   │
+│  │  getControl()           │  │  getControl()                          │   │
+│  │  clickControl()         │  │  clickControl()                        │   │
+│  │  fillControl()          │  │  fillControl()                         │   │
+│  │  + 50+ Canvas methods   │  │  + 40+ Model Driven methods            │   │
+│  └─────────────────────────┘  └────────────────────────────────────────┘   │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+          │                          │
+          ↓                          ↓
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                                                                              │
+│                    SUPPORTING INFRASTRUCTURE                                 │
+│                                                                              │
+│  ┌──────────────────────┐  ┌──────────────────────┐  ┌─────────────────┐  │
+│  │  Locators            │  │  Types               │  │  Utilities      │  │
+│  │  lib/locators/       │  │  lib/types/          │  │  lib/utils/     │  │
+│  │                      │  │                      │  │                 │  │
+│  │  BaseLocators        │  │  AppType            │  │  waitForSpinner │  │
+│  │  PowerAppsLocators   │  │  AppLaunchMode      │  │  waitForElement │  │
+│  │  CanvasAppLocators   │  │  ControlOptions     │  │  safeFill       │  │
+│  │  ModelDrivenLocators │  │  CanvasControlType  │  │  dismissBubble  │  │
+│  │  260+ selectors      │  │  10+ interfaces     │  │  30+ helpers    │  │
+│  └──────────────────────┘  └──────────────────────┘  └─────────────────┘  │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+          │                          │                          │
+          ↓                          ↓                          ↓
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                                                                              │
+│                         PLAYWRIGHT TEST RUNNER                               │
+│                                                                              │
+│  ┌────────────────┐  ┌────────────────┐  ┌────────────────┐                │
+│  │  Browser       │  │  Page          │  │  Locators      │                │
+│  │  Automation    │  │  Navigation    │  │  Interaction   │                │
+│  └────────────────┘  └────────────────┘  └────────────────┘                │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+          │
+          ↓
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                                                                              │
+│                    POWER PLATFORM APPLICATIONS                               │
+│                                                                              │
+│  ┌────────────────┐  ┌────────────────────┐  ┌──────────────────────────┐  │
+│  │  Canvas Apps   │  │  Model Driven Apps │  │  Portal Apps (Future)    │  │
+│  │                │  │                    │  │                          │  │
+│  │  make.power    │  │  make.powerapps    │  │  make.powerpages         │  │
+│  │  apps.com      │  │  .com              │  │  .microsoft.com          │  │
+│  └────────────────┘  └────────────────────┘  └──────────────────────────┘  │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+## Component Responsibilities
+
+### Level 1: AppProvider (Customer Facing)
+
+**Purpose:** Simplest API for customers to launch and test apps
+
+**Responsibilities:**
+
+- Launch apps by ID or name
+- Provide unified interface for all app types
+- Manage app state and history
+- Delegate operations to appropriate launcher
+- Track launched apps metadata
+
+**When to use:**
+
+- ✅ Recommended for most customers
+- ✅ Testing existing apps
+- ✅ Simple test scenarios
+- ✅ CI/CD pipelines
+
+### Level 2: AppLauncherFactory (Middleware)
+
+**Purpose:** Create and manage app launchers
+
+**Responsibilities:**
+
+- Create appropriate launcher based on app type
+- Cache launcher instances for performance
+- Handle app type extensibility
+- Provide factory methods for each app type
+
+**When to use:**
+
+- ✅ Advanced scenarios
+- ✅ Custom launcher wrappers
+- ✅ Need direct launcher access
+
+### Level 3: Page Objects (Implementation)
+
+**Purpose:** Implement actual app interactions
+
+**Responsibilities:**
+
+- Implement IAppLauncher interface
+- Provide app-specific methods
+- Handle iframe navigation (Canvas)
+- Manage locators and selectors
+- App creation, editing, publishing
+
+**When to use:**
+
+- ✅ Creating new apps
+- ✅ App management operations
+- ✅ Maximum control needed
+- ✅ Custom test scenarios
+
+## Data Flow
+
+### Example: Customer Launches Canvas App by ID
+
+```
+1. Customer Code:
+   provider.launch({ app: { id: 'abc-123' }, type: AppType.Canvas })
+   │
+   ↓
+2. AppProvider:
+   - Receives launch request
+   - Calls AppLauncherFactory.createLauncher(page, AppType.Canvas)
+   │
+   ↓
+3. AppLauncherFactory:
+   - Checks cache for existing launcher
+   - Creates CanvasAppPage(page) if needed
+   - Returns IAppLauncher instance
+   │
+   ↓
+4. AppProvider:
+   - Calls launcher.launchById('abc-123', baseUrl, mode)
+   - Stores launcher as currentLauncher
+   │
+   ↓
+5. CanvasAppPage:
+   - Navigates to app URL
+   - Waits for iframe to load
+   - Sets canvasPlayerFrame
+   - Marks app as ready
+   │
+   ↓
+6. Customer Code:
+   provider.click({ name: 'Submit' })
+   │
+   ↓
+7. AppProvider:
+   - Delegates to currentLauncher.clickControl()
+   │
+   ↓
+8. CanvasAppPage:
+   - Gets control from iframe
+   - Clicks control
+   - Returns success
+```
+
+## Interface Contract: IAppLauncher
+
+```typescript
+interface IAppLauncher {
+  // Identity
+  readonly appType: string;
+
+  // Launching
+  launchByName(name, findApp, mode, options): Promise<void>;
+  launchById(id, baseUrl, mode, options): Promise<void>;
+  waitForAppLoad(options): Promise<void>;
+
+  // State
+  isAppReady(): boolean;
+  getAppId(): string | null;
+  getAppUrl(): string | null;
+
+  // Interaction
+  getControl(options): Locator;
+  clickControl(options): Promise<void>;
+  fillControl(options, value): Promise<void>;
+  fillForm(data): Promise<void>;
+
+  // Assertions
+  assertControlVisible(options, assertOptions): Promise<void>;
+  assertControlText(options, text, assertOptions): Promise<void>;
+
+  // Lifecycle
+  closeApp(): Promise<void>;
+  reset(): void;
+}
+```
+
+## Extension Points
+
+### Adding New App Type (e.g., Portal)
+
+```typescript
+// 1. Create PortalAppPage implementing IAppLauncher
+export class PortalAppPage implements IAppLauncher {
+  readonly appType = AppType.Portal;
+  // ... implement all IAppLauncher methods
+}
+
+// 2. Update AppLauncherFactory
+static createLauncher(page, appType) {
+  switch (appType) {
+    case AppType.Portal:
+      return new PortalAppPage(page);
+  }
+}
+
+// 3. Customers can immediately use it!
+await provider.launch({
+  app: { id: 'portal-id' },
+  type: AppType.Portal
+});
+```
+
+### Adding New Provider Method
+
+```typescript
+// 1. Add to AppProvider
+async selectDropdown(options: ControlOptions, value: string) {
+  this.ensureLauncherExists();
+  await this.currentLauncher!.selectControl(options, value);
+}
+
+// 2. Add to IAppLauncher interface
+selectControl(options: ControlOptions, value: string): Promise<void>;
+
+// 3. Implement in CanvasAppPage and ModelDrivenAppPage
+async selectControl(options, value) {
+  // Canvas-specific implementation
+}
+```
+
+## Benefits Summary
+
+### For Customers
+
+- 🚀 **Simple** - One line to launch any app
+- 🎯 **Flexible** - Launch by ID or name
+- 📝 **Type Safe** - Full TypeScript support
+- 🔧 **Consistent** - Same API for all app types
+
+### For Maintainers
+
+- 🏗️ **Extensible** - Easy to add new app types
+- 🧩 **Modular** - Clear separation of concerns
+- 🔒 **Type Safe** - Interface-driven design
+- 📚 **Well Documented** - Complete guides and examples
+
+### For the Platform
+
+- ✅ **Scalable** - Factory pattern handles growth
+- ✅ **Maintainable** - Single responsibility principle
+- ✅ **Testable** - Clear interfaces for mocking
+- ✅ **Production Ready** - Built on proven patterns
+
+---
+
+**Architecture Status:** ✅ Production Ready

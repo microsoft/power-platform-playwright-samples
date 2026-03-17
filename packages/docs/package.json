@@ -1,0 +1,26 @@
+{
+  "name": "@power-platform-playwright/docs",
+  "version": "0.0.1",
+  "description": "Documentation site for Power Platform Playwright Toolkit",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "npm run generate:api && next build",
+    "build:github": "npm run generate:api && NEXT_PUBLIC_BASE_PATH=/power-platform-playwright-samples next build",
+    "start": "next start",
+    "generate:api": "cd ../power-platform-playwright-toolkit && npm run docs"
+  },
+  "dependencies": {
+    "lucide-react": "^0.263.1",
+    "next": "^14.2.0",
+    "nextra": "^3.3.1",
+    "nextra-theme-docs": "^3.3.1",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.0.3",
+    "@types/react": "^18.3.0",
+    "typescript": "^5.9.3"
+  }
+}

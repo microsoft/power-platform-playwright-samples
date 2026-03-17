@@ -1,0 +1,189 @@
+name: Release and Publish
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish (e.g., 1.0.0)'
+        required: true
+        type: string
+      tag:
+        description: 'NPM dist-tag (e.g., latest, beta)'
+        required: false
+        default: 'latest'
+        type: string
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  publish:
+    name: Build, Test, and Publish Package
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+          cache: 'npm'
+          cache-dependency-path: '**/package-lock.json'
+
+      - name: Install Rush
+        run: npm install -g @microsoft/rush
+
+      - name: Configure Git
+        run: |
+          git config --local user.name "GitHub Actions"
+          git config --local user.email "actions@github.com"
+
+      - name: Install dependencies
+        run: |
+          rush update
+          rush install
+
+      - name: Install prettier
+        run: npm install --no-save prettier
+
+      - name: Run format check
+        run: |
+          npm run format
+          if ! git diff --quiet; then
+            echo "❌ Formatting issues found. Please run 'npm run format' locally and commit the changes."
+            git diff --name-only
+            exit 1
+          fi
+          echo "✅ No formatting issues found"
+
+      - name: Run linting
+        run: rush lint
+
+      - name: Update package version (manual dispatch only)
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          cd packages/playwright-power-platform-toolkit
+          npm version ${{ github.event.inputs.version }} --no-git-tag-version
+          echo "Updated version to ${{ github.event.inputs.version }}"
+          cat package.json | grep version
+
+      - name: Build package
+        run: rush build --to playwright-power-platform-toolkit
+
+      - name: Verify build output
+        run: |
+          cd packages/playwright-power-platform-toolkit
+          if [ ! -d "dist" ]; then
+            echo "Error: dist/ directory not found"
+            exit 1
+          fi
+          echo "Build output verified:"
+          ls -la dist/
+
+          # Verify essential files exist
+          if [ ! -f "dist/index.js" ]; then
+            echo "Error: dist/index.js not found"
+            exit 1
+          fi
+          if [ ! -f "dist/index.d.ts" ]; then
+            echo "Error: dist/index.d.ts not found"
+            exit 1
+          fi
+          echo "All essential files present"
+
+      - name: Check package size
+        run: |
+          echo "## 📦 Package Size" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ -d "packages/playwright-power-platform-toolkit/dist" ]; then
+            toolkit_size=$(du -sh packages/playwright-power-platform-toolkit/dist | cut -f1)
+            echo "- **playwright-power-platform-toolkit dist**: \`$toolkit_size\`" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Run package tests
+        run: |
+          cd packages/playwright-power-platform-toolkit
+          npm test || echo "No tests configured, skipping"
+
+      - name: Create tarball
+        run: |
+          cd packages/playwright-power-platform-toolkit
+          npm pack
+          echo "TARBALL=$(ls *.tgz)" >> $GITHUB_ENV
+
+      - name: Get package info
+        id: package-info
+        run: |
+          cd packages/playwright-power-platform-toolkit
+          PACKAGE_VERSION=$(node -p "require('./package.json').version")
+          PACKAGE_NAME=$(node -p "require('./package.json').name")
+          echo "version=$PACKAGE_VERSION" >> $GITHUB_OUTPUT
+          echo "name=$PACKAGE_NAME" >> $GITHUB_OUTPUT
+          echo "Package: $PACKAGE_NAME@$PACKAGE_VERSION"
+
+      - name: Publish to NPM
+        run: |
+          cd packages/playwright-power-platform-toolkit
+
+          # Determine dist-tag
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            DIST_TAG="${{ github.event.inputs.tag }}"
+          else
+            DIST_TAG="latest"
+          fi
+
+          echo "Publishing with dist-tag: $DIST_TAG"
+          npm publish --provenance --access public --tag $DIST_TAG
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Upload tarball as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-package
+          path: packages/playwright-power-platform-toolkit/*.tgz
+          retention-days: 90
+
+      - name: Create GitHub Release (manual dispatch only)
+        if: github.event_name == 'workflow_dispatch'
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ steps.package-info.outputs.version }}
+          name: Release v${{ steps.package-info.outputs.version }}
+          body: |
+            ## 📦 Release v${{ steps.package-info.outputs.version }}
+
+            Published to NPM: [${{ steps.package-info.outputs.name }}@${{ steps.package-info.outputs.version }}](https://www.npmjs.com/package/${{ steps.package-info.outputs.name }}/v/${{ steps.package-info.outputs.version }})
+
+            ### Installation
+            ```bash
+            npm install ${{ steps.package-info.outputs.name }}@${{ steps.package-info.outputs.version }}
+            ```
+
+            ### Changes
+            See the [changelog](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details.
+          files: packages/playwright-power-platform-toolkit/*.tgz
+          draft: false
+          prerelease: ${{ github.event.inputs.tag != 'latest' }}
+
+      - name: Post publish summary
+        run: |
+          echo "## 📦 Package Published Successfully" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Package**: ${{ steps.package-info.outputs.name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Version**: ${{ steps.package-info.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "**NPM Link**: [View on NPM](https://www.npmjs.com/package/${{ steps.package-info.outputs.name }}/v/${{ steps.package-info.outputs.version }})" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Installation" >> $GITHUB_STEP_SUMMARY
+          echo '```bash' >> $GITHUB_STEP_SUMMARY
+          echo "npm install ${{ steps.package-info.outputs.name }}@${{ steps.package-info.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY

@@ -1,0 +1,60 @@
+{
+  "name": "power-platform-playwright-toolkit",
+  "version": "0.0.4",
+  "publishConfig": {
+    "access": "public"
+  },
+  "description": "Toolkit for automating and testing Microsoft Power Platform applications with Playwright",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "license": "MIT",
+  "author": "Microsoft",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/microsoft/power-platform-playwright-samples.git",
+    "directory": "packages/power-platform-playwright-toolkit"
+  },
+  "scripts": {
+    "build": "tsc",
+    "lint": "eslint src --ext .ts",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "clean": "rimraf dist",
+    "docs": "typedoc",
+    "docs:watch": "typedoc --watch",
+    "docs:serve": "typedoc --watch --preserveWatchOutput"
+  },
+  "keywords": [
+    "playwright",
+    "power-platform",
+    "power-apps",
+    "dynamics-365",
+    "testing",
+    "automation"
+  ],
+  "devDependencies": {
+    "@axe-core/playwright": "^4.10.0",
+    "@playwright/test": "^1.57.0",
+    "@types/node": "^25.0.3",
+    "@typescript-eslint/eslint-plugin": "^8.25.0",
+    "@typescript-eslint/parser": "^8.25.0",
+    "dotenv": "^16.4.7",
+    "eslint": "^9.20.0",
+    "playwright-core": "^1.57.0",
+    "prettier": "^3.7.4",
+    "rimraf": "^6.0.1",
+    "ts-node": "^10.9.2",
+    "tsc-alias": "^1.8.16",
+    "tsx": "^4.21.0",
+    "typedoc": "^0.28.0",
+    "typedoc-plugin-markdown": "^4.9.0",
+    "typescript": "^5.9.3"
+  },
+  "peerDependencies": {
+    "@playwright/test": "^1.57.0"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "playwright-ms-auth": "^0.0.17"
+  }
+}

@@ -1,0 +1,235 @@
+# Core Components
+
+This page details the class structure and component relationships in the toolkit.
+
+> **Note:** For a high-level overview, see the [Architecture Overview](/architecture/overview).
+
+## Class Diagram
+
+### Core Infrastructure
+
+```mermaid
+classDiagram
+    class IAppLauncher {
+        <<interface>>
+        +string appType
+        +launchByName(name, findApp, mode, options) Promise~void~
+        +launchById(id, baseUrl, mode, options) Promise~void~
+        +waitForAppLoad(options) Promise~void~
+        +isAppReady() boolean
+        +getAppId() string
+        +getAppUrl() string
+        +getControl(options) Locator
+        +clickControl(options) Promise~void~
+        +fillControl(options, value) Promise~void~
+        +fillForm(data) Promise~void~
+        +assertControlVisible(options, assertOptions) Promise~void~
+        +assertControlText(options, text, assertOptions) Promise~void~
+        +closeApp() Promise~void~
+        +reset() void
+    }
+
+    class AppLauncherFactory {
+        -Map~string, IAppLauncher~ launcherInstances
+        +createLauncher(page, appType)$ IAppLauncher
+        +getCanvasLauncher(page)$ IAppLauncher
+        +getModelDrivenLauncher(page)$ IAppLauncher
+        +clearCache()$ void
+        +clearCacheForPage(page)$ void
+        +hasLauncher(page, appType)$ boolean
+        -getPageId(page)$ string
+    }
+
+    class AppProvider {
+        -Page page
+        -Function findAppCallback
+        -IAppLauncher currentLauncher
+        -AppType currentAppType
+        -Map~string, AppMetadata~ launchedApps
+        +constructor(page, findAppCallback)
+        +setFindAppCallback(callback) void
+        +launch(config) Promise~void~
+        +getControl(options) Locator
+        +click(options) Promise~void~
+        +fill(options, value) Promise~void~
+        +fillForm(data) Promise~void~
+        +assertVisible(options) Promise~void~
+        +assertText(options, text) Promise~void~
+        +close() Promise~void~
+        +isReady() boolean
+        +getCurrentAppType() AppType
+        +getCurrentAppId() string
+        +getCurrentAppUrl() string
+        +getLaunchedApps() AppMetadata[]
+        +reset() void
+        -ensureLauncherExists() void
+        -storeAppMetadata(app, type) void
+        -launchByName(name, mode, options) Promise~void~
+        -launchById(id, baseUrl, mode, options) Promise~void~
+    }
+
+    class CanvasAppPage {
+        -Page page
+        -string canvasAppId
+        -string canvasAppUrl
+        -FrameLocator canvasPlayerFrame
+        -boolean canvasAppReady
+        +string appType
+        +launchByName(name, findApp, mode, options) Promise~void~
+        +launchById(id, baseUrl, mode, options) Promise~void~
+        +waitForAppLoad(options) Promise~void~
+        +createBlankCanvasApp(name) Promise~void~
+        +addButton() Promise~void~
+        +setButtonText(name, text) Promise~void~
+        +saveApp() Promise~void~
+        +publishApp() Promise~void~
+    }
+
+    class ModelDrivenAppPage {
+        -Page page
+        -string modelAppId
+        -string modelAppUrl
+        -boolean modelAppReady
+        +string appType
+        +launchByName(name, findApp, mode, options) Promise~void~
+        +launchById(id, baseUrl, mode, options) Promise~void~
+        +waitForAppLoad(options) Promise~void~
+        +createBlankModelDrivenApp(name) Promise~void~
+        +addTableBasedPage(table, forms, views) Promise~void~
+        +addNavigationGroup(name) Promise~void~
+        +publishApp() Promise~void~
+    }
+
+    class PowerAppsPage {
+        -Page page
+        +PowerAppsPageLocators locators
+        +CanvasAppPage canvas
+        +ModelDrivenAppPage modelDriven
+        +constructor(page)
+        +navigateToHome(options) Promise~void~
+        +navigateToApps(options) Promise~void~
+        +navigateToSolutions(options) Promise~void~
+        +navigateToAppsViaMenu(options) Promise~void~
+        +navigateToSolutionsViaMenu(options) Promise~void~
+        +findApp(name, options) Promise~Locator~
+        +createApp(type, name) Promise~void~
+        +deleteApp(type, name) Promise~void~
+        +openApp(name, type, mode) Promise~void~
+    }
+
+    class LaunchAppConfig {
+        <<interface>>
+        +app string | AppIdentifier
+        +type AppType
+        +mode AppLaunchMode
+        +baseUrl string
+        +options AppPlayerOptions
+    }
+
+    class AppMetadata {
+        <<interface>>
+        +id string
+        +name string
+        +type string
+        +url string
+        +isReady boolean
+        +launchedAt Date
+    }
+
+    IAppLauncher <|.. CanvasAppPage : implements
+    IAppLauncher <|.. ModelDrivenAppPage : implements
+    AppLauncherFactory ..> IAppLauncher : creates
+    AppLauncherFactory ..> CanvasAppPage : creates
+    AppLauncherFactory ..> ModelDrivenAppPage : creates
+    AppProvider --> AppLauncherFactory : uses
+    AppProvider --> IAppLauncher : delegates to
+    AppProvider ..> LaunchAppConfig : uses
+    AppProvider ..> AppMetadata : stores
+    PowerAppsPage --> CanvasAppPage : composes
+    PowerAppsPage --> ModelDrivenAppPage : composes
+```
+
+## Component Relationships
+
+### Dependency Graph
+
+```mermaid
+graph TB
+    subgraph "Customer Code"
+        TEST[Test Code]
+    end
+
+    subgraph "Core Infrastructure"
+        PROVIDER[AppProvider]
+        FACTORY[AppLauncherFactory]
+        INTERFACE[IAppLauncher Interface]
+    end
+
+    subgraph "Page Objects"
+        POWERAPP[PowerAppsPage]
+        CANVAS[CanvasAppPage]
+        MODEL[ModelDrivenAppPage]
+    end
+
+    subgraph "Support"
+        LOC_POWER[PowerAppsPageLocators]
+        LOC_BASE[BaseLocators]
+        LOC_CANVAS[CanvasAppLocators]
+        LOC_MODEL[ModelDrivenAppLocators]
+        TYPES[Types & Interfaces]
+        UTILS[Utilities]
+    end
+
+    TEST --> PROVIDER
+    TEST --> FACTORY
+    TEST --> POWERAPP
+
+    PROVIDER --> FACTORY
+    FACTORY --> INTERFACE
+
+    INTERFACE -.-> CANVAS
+    INTERFACE -.-> MODEL
+
+    POWERAPP --> CANVAS
+    POWERAPP --> MODEL
+    POWERAPP --> LOC_POWER
+
+    CANVAS --> LOC_CANVAS
+    CANVAS --> LOC_BASE
+    CANVAS --> TYPES
+    CANVAS --> UTILS
+
+    MODEL --> LOC_MODEL
+    MODEL --> LOC_BASE
+    MODEL --> TYPES
+    MODEL --> UTILS
+
+    POWERAPP --> TYPES
+    POWERAPP --> UTILS
+
+    style TEST fill:#e1f5ff
+    style PROVIDER fill:#c8e6c9
+    style FACTORY fill:#fff9c4
+    style INTERFACE fill:#fff9c4
+    style POWERAPP fill:#b2dfdb
+    style CANVAS fill:#bbdefb
+    style MODEL fill:#c5cae9
+```
+
+## Component Summary
+
+| Component              | Purpose                     | Key Methods                                  |
+| ---------------------- | --------------------------- | -------------------------------------------- |
+| **AppProvider**        | Simplest API for customers  | launch(), click(), fill(), assertVisible()   |
+| **AppLauncherFactory** | Create and manage launchers | createLauncher(), clearCache()               |
+| **PowerAppsPage**      | Unified entry point         | navigateToApps(), findApp(), createApp()     |
+| **CanvasAppPage**      | Canvas-specific operations  | launchById(), createBlankCanvasApp()         |
+| **ModelDrivenAppPage** | Model Driven operations     | launchById(), createBlankModelDrivenApp()    |
+| **IAppLauncher**       | Contract for all launchers  | All core testing operations                  |
+
+## Next Steps
+
+- [Usage Patterns](/architecture/patterns) - Learn when to use each component
+- [Sequence Diagrams](/architecture/sequences) - See how components interact
+- [Extending the Toolkit](/architecture/extending) - Add new app types
+- [API Reference](/reference) - Complete API documentation

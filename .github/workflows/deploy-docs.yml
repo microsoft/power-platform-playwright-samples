@@ -1,0 +1,106 @@
+name: Deploy Documentation
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'packages/docs/**'
+      - 'packages/playwright-power-platform-toolkit/src/**'
+      - '.github/workflows/deploy-docs.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: 'pages'
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Rush
+        run: npm install -g @microsoft/rush
+
+      - name: Configure Git
+        run: |
+          git config --local user.name "GitHub Actions"
+          git config --local user.email "actions@github.com"
+
+      - name: Install dependencies
+        run: |
+          rush update
+          rush install
+
+      - name: Install prettier
+        run: npm install --no-save prettier
+
+      - name: Run format check
+        run: |
+          npm run format
+          if ! git diff --quiet; then
+            echo "❌ Formatting issues found. Please run 'npm run format' locally and commit the changes."
+            git diff --name-only
+            exit 1
+          fi
+          echo "✅ No formatting issues found"
+
+      - name: Run linting
+        run: rush lint
+
+      - name: Build toolkit
+        run: rush build --to playwright-power-platform-toolkit
+
+      - name: Generate API documentation
+        run: |
+          cd packages/playwright-power-platform-toolkit
+          npm run docs
+
+      - name: Build documentation site
+        run: |
+          cd packages/docs
+          NEXT_PUBLIC_BASE_PATH=/playwright-power-platform-toolkit npm run build
+
+      - name: Check package sizes
+        run: |
+          echo "## 📦 Package Sizes" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ -d "packages/playwright-power-platform-toolkit/dist" ]; then
+            toolkit_size=$(du -sh packages/playwright-power-platform-toolkit/dist | cut -f1)
+            echo "- **playwright-power-platform-toolkit**: \`$toolkit_size\`" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [ -d "packages/docs/out" ]; then
+            docs_out_size=$(du -sh packages/docs/out | cut -f1)
+            echo "- **docs (static export)**: \`$docs_out_size\`" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./packages/docs/out
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
