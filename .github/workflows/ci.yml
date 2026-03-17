@@ -51,7 +51,7 @@ jobs:
         run: rush lint
 
       - name: Build all packages
-        run: rush build --allow-warnings-in-successful-build
+        run: rush build
 
       - name: Check package sizes
         run: |
