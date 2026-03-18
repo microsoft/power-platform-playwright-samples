@@ -1,0 +1,24 @@
+# CODEOWNERS for power-platform-playwright-samples
+# Automatically requests reviews from owners when files are changed in a PR.
+# See: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default owner for everything in the repo
+* @microsoft/power-platform-devx
+
+# Core library package
+/packages/power-platform-playwright-toolkit/ @microsoft/power-platform-devx
+
+# Documentation
+/packages/docs/ @microsoft/power-platform-devx
+/README.md @microsoft/power-platform-devx
+/CLAUDE.md @microsoft/power-platform-devx
+
+# GitHub workflows and CI/CD
+/.github/ @microsoft/power-platform-devx
+
+# Rush configuration
+/common/config/ @microsoft/power-platform-devx
+/rush.json @microsoft/power-platform-devx
+
+# Sample tests
+/packages/e2e-tests/ @microsoft/power-platform-devx

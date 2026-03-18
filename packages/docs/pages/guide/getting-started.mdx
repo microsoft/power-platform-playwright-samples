@@ -1,0 +1,388 @@
+---
+title: Getting Started
+---
+
+import { Callout, Steps, Tabs } from 'nextra/components';
+import { Cards, Card } from '../../components/Cards';
+import { PackageInstall } from '../../components/PackageInstall';
+import { EnvTable } from '../../components/EnvTable';
+import { FileStructure } from '../../components/FileStructure';
+import { Rocket, BookOpen, Lock, BarChart3, Palette } from 'lucide-react';
+
+# Getting Started
+
+This guide walks you through setting up your first Power Platform Playwright test project — from
+installation to running your first test.
+
+<Callout type="info">
+  **Prerequisites:** Node.js 20+ and access to a Microsoft Power Platform environment (Canvas App
+  or Model-Driven App). A test account with no MFA is strongly recommended for automated runs.
+</Callout>
+
+## Installation
+
+<Steps>
+
+### Create your project
+
+```bash
+mkdir my-power-platform-tests && cd my-power-platform-tests
+npm init -y
+```
+
+### Install the toolkit and Playwright
+
+<PackageInstall packages={['power-platform-playwright-toolkit', '@playwright/test']} />
+
+### Install Playwright browsers
+
+```bash
+npx playwright install msedge --with-deps
+```
+
+<Callout type="tip">
+  The toolkit is optimized for **Microsoft Edge** (`msedge`). Power Platform apps run best in Edge
+  and Chromium-based browsers.
+</Callout>
+
+### Create your project structure
+
+<FileStructure
+  items={[
+    {
+      name: 'my-power-platform-tests/',
+      type: 'folder',
+      children: [
+        { name: 'globals/', type: 'folder', description: 'Global setup/teardown scripts', children: [
+          { name: 'global-setup.ts', type: 'file' },
+          { name: 'global-teardown.ts', type: 'file' }
+        ]},
+        { name: 'tests/', type: 'folder', description: 'Your test files', children: [
+          { name: 'mda/', type: 'folder', children: [
+            { name: 'my-mda.test.ts', type: 'file' }
+          ]},
+          { name: 'canvas/', type: 'folder', children: [
+            { name: 'my-canvas.test.ts', type: 'file' }
+          ]}
+        ]},
+        { name: 'pages/', type: 'folder', description: 'Page Object Models' },
+        { name: 'utils/', type: 'folder', description: 'Shared helpers' },
+        { name: '.env', type: 'file', description: 'Environment variables (gitignored)' },
+        { name: 'playwright.config.ts', type: 'file' },
+        { name: 'tsconfig.json', type: 'file' }
+      ]
+    }
+  ]}
+/>
+
+</Steps>
+
+## Configuration
+
+### `playwright.config.ts`
+
+```typescript
+import * as path from 'path';
+import { defineConfig } from '@playwright/test';
+import dotenv from 'dotenv';
+import { getStorageStatePath, TimeOut, ConfigHelper } from 'power-platform-playwright-toolkit';
+
+dotenv.config({ path: path.resolve(__dirname, '.env') });
+
+export default defineConfig({
+  globalSetup: require.resolve('./globals/global-setup'),
+  globalTeardown: require.resolve('./globals/global-teardown'),
+
+  fullyParallel: !process.env.CI,
+  forbidOnly: !!process.env.CI,
+  retries: process.env.CI ? 1 : 0,
+  workers: process.env.CI ? 1 : 2,
+  timeout: TimeOut.TestTimeout,
+
+  testDir: './tests',
+  testMatch: ['**/*.test.ts'],
+
+  use: {
+    baseURL: ConfigHelper.getBaseUrl(),
+    channel: 'msedge',
+    headless: !!process.env.CI,
+    viewport: { width: 1920, height: 1080 },
+    screenshot: 'only-on-failure',
+    video: 'retain-on-failure',
+    trace: 'retain-on-failure',
+    actionTimeout: TimeOut.OneMinuteTimeOut,
+    navigationTimeout: TimeOut.OneMinuteTimeOut,
+    ignoreHTTPSErrors: true,
+    locale: 'en-US',
+    launchOptions: {
+      args: ['--start-maximized', '--window-size=1920,1080'],
+    },
+  },
+
+  reporter: process.env.CI
+    ? [['dot'], ['junit', { outputFile: './test-results/results.xml' }]]
+    : [['list'], ['html', { outputFolder: './test-results/html-report', open: 'never' }]],
+
+  projects: [
+    {
+      name: 'model-driven-app',
+      testMatch: '**/mda/**/*.test.ts',
+      use: {
+        storageState: process.env.MS_AUTH_EMAIL
+          ? path.join(
+              path.dirname(getStorageStatePath(process.env.MS_AUTH_EMAIL)),
+              `state-mda-${process.env.MS_AUTH_EMAIL}.json`
+            )
+          : undefined,
+      },
+    },
+    {
+      name: 'canvas-app',
+      testMatch: '**/canvas/**/*.test.ts',
+      use: {
+        storageState: process.env.MS_AUTH_EMAIL
+          ? getStorageStatePath(process.env.MS_AUTH_EMAIL)
+          : undefined,
+      },
+    },
+  ],
+});
+```
+
+### `tsconfig.json`
+
+```json
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "commonjs",
+    "lib": ["ES2020", "DOM"],
+    "strict": false,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/utils/*": ["utils/*"],
+      "@/tests/*": ["tests/*"],
+      "@/pages/*": ["pages/*"]
+    }
+  },
+  "include": ["**/*.ts"],
+  "exclude": ["node_modules"]
+}
+```
+
+### `.env` file
+
+<Callout type="warning">
+  Never commit your `.env` file. Add it to `.gitignore` immediately.
+</Callout>
+
+<EnvTable
+  vars={[
+    { name: 'MS_AUTH_EMAIL', required: true, description: 'Microsoft account email for authentication and storage state filename', example: 'testuser@contoso.com' },
+    { name: 'MS_AUTH_PASSWORD', required: true, description: 'Microsoft account password', example: 'YourPassword123' },
+    { name: 'MODEL_DRIVEN_APP_URL', required: false, description: 'Direct URL to the Model-Driven App', example: 'https://org.crm.dynamics.com/main.aspx?appid=abc-123' },
+    { name: 'CANVAS_APP_URL', required: false, description: 'Direct URL to the Canvas App player', example: 'https://apps.powerapps.com/play/e/env-id/a/app-id' },
+    { name: 'POWER_APPS_BASE_URL', required: false, description: 'Base URL for Power Apps Maker Portal', example: 'https://make.powerapps.com' },
+    { name: 'POWER_APPS_ENVIRONMENT_ID', required: false, description: 'Power Platform environment ID', example: 'Default-00000000-...' },
+    { name: 'CI', required: false, description: 'Set to "true" in CI pipelines to enable headless mode and CI reporters', example: 'true' },
+  ]}
+/>
+
+Example `.env` file:
+
+```env
+# Authentication
+MS_AUTH_EMAIL=testuser@contoso.com
+MS_AUTH_PASSWORD=YourSecurePassword
+
+# App URLs
+MODEL_DRIVEN_APP_URL=https://yourorg.crm.dynamics.com/main.aspx?appid=00000000-0000-0000-0000-000000000000
+CANVAS_APP_URL=https://apps.powerapps.com/play/e/Default-00000000-xxxx/a/00000000-yyyy?tenantId=00000000-zzzz
+
+# Environment
+POWER_APPS_BASE_URL=https://make.powerapps.com
+POWER_APPS_ENVIRONMENT_ID=Default-00000000-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+```
+
+## Authentication Setup
+
+<Callout type="info">
+  This toolkit uses **`playwright-ms-auth`** to handle Microsoft 365 authentication via storage state
+  (browser cookies/localStorage). You authenticate once and reuse the session across all tests.
+</Callout>
+
+### Global setup/teardown
+
+Create `globals/global-setup.ts`:
+
+```typescript
+import { chromium } from '@playwright/test';
+import {
+  authenticateToMicrosoft,
+  getStorageStatePath,
+  loadAuthConfig,
+} from 'power-platform-playwright-toolkit';
+import * as path from 'path';
+
+async function globalSetup() {
+  console.log('Setting up Playwright Power Platform test environment...');
+}
+
+export default globalSetup;
+```
+
+For authentication, run the dedicated script (see [Authentication Guide](/guide/authentication)):
+
+```bash
+# Authenticate for Canvas/default apps
+npx tsx scripts/authenticate.ts
+
+# Authenticate for Model-Driven Apps (separate storage state)
+npx tsx scripts/authenticate.ts --mda
+```
+
+## Writing Your First Test
+
+### Model-Driven App
+
+<Callout type="tip">
+  **AppProvider is the only entry point.** Never instantiate `ModelDrivenAppPage` or `CanvasAppPage` directly.
+</Callout>
+
+```typescript
+// tests/mda/orders.test.ts
+import { test, expect } from '@playwright/test';
+import {
+  AppProvider,
+  AppType,
+  AppLaunchMode,
+  ModelDrivenAppPage,
+} from 'power-platform-playwright-toolkit';
+
+const APP_URL = process.env.MODEL_DRIVEN_APP_URL!;
+
+test.describe('Northwind Orders', () => {
+  let appProvider: AppProvider;
+  let app: ModelDrivenAppPage;
+
+  test.beforeEach(async ({ page, context }) => {
+    // 1. Create AppProvider — the single entry point
+    appProvider = new AppProvider(page, context);
+
+    // 2. Launch app via direct URL (skips Maker Portal)
+    await appProvider.launch({
+      app: 'Northwind Orders',
+      type: AppType.ModelDriven,
+      mode: AppLaunchMode.Play,
+      skipMakerPortal: true,
+      directUrl: APP_URL,
+    });
+
+    // 3. Get typed page object
+    app = appProvider.getModelDrivenAppPage();
+  });
+
+  test('should display orders grid', async ({ page }) => {
+    await app.navigateToGridView('nwind_orders');
+    await app.grid.waitForGridLoad();
+
+    const rowCount = await app.grid.getRowCount();
+    expect(rowCount).toBeGreaterThan(0);
+  });
+});
+```
+
+### Canvas App
+
+```typescript
+// tests/canvas/my-canvas.test.ts
+import { test, expect } from '@playwright/test';
+import {
+  AppProvider,
+  AppType,
+  AppLaunchMode,
+  CanvasAppPage,
+} from 'power-platform-playwright-toolkit';
+
+const APP_URL = process.env.CANVAS_APP_URL!;
+
+test.describe('My Canvas App', () => {
+  let app: CanvasAppPage;
+
+  test.beforeEach(async ({ page, context }) => {
+    const appProvider = new AppProvider(page, context);
+
+    await appProvider.launch({
+      app: 'My Canvas App',
+      type: AppType.Canvas,
+      mode: AppLaunchMode.Play,
+      skipMakerPortal: true,
+      directUrl: APP_URL,
+    });
+
+    app = appProvider.getCanvasAppPage();
+  });
+
+  test('should interact with canvas controls', async () => {
+    await app.clickControl('ButtonSubmit');
+    await app.fillTextInput('TextInputName', 'Contoso Ltd');
+
+    const label = await app.getControlText('LabelStatus');
+    expect(label).toContain('Submitted');
+  });
+});
+```
+
+## Running Tests
+
+<Tabs items={['All tests', 'Specific project', 'Headed mode', 'Debug mode', 'UI mode']}>
+  <Tabs.Tab>
+    ```bash
+    npx playwright test
+    ```
+  </Tabs.Tab>
+  <Tabs.Tab>
+    ```bash
+    # Run only Model-Driven App tests
+    npx playwright test --project=model-driven-app
+
+    # Run only Canvas App tests
+    npx playwright test --project=canvas-app
+    ```
+  </Tabs.Tab>
+  <Tabs.Tab>
+    ```bash
+    npx playwright test --headed
+    ```
+  </Tabs.Tab>
+  <Tabs.Tab>
+    ```bash
+    npx playwright test --debug
+    ```
+  </Tabs.Tab>
+  <Tabs.Tab>
+    ```bash
+    npx playwright test --ui
+    ```
+  </Tabs.Tab>
+</Tabs>
+
+## Next Steps
+
+<Cards>
+  <Card icon={<Lock />} title="Authentication Guide" href="/guide/authentication">
+    Set up storage state, understand token expiry, and configure CI/CD authentication
+  </Card>
+  <Card icon={<Rocket />} title="Project Setup" href="/guide/setup">
+    Full walkthrough for configuring an e2e-tests package from scratch
+  </Card>
+  <Card icon={<BarChart3 />} title="Model-Driven Apps" href="/guide/model-driven-apps">
+    Forms, grids, FormContext API, commanding, and custom pages
+  </Card>
+  <Card icon={<Palette />} title="Canvas Apps" href="/guide/canvas-apps">
+    Control interactions, screens, galleries, and locator utilities
+  </Card>
+</Cards>

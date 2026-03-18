@@ -1,0 +1,43 @@
+# Dependencies
+node_modules/
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+
+# Build outputs
+dist/
+build/
+out/
+*.tsbuildinfo
+
+# Coverage
+coverage/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Test results
+test-results/
+playwright-report/
+blob-report/
+.playwright/
+
+# Common config
+common/config/rush/
+
+# Temp
+.temp/
+temp/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Misc
+*.min.js
+*.min.css

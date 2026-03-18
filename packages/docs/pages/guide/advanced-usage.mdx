@@ -1,0 +1,637 @@
+---
+title: Advanced Usage
+---
+
+import { Callout, Steps, Tabs } from 'nextra/components';
+import { Cards, Card } from '../../components/Cards';
+import { BookOpen, Code2, Zap, Settings, GitBranch, BarChart3 } from 'lucide-react';
+
+# Advanced Usage
+
+Patterns for building maintainable, scalable Power Platform test suites: custom Page Object Models,
+Playwright fixtures, data management, CI/CD sharding, and debugging tools.
+
+<Callout type="info">
+  This guide assumes familiarity with the [Getting Started](/guide/getting-started) guide and
+  the [AppProvider pattern](/guide/setup).
+</Callout>
+
+## Custom Page Object Models
+
+Extend the built-in page classes to encapsulate app-specific interactions:
+
+<Tabs items={['Canvas App', 'Model-Driven App']}>
+  <Tabs.Tab>
+```typescript
+// pages/northwind/OrdersCanvasPage.ts
+import { CanvasAppPage } from 'power-platform-playwright-toolkit';
+import { Page, BrowserContext, expect } from '@playwright/test';
+
+interface OrderData {
+  customerName: string;
+  quantity: number;
+  productName: string;
+}
+
+export class OrdersCanvasPage extends CanvasAppPage {
+  constructor(page: Page, context: BrowserContext) {
+    super(page, context);
+  }
+
+  async submitOrder(order: OrderData): Promise<void> {
+    await this.fillTextInput('TextInputCustomerName', order.customerName);
+    await this.fillTextInput('TextInputQuantity', String(order.quantity));
+    await this.clickControl('DropdownProduct');
+    await this.page.getByRole('option', { name: order.productName }).click();
+    await this.clickControl('ButtonSubmitOrder');
+    await this.waitForSuccessMessage();
+  }
+
+  async waitForSuccessMessage(): Promise<void> {
+    const label = this.page.locator('[data-control-name="LabelSuccess"]');
+    await label.waitFor({ state: 'visible', timeout: 10_000 });
+    await expect(label).toContainText('Success');
+  }
+
+  async getOrderCount(): Promise<number> {
+    const text = await this.getControlText('LabelOrderCount');
+    return parseInt(text, 10);
+  }
+}
+```
+  </Tabs.Tab>
+  <Tabs.Tab>
+```typescript
+// pages/northwind/OrdersMdaPage.ts
+import { ModelDrivenAppPage } from 'power-platform-playwright-toolkit';
+import { Page, BrowserContext } from '@playwright/test';
+
+export class OrdersMdaPage extends ModelDrivenAppPage {
+  constructor(page: Page, context: BrowserContext) {
+    super(page, context);
+  }
+
+  async createOrder(customerName: string, amount: number): Promise<string> {
+    // Navigate to new order form
+    await this.grid.clickNewButton();
+    await this.form.waitForFormLoad();
+
+    // Fill fields
+    await this.form.setFieldValue('customerid', customerName);
+    await this.form.setFieldValue('totalamount', String(amount));
+
+    // Save and return the new record ID
+    await this.form.save();
+    return this.page.url().match(/id=([^&]+)/)?.[1] ?? '';
+  }
+
+  async getOrdersByCustomer(customerName: string): Promise<number> {
+    await this.grid.navigateToGridView();
+    await this.grid.filterByKeyword(customerName);
+    return this.grid.getRowCount();
+  }
+}
+```
+  </Tabs.Tab>
+</Tabs>
+
+Use the custom POM in tests:
+
+```typescript
+import { test } from '@playwright/test';
+import { AppProvider, AppType } from 'power-platform-playwright-toolkit';
+import { OrdersCanvasPage } from '../pages/northwind/OrdersCanvasPage';
+
+test('submit an order', async ({ page, context }) => {
+  const appProvider = new AppProvider(page, context);
+  await appProvider.launch({
+    app: 'Northwind Orders',
+    type: AppType.Canvas,
+    directUrl: process.env.CANVAS_APP_URL!,
+    skipMakerPortal: true,
+  });
+
+  // Cast to the custom POM
+  const ordersPage = appProvider.getCanvasAppPage() as OrdersCanvasPage;
+
+  await ordersPage.submitOrder({
+    customerName: 'Contoso Ltd',
+    quantity: 10,
+    productName: 'Widget A',
+  });
+});
+```
+
+## Playwright Fixtures
+
+Fixtures eliminate repetitive `beforeEach` setup and make dependencies explicit:
+
+```typescript
+// fixtures/power-platform.fixture.ts
+import { test as base } from '@playwright/test';
+import {
+  AppProvider,
+  AppType,
+  CanvasAppPage,
+  ModelDrivenAppPage,
+} from 'power-platform-playwright-toolkit';
+
+type PowerPlatformFixtures = {
+  canvasApp: CanvasAppPage;
+  modelDrivenApp: ModelDrivenAppPage;
+  appProvider: AppProvider;
+};
+
+export const test = base.extend<PowerPlatformFixtures>({
+  // AppProvider fixture — always available
+  appProvider: async ({ page, context }, use) => {
+    await use(new AppProvider(page, context));
+  },
+
+  // Canvas App fixture — auto-launches app
+  canvasApp: async ({ appProvider }, use) => {
+    await appProvider.launch({
+      app: 'Northwind Canvas',
+      type: AppType.Canvas,
+      directUrl: process.env.CANVAS_APP_URL!,
+      skipMakerPortal: true,
+    });
+    await use(appProvider.getCanvasAppPage());
+  },
+
+  // Model-Driven App fixture — auto-launches app
+  modelDrivenApp: async ({ appProvider }, use) => {
+    await appProvider.launch({
+      app: 'Northwind MDA',
+      type: AppType.ModelDriven,
+      directUrl: process.env.MODEL_DRIVEN_APP_URL!,
+      skipMakerPortal: true,
+    });
+    await use(appProvider.getModelDrivenAppPage());
+  },
+});
+
+export { expect } from '@playwright/test';
+```
+
+Use the fixture in tests:
+
+```typescript
+// tests/canvas/orders.test.ts
+import { test, expect } from '../../fixtures/power-platform.fixture';
+
+test('canvas app loads successfully', async ({ canvasApp }) => {
+  // canvasApp is already launched — no beforeEach needed
+  const title = await canvasApp.getControlText('LabelTitle');
+  expect(title).toContain('Orders');
+});
+
+test('model driven app grid loads', async ({ modelDrivenApp }) => {
+  await modelDrivenApp.grid.navigateToGridView();
+  const count = await modelDrivenApp.grid.getRowCount();
+  expect(count).toBeGreaterThan(0);
+});
+```
+
+## Parameterized Tests
+
+Drive tests from data tables for boundary and scenario testing:
+
+```typescript
+import { test, expect } from '@playwright/test';
+import { AppProvider, AppType } from 'power-platform-playwright-toolkit';
+
+const contactScenarios = [
+  { name: 'Standard contact',      firstName: 'Jane',    lastName: 'Doe',           valid: true  },
+  { name: 'Special characters',   firstName: "O'Brien", lastName: 'Müller-Schmidt', valid: true  },
+  { name: 'Max length first name', firstName: 'A'.repeat(50), lastName: 'Smith',    valid: true  },
+  { name: 'Empty first name',      firstName: '',        lastName: 'Jones',          valid: false },
+];
+
+for (const scenario of contactScenarios) {
+  test(`create contact — ${scenario.name}`, async ({ page, context }) => {
+    const appProvider = new AppProvider(page, context);
+    await appProvider.launch({
+      app: 'Contacts MDA',
+      type: AppType.ModelDriven,
+      directUrl: process.env.MODEL_DRIVEN_APP_URL!,
+      skipMakerPortal: true,
+    });
+
+    const app = appProvider.getModelDrivenAppPage();
+    await app.grid.clickNewButton();
+
+    await app.form.setFieldValue('firstname', scenario.firstName);
+    await app.form.setFieldValue('lastname', scenario.lastName);
+    await app.form.save();
+
+    if (scenario.valid) {
+      await expect(app.page.locator('.ms-MessageBar--error')).toBeHidden();
+    } else {
+      await expect(app.page.locator('.ms-MessageBar--error')).toBeVisible();
+    }
+  });
+}
+```
+
+## Test Data Management
+
+### Unique identifiers
+
+Prevent collisions between parallel or repeated runs:
+
+```typescript
+import { generateUniqueTestId, generateRandomAlphaNumeric } from 'power-platform-playwright-toolkit';
+
+// Timestamp-based unique ID
+const testId   = generateUniqueTestId();      // e.g. "test-20250315-143022"
+const appName  = `Order-${generateRandomAlphaNumeric(8)}`;  // e.g. "Order-a3Bx9kQ2"
+```
+
+### Dataverse API setup / teardown
+
+Use Playwright's API context to seed and clean data without UI:
+
+```typescript
+import { test, request } from '@playwright/test';
+
+let testAccountId: string;
+
+test.beforeAll(async () => {
+  const api = await request.newContext({
+    baseURL: `https://${process.env.D365_ORG}.api.crm.dynamics.com`,
+    extraHTTPHeaders: {
+      Authorization: `Bearer ${process.env.D365_API_TOKEN}`,
+      'OData-MaxVersion': '4.0',
+      'OData-Version': '4.0',
+      Accept: 'application/json',
+    },
+  });
+
+  const resp = await api.post('/api/data/v9.2/accounts', {
+    data: { name: `Test-${Date.now()}`, telephone1: '555-0100' },
+  });
+  const body = await resp.json();
+  testAccountId = body.accountid;
+  await api.dispose();
+});
+
+test.afterAll(async () => {
+  const api = await request.newContext({
+    baseURL: `https://${process.env.D365_ORG}.api.crm.dynamics.com`,
+    extraHTTPHeaders: { Authorization: `Bearer ${process.env.D365_API_TOKEN}` },
+  });
+  await api.delete(`/api/data/v9.2/accounts(${testAccountId})`);
+  await api.dispose();
+});
+
+test('open seeded account in MDA', async ({ page, context }) => {
+  // Use testAccountId to navigate directly to the record
+  const appProvider = new AppProvider(page, context);
+  await appProvider.launch({
+    app: 'Accounts',
+    type: AppType.ModelDriven,
+    directUrl: `${process.env.MODEL_DRIVEN_APP_URL}&id=${testAccountId}&etn=account&pagetype=entityrecord`,
+    skipMakerPortal: true,
+  });
+});
+```
+
+## Performance & Parallel Execution
+
+<Callout type="warning">
+  Power Platform tests require live browser sessions — they cannot share browser state across parallel workers. Each worker gets its own storage state copy.
+</Callout>
+
+### `playwright.config.ts` parallelism settings
+
+```typescript
+export default defineConfig({
+  // Number of parallel workers (default: half of CPU cores)
+  workers: process.env.CI ? 2 : 4,
+
+  // Run all tests in all files in parallel (within each file, tests run sequentially by default)
+  fullyParallel: true,
+
+  // Retry flaky tests once in CI
+  retries: process.env.CI ? 1 : 0,
+});
+```
+
+### Tagging for selective runs
+
+```typescript
+test('smoke — home screen loads @smoke', async ({ canvasApp }) => { /* ... */ });
+test('regression — full CRUD flow @regression', async ({ modelDrivenApp }) => { /* ... */ });
+test('nightly — performance baseline @nightly', async ({ canvasApp }) => { /* ... */ });
+```
+
+```bash
+# CI: smoke suite only
+npx playwright test --grep "@smoke"
+
+# Full regression
+npx playwright test --grep "@regression"
+```
+
+### Test sharding for large suites
+
+```bash
+# Split across 3 machines in CI
+npx playwright test --shard=1/3
+npx playwright test --shard=2/3
+npx playwright test --shard=3/3
+```
+
+Merge shard reports:
+
+```bash
+npx playwright merge-reports --reporter html ./blob-report
+```
+
+## Debugging
+
+### Playwright Inspector
+
+```bash
+# Step through test interactively
+npx playwright test --debug
+
+# Run headed with slow motion
+npx playwright test --headed --slow-mo=500
+```
+
+### Trace Viewer
+
+```typescript
+// playwright.config.ts — capture traces on first retry
+export default defineConfig({
+  use: {
+    trace: 'on-first-retry',
+    screenshot: 'only-on-failure',
+    video: 'retain-on-failure',
+  },
+});
+```
+
+```bash
+# View recorded trace
+npx playwright show-trace test-results/trace.zip
+```
+
+### `page.pause()` breakpoints
+
+```typescript
+test('debug a flaky interaction', async ({ page, canvasApp }) => {
+  await canvasApp.clickControl('ButtonOpenForm');
+  await page.pause();   // Opens Playwright Inspector — resume manually
+  await canvasApp.clickControl('ButtonSave');
+});
+```
+
+### Verbose toolkit logging
+
+Set `DEBUG=pw:toolkit` before running tests to see internal toolkit logs:
+
+```bash
+DEBUG=pw:toolkit npx playwright test
+```
+
+## Reporting
+
+### Multiple reporters
+
+```typescript
+// playwright.config.ts
+export default defineConfig({
+  reporter: [
+    ['html',  { outputFolder: 'playwright-report', open: 'never' }],
+    ['json',  { outputFile: 'test-results/results.json' }],
+    ['junit', { outputFile: 'test-results/junit.xml' }],
+    // Azure DevOps — use 'junit' and publish the XML artifact
+  ],
+});
+```
+
+### Custom reporter
+
+```typescript
+import { Reporter, TestCase, TestResult } from '@playwright/test/reporter';
+
+class SlackReporter implements Reporter {
+  onTestEnd(test: TestCase, result: TestResult) {
+    if (result.status === 'failed') {
+      // Post to Slack webhook
+      fetch(process.env.SLACK_WEBHOOK_URL!, {
+        method: 'POST',
+        body: JSON.stringify({ text: `❌ Failed: ${test.title}` }),
+      });
+    }
+  }
+}
+
+export default SlackReporter;
+```
+
+```typescript
+// playwright.config.ts
+reporter: [
+  ['html'],
+  ['./reporters/slack-reporter.ts'],
+],
+```
+
+## Visual Regression Testing
+
+```typescript
+import { test, expect } from '@playwright/test';
+import { AppProvider, AppType } from 'power-platform-playwright-toolkit';
+
+test('home screen visual regression', async ({ page, context }) => {
+  const appProvider = new AppProvider(page, context);
+  await appProvider.launch({
+    app: 'Northwind Canvas',
+    type: AppType.Canvas,
+    directUrl: process.env.CANVAS_APP_URL!,
+    skipMakerPortal: true,
+  });
+
+  const canvasApp = appProvider.getCanvasAppPage();
+  await canvasApp.waitForAppToLoad();
+
+  // Compare screenshot against baseline (first run creates the baseline)
+  await expect(page).toHaveScreenshot('home-screen.png', {
+    maxDiffPixels: 100,
+    threshold: 0.1,
+  });
+});
+```
+
+Update baselines after intentional UI changes:
+
+```bash
+npx playwright test --update-snapshots
+```
+
+## CI/CD Integration
+
+<Tabs items={['GitHub Actions', 'Azure DevOps']}>
+  <Tabs.Tab>
+```yaml
+# .github/workflows/playwright.yml
+name: Playwright Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        shard: [1, 2, 3]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Rush
+        run: npm install -g @microsoft/rush
+
+      - name: Install dependencies
+        run: rush install
+
+      - name: Build
+        run: rush build
+
+      - name: Install Playwright browsers
+        run: cd packages/e2e-tests && npx playwright install --with-deps chromium
+
+      - name: Run tests (shard ${{ matrix.shard }}/3)
+        env:
+          MS_AUTH_EMAIL: ${{ secrets.MS_AUTH_EMAIL }}
+          MS_AUTH_PASSWORD: ${{ secrets.MS_AUTH_PASSWORD }}
+          MODEL_DRIVEN_APP_URL: ${{ secrets.MODEL_DRIVEN_APP_URL }}
+          CANVAS_APP_URL: ${{ secrets.CANVAS_APP_URL }}
+        run: |
+          cd packages/e2e-tests
+          npx playwright test --shard=${{ matrix.shard }}/3
+
+      - name: Upload blob report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: blob-report-${{ matrix.shard }}
+          path: packages/e2e-tests/blob-report/
+
+  merge-reports:
+    if: always()
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Download all blob reports
+        uses: actions/download-artifact@v4
+        with:
+          path: all-blob-reports
+          pattern: blob-report-*
+
+      - name: Merge reports
+        run: npx playwright merge-reports --reporter html ./all-blob-reports
+
+      - name: Upload HTML report
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+```
+  </Tabs.Tab>
+  <Tabs.Tab>
+```yaml
+# azure-pipelines.yml
+trigger:
+  branches:
+    include: [main]
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  - group: playwright-secrets   # Contains MS_AUTH_EMAIL, MS_AUTH_PASSWORD, etc.
+
+strategy:
+  matrix:
+    Shard1:
+      SHARD: '1/3'
+    Shard2:
+      SHARD: '2/3'
+    Shard3:
+      SHARD: '3/3'
+
+steps:
+  - task: NodeTool@0
+    inputs:
+      versionSpec: '20.x'
+
+  - script: npm install -g @microsoft/rush
+    displayName: 'Install Rush'
+
+  - script: rush install
+    displayName: 'Install dependencies'
+
+  - script: rush build
+    displayName: 'Build'
+
+  - script: cd packages/e2e-tests && npx playwright install --with-deps chromium
+    displayName: 'Install Playwright browsers'
+
+  - script: cd packages/e2e-tests && npx playwright test --shard=$(SHARD)
+    displayName: 'Run Playwright tests (shard $(SHARD))'
+    env:
+      MS_AUTH_EMAIL: $(MS_AUTH_EMAIL)
+      MS_AUTH_PASSWORD: $(MS_AUTH_PASSWORD)
+      MODEL_DRIVEN_APP_URL: $(MODEL_DRIVEN_APP_URL)
+      CANVAS_APP_URL: $(CANVAS_APP_URL)
+
+  - task: PublishTestResults@2
+    condition: always()
+    inputs:
+      testResultsFormat: 'JUnit'
+      testResultsFiles: 'packages/e2e-tests/test-results/junit.xml'
+
+  - task: PublishPipelineArtifact@1
+    condition: always()
+    inputs:
+      targetPath: packages/e2e-tests/playwright-report
+      artifact: playwright-report-$(SHARD)
+```
+  </Tabs.Tab>
+</Tabs>
+
+## Next Steps
+
+<Cards>
+  <Card icon={<BookOpen />} title="API Reference" href="/reference">
+    Complete TypeDoc reference for every class and function
+  </Card>
+  <Card icon={<BarChart3 />} title="Architecture Overview" href="/architecture/overview">
+    Design patterns and component architecture
+  </Card>
+  <Card icon={<GitBranch />} title="Quick Reference" href="/architecture/quick-reference">
+    Cheat sheet for common operations
+  </Card>
+  <Card icon={<Code2 />} title="Sample Tests" href="https://github.com/microsoft/power-platform-playwright-samples/tree/main/packages/e2e-tests/tests">
+    Real-world test examples in the repository
+  </Card>
+</Cards>

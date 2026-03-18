@@ -1,0 +1,376 @@
+---
+title: Model-Driven Apps
+---
+
+import { Callout, Steps, Tabs } from 'nextra/components';
+import { Cards, Card } from '../../components/Cards';
+import { Features, Feature } from '../../components/Features';
+import { BookOpen, Lock, Palette, Zap, Code2, Database } from 'lucide-react';
+
+# Testing Model-Driven Apps
+
+Model-Driven Apps (including Dynamics 365) are data-driven applications built on Microsoft
+Dataverse. They follow a structured pattern: **entities → forms → grids → commands**.
+
+## Architecture Overview
+
+<Features>
+  <Feature icon={<Database />} title="Grid Component">
+    Interact with entity views: search, filter, sort, select rows, open records
+  </Feature>
+  <Feature icon={<Code2 />} title="Form Component">
+    Fill fields, save records, navigate tabs and sections
+  </Feature>
+  <Feature icon={<Zap />} title="Commanding Component">
+    Click command bar buttons (Save, Delete, custom commands), handle flyout menus
+  </Feature>
+  <Feature icon={<BookOpen />} title="FormContext API">
+    Execute Xrm JavaScript directly — read/write attributes, check dirty/valid state
+  </Feature>
+</Features>
+
+## Launching a Model-Driven App
+
+<Callout type="info">
+  Always use **`AppProvider`** as the entry point. Never instantiate `ModelDrivenAppPage` directly.
+</Callout>
+
+```typescript
+import { test } from '@playwright/test';
+import {
+  AppProvider,
+  AppType,
+  AppLaunchMode,
+  ModelDrivenAppPage,
+} from 'power-platform-playwright-toolkit';
+
+const APP_URL = process.env.MODEL_DRIVEN_APP_URL!;
+
+test.describe('Model-Driven App Tests', () => {
+  let appProvider: AppProvider;
+  let app: ModelDrivenAppPage;
+
+  test.beforeEach(async ({ page, context }) => {
+    appProvider = new AppProvider(page, context);
+
+    await appProvider.launch({
+      app: 'Northwind Orders',
+      type: AppType.ModelDriven,
+      mode: AppLaunchMode.Play,
+      skipMakerPortal: true,    // Skip the Maker Portal — go straight to the app
+      directUrl: APP_URL,
+    });
+
+    app = appProvider.getModelDrivenAppPage();
+  });
+});
+```
+
+## Working with Grids
+
+### Navigate and wait for grid load
+
+```typescript
+// Navigate to an entity grid view
+await app.navigateToGridView('account');       // logical entity name
+await app.grid.waitForGridLoad();
+
+// Get row count
+const count = await app.grid.getRowCount();
+expect(count).toBeGreaterThan(0);
+```
+
+### Search and filter
+
+```typescript
+// Filter/search by keyword (uses the grid search box)
+await app.grid.filterByKeyword('Contoso');
+await app.grid.waitForGridLoad();
+
+const filtered = await app.grid.getRowCount();
+expect(filtered).toBeGreaterThan(0);
+```
+
+### Read cell values
+
+```typescript
+// Get value from a specific cell (row 0, column "Account Name")
+const name = await app.grid.getCellValue(0, 'Account Name');
+expect(name).toBe('Contoso Ltd');
+```
+
+### Select rows and open records
+
+```typescript
+// Select row for bulk operations
+await app.grid.selectRow(0);
+
+// Open a record by row index
+await app.grid.openRecord({ rowNumber: 0 });
+```
+
+## Working with Forms
+
+### Navigate to a form
+
+```typescript
+// Navigate to a new (empty) form
+await app.navigateToFormView('account');
+
+// Open a specific record by ID
+await app.navigateToFormView('account', 'record-guid-here');
+```
+
+### Fill and save a record
+
+```typescript
+// Fill a text field by data-id selector
+const nameInput = page.locator('input[data-id="name.fieldControl-text-box-text"]');
+await nameInput.fill('Contoso Ltd');
+
+// Save using the form component
+await app.form.save();
+
+// Or use the commanding component
+await app.commanding.clickCommand('Save');
+```
+
+### Read field values
+
+```typescript
+// Get all form data via FormContext API
+import { getFormContext, getEntityAttribute, getAllEntityAttributes } from 'power-platform-playwright-toolkit';
+
+const context = await getFormContext(page);
+console.log('Entity:', context.entityName);       // 'account'
+console.log('Record ID:', context.entityId);
+console.log('Is dirty:', context.isDirty);
+
+// Read a specific attribute
+const accountName = await getEntityAttribute(page, 'name');
+
+// Read all attributes at once
+const allData = await getAllEntityAttributes(page);
+```
+
+## FormContext API
+
+The FormContext API lets you execute Xrm JavaScript directly in the page context. This is the
+most reliable way to interact with Model-Driven App form data.
+
+### Read and write attributes
+
+```typescript
+import {
+  getEntityAttribute,
+  setEntityAttribute,
+  getAllEntityAttributes,
+  isFormDirty,
+  isFormValid,
+  saveForm,
+  refreshForm,
+} from 'power-platform-playwright-toolkit';
+
+// Read
+const value = await getEntityAttribute(page, 'nwind_ordernumber');
+
+// Write
+await setEntityAttribute(page, 'nwind_ordernumber', 'ORD-2024-001');
+
+// Check state
+const dirty = await isFormDirty(page);
+const valid = await isFormValid(page);
+
+// Save programmatically
+if (valid) {
+  await saveForm(page);
+}
+
+// Refresh form
+await refreshForm(page);
+```
+
+### Execute arbitrary Xrm code
+
+```typescript
+import { executeInFormContext } from 'power-platform-playwright-toolkit';
+
+// Get current user info
+const userInfo = await executeInFormContext(page, (Xrm) => {
+  const settings = Xrm.Utility.getGlobalContext().userSettings;
+  return { userId: settings.userId, userName: settings.userName };
+});
+
+// Set a form notification
+await executeInFormContext(page, (Xrm) => {
+  Xrm.Page.ui.setFormNotification('Test running...', 'INFO', 'test-id');
+});
+```
+
+<Callout type="tip">
+  `executeInFormContext` serializes the return value across the page boundary — return only plain
+  objects/primitives (no DOM nodes, functions, or class instances).
+</Callout>
+
+## Commanding Component
+
+```typescript
+// Click a command bar button
+await app.commanding.clickCommand('New');
+await app.commanding.clickCommand('Delete');
+await app.commanding.clickCommand('Deactivate');
+
+// Click a button in a specific context
+import { CommandBarContext } from 'power-platform-playwright-toolkit';
+
+await app.commanding.clickCommand('Save', { context: CommandBarContext.Form });
+await app.commanding.clickCommand('Delete', { context: CommandBarContext.Grid });
+```
+
+## Full CRUD Example
+
+```typescript
+import { test, expect } from '@playwright/test';
+import {
+  AppProvider,
+  AppType,
+  AppLaunchMode,
+  ModelDrivenAppPage,
+  generateUniqueOrderNumber,
+  setEntityAttribute,
+  saveForm,
+  isFormDirty,
+  isFormValid,
+} from 'power-platform-playwright-toolkit';
+
+const APP_URL = process.env.MODEL_DRIVEN_APP_URL!;
+const ENTITY = 'nwind_orders';
+
+test.describe('Northwind Orders CRUD', () => {
+  let app: ModelDrivenAppPage;
+
+  test.beforeEach(async ({ page, context }) => {
+    const provider = new AppProvider(page, context);
+    await provider.launch({
+      app: 'Northwind Orders',
+      type: AppType.ModelDriven,
+      mode: AppLaunchMode.Play,
+      skipMakerPortal: true,
+      directUrl: APP_URL,
+    });
+    app = provider.getModelDrivenAppPage();
+  });
+
+  test('Create → Read → Update → Delete', async ({ page }) => {
+    const orderNumber = generateUniqueOrderNumber();
+
+    // ── CREATE ────────────────────────────────────────────────
+    await app.navigateToFormView(ENTITY);
+    await page.waitForTimeout(3000);
+
+    await setEntityAttribute(page, 'nwind_ordernumber', orderNumber);
+    expect(await isFormDirty(page)).toBe(true);
+
+    if (await isFormValid(page)) {
+      await saveForm(page);
+    }
+
+    // ── READ ──────────────────────────────────────────────────
+    await app.navigateToGridView(ENTITY);
+    await app.grid.waitForGridLoad();
+    await app.grid.filterByKeyword(orderNumber);
+    await app.grid.waitForGridLoad();
+
+    const rowCount = await app.grid.getRowCount();
+    expect(rowCount).toBeGreaterThan(0);
+
+    const cell = await app.grid.getCellValue(0, 'Order Number');
+    expect(cell).toBe(orderNumber);
+
+    // ── UPDATE ────────────────────────────────────────────────
+    await app.grid.openRecord({ rowNumber: 0 });
+    await page.waitForTimeout(2000);
+
+    const updated = `${orderNumber}-UPDATED`;
+    await setEntityAttribute(page, 'nwind_ordernumber', updated);
+    await saveForm(page);
+
+    // ── DELETE ────────────────────────────────────────────────
+    await app.navigateToGridView(ENTITY);
+    await app.grid.waitForGridLoad();
+    await app.grid.filterByKeyword(updated);
+    await app.grid.waitForGridLoad();
+
+    await app.grid.selectRow(0);
+    await app.commanding.clickCommand('Delete');
+
+    const dialog = page.locator('[role="dialog"], [role="alertdialog"]');
+    await dialog.waitFor({ state: 'visible', timeout: 10000 });
+    await dialog
+      .locator('button[data-id="confirmButton"], button:has-text("Delete")')
+      .first()
+      .click();
+
+    await page.waitForTimeout(3000);
+
+    // ── VERIFY DELETE ─────────────────────────────────────────
+    await app.grid.filterByKeyword(updated);
+    await app.grid.waitForGridLoad();
+    expect(await app.grid.getRowCount()).toBe(0);
+  });
+});
+```
+
+## Custom Locators
+
+For advanced scenarios where the component API doesn't cover your use case:
+
+```typescript
+import {
+  getModelDrivenFormField,
+  getModelDrivenDataAutomationId,
+  getModelDrivenTablePage,
+  getModelDrivenNavItem,
+} from 'power-platform-playwright-toolkit';
+
+// Form field by logical name
+const nameField = page.locator(getModelDrivenFormField('name'));
+
+// Element by data-automation-id
+const saveBtn = page.locator(getModelDrivenDataAutomationId('save-button'));
+
+// Table/entity page container
+const accountsGrid = page.locator(getModelDrivenTablePage('account'));
+
+// Navigation item
+const navItem = page.locator(getModelDrivenNavItem('Sales'));
+```
+
+## Best Practices
+
+<Callout type="warning">
+  Always use **logical (schema) names**, not display names, for field identifiers. Display names
+  vary by language and customisation.
+</Callout>
+
+| Practice | Reason |
+|----------|--------|
+| Use `skipMakerPortal: true` + `directUrl` | Faster test start — avoids Maker Portal navigation |
+| Use FormContext API for form data | More reliable than raw DOM selectors |
+| Call `waitForGridLoad()` after navigation | Grid loading is asynchronous |
+| Use `generateUniqueOrderNumber()` for test data | Avoids collisions between parallel test runs |
+| Clean up test records in `afterEach` | Keeps your environment clean |
+
+## Next Steps
+
+<Cards>
+  <Card icon={<Palette />} title="Canvas Apps" href="/guide/canvas-apps">
+    Testing Canvas Apps — controls, screens, galleries
+  </Card>
+  <Card icon={<Lock />} title="Authentication" href="/guide/authentication">
+    Storage state, token expiry, CI/CD auth setup
+  </Card>
+  <Card icon={<BookOpen />} title="API Reference" href="/reference">
+    Full TypeDoc reference for all classes and functions
+  </Card>
+</Cards>

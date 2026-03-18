@@ -1,0 +1,437 @@
+---
+title: Gen UX Testing
+---
+
+import { Callout, Steps, Tabs } from 'nextra/components';
+import { Cards, Card } from '../../components/Cards';
+import { Features, Feature } from '../../components/Features';
+import { EnvTable } from '../../components/EnvTable';
+import { BookOpen, Zap, Eye, Code2, Rocket, Lock } from 'lucide-react';
+
+# Gen UX Testing
+
+**Gen UX** is the Power Apps AI designer experience — users describe what they want in natural
+language and the platform generates a Canvas App. The toolkit provides a dedicated `GenUxPage`
+object to automate and validate this workflow.
+
+<Callout type="info">
+  Gen UX tests run against the **Power Apps Maker Portal** (`make.powerapps.com` or
+  `make.preview.powerapps.com`). You need a **Maker** licence for the test account.
+</Callout>
+
+## Two Testing Modes
+
+<Features>
+  <Feature icon={<Eye />} title="In-Designer (Preview iframe)">
+    Test the generated app inside the UCI Preview iframe while still in the Maker Portal. No
+    publish step needed. Best for CI validation of generated form structure.
+  </Feature>
+  <Feature icon={<Rocket />} title="Played App (via Power Apps)">
+    Play the generated app from the Apps page — opens in a new tab as a full Canvas App.
+    Tests the real runtime experience end-to-end.
+  </Feature>
+</Features>
+
+## Playwright Project Setup
+
+Add a dedicated project for Gen UX tests in `playwright.config.ts`:
+
+```typescript
+import { getStorageStatePath } from 'power-platform-playwright-toolkit';
+
+export default defineConfig({
+  projects: [
+    // ... other projects ...
+    {
+      name: 'gen-ux',
+      testDir: path.join(getEnvironmentConfig().testDirectory, 'gen-ux'),
+      testMatch: '**/*.test.ts',
+      use: {
+        // Uses default (Maker Portal) storage state — same as Canvas App auth
+        storageState: process.env.MS_AUTH_EMAIL
+          ? getStorageStatePath(process.env.MS_AUTH_EMAIL)
+          : undefined,
+      },
+    },
+  ],
+});
+```
+
+Run Gen UX tests with:
+
+```bash
+npx playwright test --project=gen-ux
+```
+
+## Environment Variables
+
+<EnvTable
+  vars={[
+    { name: 'MAKER_PORTAL_URL', required: false, description: 'Maker Portal URL. Defaults to https://make.powerapps.com. Use the preview URL for pre-release features.', example: 'https://make.preview.powerapps.com' },
+    { name: 'POWER_APPS_BASE_URL', required: false, description: 'Fallback base URL for Maker Portal if MAKER_PORTAL_URL is not set', example: 'https://make.powerapps.com' },
+    { name: 'POWER_APPS_ENVIRONMENT_ID', required: false, description: 'Environment GUID — used for direct /environments/:id/apps navigation', example: 'Default-00000000-xxxx-xxxx-xxxx-xxxxxxxxxxxx' },
+    { name: 'MS_AUTH_EMAIL', required: true, description: 'Maker Portal account email — must have Power Apps Maker licence', example: 'maker@contoso.com' },
+  ]}
+/>
+
+## Launching the Gen UX Designer
+
+```typescript
+import { test } from '@playwright/test';
+import { AppProvider, AppType, GenUxPage } from 'power-platform-playwright-toolkit';
+
+const MAKER_PORTAL_URL =
+  process.env.MAKER_PORTAL_URL ??
+  process.env.POWER_APPS_BASE_URL ??
+  'https://make.powerapps.com';
+
+test.beforeEach(async ({ page, context }) => {
+  const appProvider = new AppProvider(page, context);
+
+  // Launch the Power Apps Maker Portal
+  await appProvider.launch({
+    app: 'Power Apps Maker',
+    type: AppType.PowerApps,   // Maker Portal — not a Canvas or MDA app
+    skipMakerPortal: true,
+    directUrl: MAKER_PORTAL_URL,
+  });
+
+  const genUxPage = appProvider.getGenUxPage();
+});
+```
+
+## Workflow: Generate an App with AI
+
+The typical Gen UX test follows this sequence:
+
+```
+Navigate to "Start with Copilot"
+        ↓
+Name the app
+        ↓
+Enter AI prompt → wait for generation
+        ↓
+(Optional) Switch to Preview tab → test inside UCI iframe
+        ↓
+(Optional) Navigate to Apps page → Play app in new tab
+```
+
+### Full generation example
+
+```typescript
+import { test, expect } from '@playwright/test';
+import { AppProvider, AppType, GenUxPage } from 'power-platform-playwright-toolkit';
+
+const MAKER_PORTAL_URL = process.env.MAKER_PORTAL_URL ?? 'https://make.powerapps.com';
+
+function makeAppName(): string {
+  const ts = new Date().toISOString().replace(/[-:.TZ]/g, '').slice(0, 14);
+  return `GenUX ContactForm ${ts}`;
+}
+
+test.describe.serial('GenUX — Contact Form', () => {
+  let genUxPage: GenUxPage;
+  const appsCreated: string[] = [];
+
+  test.beforeEach(async ({ browser }) => {
+    const context = await browser.newContext();
+    const page = await context.newPage();
+
+    const appProvider = new AppProvider(page, context);
+    await appProvider.launch({
+      app: 'Power Apps Maker',
+      type: AppType.PowerApps,
+      skipMakerPortal: true,
+      directUrl: MAKER_PORTAL_URL,
+    });
+
+    genUxPage = appProvider.getGenUxPage();
+  });
+
+  test.afterAll(async ({ browser }) => {
+    // Clean up all apps created during this test suite
+    const context = await browser.newContext();
+    const page = await context.newPage();
+    const appProvider = new AppProvider(page, context);
+    await appProvider.launch({
+      app: 'Power Apps Maker',
+      type: AppType.PowerApps,
+      skipMakerPortal: true,
+      directUrl: MAKER_PORTAL_URL,
+    });
+
+    const cleanupPage = appProvider.getGenUxPage();
+    await cleanupPage.goToAppsPage();
+    await cleanupPage.deleteAppsMatchingPrefix('GenUX ContactForm');
+    await context.close();
+  });
+
+  test('should generate a contact form and verify fields in Preview', async () => {
+    const appName = makeAppName();
+    appsCreated.push(appName);
+
+    // Phase 1: Navigate to GenUX designer
+    await genUxPage.goToAppsPage();
+    await genUxPage.clickNewAppWithCopilot();
+
+    // Phase 2: Set app name
+    await genUxPage.setAppName(appName);
+
+    // Phase 3: Enter AI prompt and generate
+    await genUxPage.enterPrompt(
+      'Build a contact form with First Name, Last Name, and Email fields.'
+    );
+    await genUxPage.clickGenerate();
+    await genUxPage.waitForGeneration();     // Waits up to 120s for AI generation
+
+    // Phase 4: Switch to Preview tab
+    await genUxPage.clickPreviewTab();
+    await genUxPage.waitForGeneratedContent();
+
+    // Verify fields are visible inside the UCI Preview iframe
+    const firstName = await findFormInput(genUxPage.previewFrame, 'firstName');
+    const lastName  = await findFormInput(genUxPage.previewFrame, 'lastName');
+    const email     = await findFormInput(genUxPage.previewFrame, 'email');
+
+    await expect(firstName).toBeVisible();
+    await expect(lastName).toBeVisible();
+    await expect(email).toBeVisible();
+
+    // Phase 5: Fill and submit form in preview
+    await firstName.fill('Jane');
+    await lastName.fill('Doe');
+    await email.fill('jane.doe@contoso.com');
+
+    await genUxPage.submitForm();
+    await genUxPage.waitForSubmitSuccess();
+  });
+});
+```
+
+## Mode 1: Testing Inside the Designer (UCI Preview iframe)
+
+The generated app renders inside an `iframe[title="UCI Preview"]` in the Maker Portal. Access it
+via `genUxPage.previewFrame`:
+
+```typescript
+// The previewFrame is a FrameLocator — Playwright auto-waits for the iframe
+const frame = genUxPage.previewFrame;
+
+// Find form inputs using the multi-strategy helper
+import { findFormInput } from '@/utils/gen-ux/gen-ux-utils';
+
+const firstNameInput = await findFormInput(frame, 'firstName');
+const emailInput     = await findFormInput(frame, 'email');
+
+await firstNameInput.fill('John');
+await emailInput.fill('john@contoso.com');
+
+// Submit
+await genUxPage.submitForm();
+await genUxPage.waitForSubmitSuccess();
+```
+
+### `findFormInput` helper
+
+`findFormInput` tries multiple locator strategies for generated forms where field naming is
+non-deterministic:
+
+```typescript
+// In your utils/gen-ux/gen-ux-utils.ts
+import { findFormInput } from '@/utils/gen-ux/gen-ux-utils';
+
+// Works with Page or FrameLocator
+const input = await findFormInput(genUxPage.previewFrame, 'firstName');
+const input2 = await findFormInput(page, 'email');
+```
+
+**Strategy order:**
+1. `getByLabel(/firstName/i)` — accessible labels (most reliable)
+2. `getByRole('textbox', { name: /firstName/i })` — ARIA textbox with accessible name
+3. `getByPlaceholder(/firstName/i)` — placeholder text (common in generated forms)
+4. `getByTestId('firstName')` — data-testid attribute
+5. Pattern fallback via `GenUxConstants.FIELD_PATTERNS` — handles "First Name" → `firstName`
+
+### Verify the Code tab
+
+```typescript
+await genUxPage.clickCodeTab();
+await genUxPage.waitForCodeTabContent();
+
+const code = await genUxPage.getCodeTabContent();
+expect(code.length).toBeGreaterThan(0);
+expect(code).toContain('Patch(');   // Generated code typically uses Patch() to write to Dataverse
+```
+
+## Mode 2: Playing the Generated App (Full Canvas Runtime)
+
+After generation, you can navigate to the Apps page, find the app, and play it in a new tab.
+This exercises the real Canvas App player — the same experience end users see.
+
+```typescript
+test('should play generated app and submit form', async () => {
+  const appName = makeAppName();
+
+  // ... generate the app (same as above) ...
+
+  // Navigate to Apps list
+  await genUxPage.goToAppsPage();
+
+  // Search for app and click Play — returns the new tab Page, or null if not published
+  const appPage = await genUxPage.searchAndPlayApp(appName, context);
+
+  // App may not be immediately playable (needs publish step)
+  test.skip(!appPage, 'App not yet published — skipping play test');
+  if (!appPage) return;
+
+  await appPage.waitForLoadState('networkidle');
+
+  // Now interact with the full Canvas App (same locators as a regular Canvas App)
+  const firstNameInput = await findFormInput(appPage, 'firstName');
+  await firstNameInput.fill('John');
+  // ... rest of form ...
+
+  const submitBtn = appPage
+    .getByRole('button', { name: /submit/i })
+    .or(appPage.getByRole('button', { name: /save/i }));
+  await submitBtn.first().click();
+
+  const success = appPage.getByText(/submitted|saved|success|created/i).first();
+  await success.waitFor({ state: 'visible', timeout: 30_000 });
+});
+```
+
+<Callout type="tip">
+  A newly generated app may not be immediately playable from the Apps page until it has been
+  published. Use `test.skip(!appPage, ...)` to gracefully skip rather than fail the test.
+</Callout>
+
+## GenUxPage API Reference
+
+| Method | Description |
+|--------|-------------|
+| `goToAppsPage()` | Navigate to the Apps list in Maker Portal |
+| `clickNewAppWithCopilot()` | Click "New app" → "Start with Copilot" |
+| `setAppName(name)` | Enter the app name in the naming dialog |
+| `enterPrompt(text)` | Type the AI generation prompt |
+| `clickGenerate()` | Click the Generate button |
+| `waitForGeneration()` | Wait for AI generation to complete (up to 120s) |
+| `clickPreviewTab()` | Switch to the Preview tab in the designer |
+| `waitForGeneratedContent()` | Wait for content to render in the Preview iframe |
+| `previewFrame` | `FrameLocator` scoped to `iframe[title="UCI Preview"]` |
+| `submitForm()` | Click the Submit/Save button in the Preview |
+| `waitForSubmitSuccess()` | Wait for success notification after submit |
+| `clickCodeTab()` | Switch to the Code tab |
+| `waitForCodeTabContent()` | Wait for code to render |
+| `getCodeTabContent()` | Get the full generated code as a string |
+| `getAppIdFromUrl()` | Extract the app ID from the current URL |
+| `searchAndPlayApp(name, ctx)` | Find app in list, click Play, return new tab |
+| `deleteAppsMatchingPrefix(prefix)` | Bulk-delete apps whose names start with prefix |
+
+## Shared Test Steps Pattern
+
+For larger test suites, extract setup/teardown into shared helpers:
+
+```typescript
+// utils/gen-ux/shared-test-steps.ts
+import { GenUxPage } from 'power-platform-playwright-toolkit';
+
+interface SetupOptions {
+  aiPrompt: string;
+}
+
+export async function performGenUxBasicSetup(
+  genUxPage: GenUxPage,
+  appName: string,
+  options: SetupOptions
+): Promise<void> {
+  await genUxPage.goToAppsPage();
+  await genUxPage.clickNewAppWithCopilot();
+  await genUxPage.setAppName(appName);
+  await genUxPage.enterPrompt(options.aiPrompt);
+  await genUxPage.clickGenerate();
+  await genUxPage.waitForGeneration();
+}
+
+export async function performGenUxBasicTeardown(
+  genUxPage: GenUxPage,
+  appNames: string[]
+): Promise<void> {
+  for (const name of appNames) {
+    await genUxPage.goToAppsPage();
+    await genUxPage.deleteAppsMatchingPrefix(name);
+  }
+}
+```
+
+Use in tests:
+
+```typescript
+import {
+  performGenUxBasicSetup,
+  performGenUxBasicTeardown,
+} from '@/utils/gen-ux/shared-test-steps';
+
+test.beforeEach(async () => {
+  await performGenUxBasicSetup(genUxPage, appName, {
+    aiPrompt: 'Build a contact form with First Name, Last Name, and Email fields.',
+  });
+});
+
+test.afterEach(async () => {
+  await performGenUxBasicTeardown(genUxPage, appsCreated);
+});
+```
+
+## GenUxConstants
+
+The toolkit exports `GenUxConstants` with pre-defined test data and field pattern matchers:
+
+```typescript
+import { GenUxConstants } from 'power-platform-playwright-toolkit';
+
+// Pre-defined valid test data
+const data = GenUxConstants.VALID_FORM_DATA;
+// { firstName: 'John', lastName: 'Doe', email: 'john.doe@example.com' }
+
+// Edge case data for boundary testing
+const edge = GenUxConstants.EDGE_CASE_DATA;
+// { firstName: "O'Brien", lastName: 'Müller-Schmidt', email: 'test+alias@example.com' }
+
+// Regex patterns for field name matching
+const patterns = GenUxConstants.FIELD_PATTERNS;
+// { FIRSTNAME: /first\s*name/i, LASTNAME: /last\s*name/i, EMAIL: /e-?mail/i, ... }
+```
+
+## Best Practices
+
+<Callout type="warning">
+  Gen UX tests are **non-deterministic** — AI generation may produce slightly different selectors,
+  layouts, or code each run. Design tests to be resilient to this variation.
+</Callout>
+
+| Practice | Reason |
+|----------|--------|
+| Use `test.describe.serial()` | Generation is slow — avoid parallel runs in the same suite |
+| Always clean up created apps in `afterAll` | Prevent environment pollution |
+| Use `findFormInput()` with multi-strategy fallback | Generated field names/labels vary |
+| Accept flexible success patterns (`/submitted\|saved\|success/i`) | Success messages are AI-generated |
+| Use `test.skip(!appPage, ...)` for play tests | Apps may not be published yet |
+| Set unique timestamped app names | Avoid collisions between parallel test suite runs |
+
+## Next Steps
+
+<Cards>
+  <Card icon={<Rocket />} title="Getting Started" href="/guide/getting-started">
+    Set up your Playwright project from scratch
+  </Card>
+  <Card icon={<Lock />} title="Authentication" href="/guide/authentication">
+    Configure Maker Portal storage state
+  </Card>
+  <Card icon={<BookOpen />} title="Canvas Apps" href="/guide/canvas-apps">
+    Test played Canvas Apps and their controls
+  </Card>
+  <Card icon={<Code2 />} title="API Reference" href="/reference">
+    Full GenUxPage TypeDoc reference
+  </Card>
+</Cards>

@@ -1,0 +1,9 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/rush/v5/common-versions.schema.json",
+
+  "preferredVersions": {
+    "typescript": "^5.9.3"
+  },
+
+  "allowedAlternativeVersions": {}
+}

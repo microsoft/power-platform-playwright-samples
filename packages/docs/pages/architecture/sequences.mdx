@@ -1,0 +1,351 @@
+# Sequence Diagrams
+
+This page shows detailed interaction flows between components.
+
+> **Note:** These diagrams illustrate how different components collaborate to accomplish common tasks.
+
+## Sequence 1: Launch App by ID using AppProvider
+
+This is the most common and fastest way to launch and test an app.
+
+```mermaid
+sequenceDiagram
+    actor Customer
+    participant Provider as AppProvider
+    participant Factory as AppLauncherFactory
+    participant Launcher as IAppLauncher<br/>(CanvasAppPage)
+    participant Page as Playwright Page
+    participant App as Canvas App
+
+    Customer->>Provider: new AppProvider(page)
+    activate Provider
+    Provider-->>Customer: provider instance
+    deactivate Provider
+
+    Customer->>Provider: launch({app: {id: 'abc-123'}, type: Canvas})
+    activate Provider
+
+    Provider->>Factory: createLauncher(page, AppType.Canvas)
+    activate Factory
+
+    Factory->>Factory: Check cache
+    alt Launcher exists in cache
+        Factory-->>Provider: Return cached launcher
+    else Launcher not in cache
+        Factory->>Launcher: new CanvasAppPage(page)
+        activate Launcher
+        Launcher-->>Factory: launcher instance
+        deactivate Launcher
+        Factory->>Factory: Store in cache
+        Factory-->>Provider: Return new launcher
+    end
+    deactivate Factory
+
+    Provider->>Provider: Store as currentLauncher
+    Provider->>Launcher: launchById('abc-123', baseUrl, Play, options)
+    activate Launcher
+
+    Launcher->>Launcher: Set canvasAppId = 'abc-123'
+    Launcher->>Launcher: Build app URL
+
+    Launcher->>Page: goto(appUrl)
+    activate Page
+    Page->>App: Navigate to app
+    activate App
+    App-->>Page: Page loaded
+    deactivate App
+    Page-->>Launcher: Navigation complete
+    deactivate Page
+
+    Launcher->>Launcher: waitForAppLoad()
+    Launcher->>Page: waitForSelector('iframe[name="app-player"]')
+    activate Page
+    Page-->>Launcher: iframe found
+    deactivate Page
+
+    Launcher->>Launcher: canvasPlayerFrame = frameLocator()
+    Launcher->>Launcher: canvasAppReady = true
+    Launcher-->>Provider: App launched successfully
+    deactivate Launcher
+
+    Provider->>Provider: storeAppMetadata()
+    Provider-->>Customer: Launch complete
+    deactivate Provider
+
+    Note over Customer,App: App is now ready for testing
+
+    Customer->>Provider: click({name: 'Submit'})
+    activate Provider
+    Provider->>Launcher: clickControl({name: 'Submit'})
+    activate Launcher
+    Launcher->>Launcher: getControl({name: 'Submit'})
+    Launcher->>Page: frameLocator().getByRole('button', {name: 'Submit'})
+    activate Page
+    Page->>App: Click button
+    activate App
+    App-->>Page: Button clicked
+    deactivate App
+    Page-->>Launcher: Click complete
+    deactivate Page
+    Launcher-->>Provider: Click complete
+    deactivate Launcher
+    Provider-->>Customer: Click complete
+    deactivate Provider
+```
+
+### Key Points
+
+- Factory caching improves performance
+- App launch happens in iframe for Canvas apps
+- All interactions go through the provider for consistency
+- State is tracked automatically
+
+## Sequence 2: Launch App by Name using AppProvider
+
+When you don't have the app ID, you can launch by name (requires PowerAppsPage).
+
+```mermaid
+sequenceDiagram
+    actor Customer
+    participant PowerApps as PowerAppsPage
+    participant Provider as AppProvider
+    participant Factory as AppLauncherFactory
+    participant Launcher as IAppLauncher<br/>(CanvasAppPage)
+    participant Page as Playwright Page
+    participant MakerPortal as Maker Portal
+    participant App as Canvas App
+
+    Customer->>PowerApps: new PowerAppsPage(page)
+    activate PowerApps
+    PowerApps-->>Customer: powerApps instance
+    deactivate PowerApps
+
+    Customer->>PowerApps: navigateToApps()
+    activate PowerApps
+    PowerApps->>Page: goto('/apps')
+    activate Page
+    Page->>MakerPortal: Navigate to apps page
+    activate MakerPortal
+    MakerPortal-->>Page: Apps page loaded
+    deactivate MakerPortal
+    Page-->>PowerApps: Navigation complete
+    deactivate Page
+    PowerApps-->>Customer: On apps page
+    deactivate PowerApps
+
+    Customer->>Provider: new AppProvider(page, powerApps.findApp)
+    activate Provider
+    Provider-->>Customer: provider instance
+    deactivate Provider
+
+    Customer->>Provider: launch({app: {name: 'My Sales App'}, type: Canvas})
+    activate Provider
+
+    Provider->>Factory: createLauncher(page, AppType.Canvas)
+    activate Factory
+    Factory->>Launcher: new CanvasAppPage(page)
+    activate Launcher
+    Launcher-->>Factory: launcher instance
+    deactivate Launcher
+    Factory-->>Provider: launcher
+    deactivate Factory
+
+    Provider->>Provider: launchByName('My Sales App', Play, options)
+    Provider->>PowerApps: findApp('My Sales App')
+    activate PowerApps
+
+    PowerApps->>Page: locator('[role="searchbox"]').fill('My Sales App')
+    activate Page
+    Page->>MakerPortal: Search for app
+    activate MakerPortal
+    MakerPortal-->>Page: Search results
+    deactivate MakerPortal
+    Page-->>PowerApps: Search complete
+    deactivate Page
+
+    PowerApps->>Page: getByRole('link', {name: 'My Sales App'})
+    activate Page
+    Page-->>PowerApps: app locator
+    deactivate Page
+    PowerApps-->>Provider: app locator
+    deactivate PowerApps
+
+    Provider->>Launcher: launchByName('My Sales App', findApp, Play, options)
+    activate Launcher
+
+    Launcher->>Page: appLocator.click()
+    activate Page
+    Page->>MakerPortal: Click app
+    activate MakerPortal
+    MakerPortal-->>Page: App details shown
+    deactivate MakerPortal
+    Page-->>Launcher: Click complete
+    deactivate Page
+
+    Launcher->>Page: getByRole('button', {name: 'Play'}).click()
+    activate Page
+    Page->>App: Launch app in play mode
+    activate App
+    App-->>Page: App launched
+    deactivate App
+    Page-->>Launcher: Launch complete
+    deactivate Page
+
+    Launcher->>Launcher: waitForAppLoad()
+    Launcher->>Launcher: canvasAppReady = true
+    Launcher-->>Provider: App launched successfully
+    deactivate Launcher
+
+    Provider-->>Customer: Launch complete
+    deactivate Provider
+```
+
+### Key Points
+
+- Requires navigation to maker portal first
+- Uses search to find app by name
+- Slower than launching by ID
+- Useful when ID is unknown
+
+## Sequence 3: Create and Test Canvas App using PowerAppsPage
+
+For scenarios where you need to create a new app from scratch.
+
+```mermaid
+sequenceDiagram
+    actor Customer
+    participant PowerApps as PowerAppsPage
+    participant Canvas as CanvasAppPage
+    participant Page as Playwright Page
+    participant Studio as Canvas Studio
+
+    Customer->>PowerApps: new PowerAppsPage(page)
+    activate PowerApps
+    PowerApps->>Canvas: new CanvasAppPage(page)
+    activate Canvas
+    Canvas-->>PowerApps: canvas instance
+    deactivate Canvas
+    PowerApps-->>Customer: powerApps instance
+    deactivate PowerApps
+
+    Customer->>PowerApps: navigateToApps()
+    activate PowerApps
+    PowerApps->>Page: goto('/apps')
+    activate Page
+    Page-->>PowerApps: Navigation complete
+    deactivate Page
+    PowerApps-->>Customer: On apps page
+    deactivate PowerApps
+
+    Customer->>PowerApps: canvas.createBlankCanvasApp('TestApp')
+    activate PowerApps
+    PowerApps->>Canvas: createBlankCanvasApp('TestApp')
+    activate Canvas
+
+    Canvas->>Page: getByTestId('new-app').click()
+    activate Page
+    Page->>Studio: Open create dialog
+    activate Studio
+    Studio-->>Page: Dialog opened
+    deactivate Studio
+    Page-->>Canvas: Click complete
+    deactivate Page
+
+    Canvas->>Page: getByTestId('canvas-app-create-text').fill('TestApp')
+    activate Page
+    Page->>Studio: Fill app name
+    activate Studio
+    Studio-->>Page: Name filled
+    deactivate Studio
+    Page-->>Canvas: Fill complete
+    deactivate Page
+
+    Canvas->>Page: getByTestId('canvas-app-create-button').click()
+    activate Page
+    Page->>Studio: Create app
+    activate Studio
+    Studio-->>Page: App created, studio loading
+    deactivate Studio
+    Page-->>Canvas: Create complete
+    deactivate Page
+
+    Canvas->>Canvas: waitForStudioLoad()
+    Canvas->>Page: waitForSelector('[data-automation-id="canvas-pane"]')
+    activate Page
+    Page-->>Canvas: Studio loaded
+    deactivate Page
+
+    Canvas-->>PowerApps: App created
+    deactivate Canvas
+    PowerApps-->>Customer: App created
+    deactivate PowerApps
+
+    Customer->>PowerApps: canvas.addButton()
+    activate PowerApps
+    PowerApps->>Canvas: addButton()
+    activate Canvas
+
+    Canvas->>Page: getByRole('button', {name: 'Insert'}).click()
+    activate Page
+    Page->>Studio: Open insert menu
+    activate Studio
+    Studio-->>Page: Menu opened
+    deactivate Studio
+    Page-->>Canvas: Menu opened
+    deactivate Page
+
+    Canvas->>Page: getByText('Button').click()
+    activate Page
+    Page->>Studio: Add button control
+    activate Studio
+    Studio-->>Page: Button added
+    deactivate Studio
+    Page-->>Canvas: Button added
+    deactivate Page
+
+    Canvas-->>PowerApps: Button added
+    deactivate Canvas
+    PowerApps-->>Customer: Button added
+    deactivate PowerApps
+
+    Customer->>PowerApps: canvas.saveApp()
+    activate PowerApps
+    PowerApps->>Canvas: saveApp()
+    activate Canvas
+
+    Canvas->>Page: keyboard.press('Control+S')
+    activate Page
+    Page->>Studio: Save app
+    activate Studio
+    Studio-->>Page: App saved
+    deactivate Studio
+    Page-->>Canvas: Save complete
+    deactivate Page
+
+    Canvas-->>PowerApps: App saved
+    deactivate Canvas
+    PowerApps-->>Customer: App saved
+    deactivate PowerApps
+```
+
+### Key Points
+
+- PowerAppsPage composes CanvasAppPage
+- Studio operations available
+- Full app lifecycle management
+- Useful for integration tests
+
+## Pattern Comparison
+
+| Pattern             | Complexity | Speed     | Use Case              |
+| ------------------- | ---------- | --------- | --------------------- |
+| Launch by ID        | Low        | Fast ⚡   | Testing existing apps |
+| Launch by Name      | Medium     | Moderate  | When ID unknown       |
+| Create and Test     | High       | Slow      | Integration tests     |
+
+## Next Steps
+
+- [Usage Patterns](/architecture/patterns) - Learn when to use each pattern
+- [Core Components](/architecture/components) - Understand the class structure
+- [Extending the Toolkit](/architecture/extending) - Add new app types
+- [Getting Started](/guide/getting-started) - Start writing tests

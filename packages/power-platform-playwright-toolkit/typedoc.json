@@ -1,0 +1,54 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": ["./src/index.ts"],
+  "out": "../docs/pages/reference",
+  "plugin": ["typedoc-plugin-markdown"],
+  "excludePrivate": true,
+  "excludeProtected": false,
+  "excludeInternal": true,
+  "readme": "none",
+  "exclude": ["**/node_modules/**", "**/_media/**", "**/*.test.ts", "**/*.spec.ts"],
+  "name": "Power Platform Playwright Toolkit",
+  "includeVersion": true,
+  "sort": ["source-order", "alphabetical"],
+  "navigation": {
+    "includeCategories": true,
+    "includeGroups": true,
+    "includeFolders": true
+  },
+  "categorizeByGroup": true,
+  "categoryOrder": [
+    "Core",
+    "Page Object Models",
+    "App-Specific Helpers",
+    "Locators",
+    "Types",
+    "Authentication",
+    "API Testing",
+    "Accessibility Testing",
+    "Utilities",
+    "Test Annotations",
+    "Test Logging",
+    "*"
+  ],
+  "commentStyle": "jsdoc",
+  "validation": {
+    "notExported": false,
+    "invalidLink": true,
+    "notDocumented": false
+  },
+  "visibilityFilters": {
+    "protected": false,
+    "private": false,
+    "inherited": true,
+    "external": false
+  },
+  "searchInComments": true,
+  "cleanOutputDir": true,
+  "treatWarningsAsErrors": false,
+  "treatValidationWarningsAsErrors": false,
+  "logLevel": "Info",
+  "sourceLinkTemplate": "https://github.com/microsoft/power-platform-playwright-samples/blob/{gitRevision}/{path}#L{line}",
+  "gitRevision": "main",
+  "gitRemote": "origin"
+}

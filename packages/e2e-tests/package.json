@@ -1,0 +1,41 @@
+{
+  "name": "@power-platform-playwright/e2e-tests",
+  "version": "0.0.1",
+  "description": "Sample Playwright tests for Microsoft Power Platform applications",
+  "private": true,
+  "license": "MIT",
+  "author": "Microsoft",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/microsoft/power-platform-playwright-samples.git",
+    "directory": "packages/e2e-tests"
+  },
+  "scripts": {
+    "build": "tsc --noEmit",
+    "auth": "tsx scripts/authenticate.ts",
+    "auth:headful": "tsx scripts/authenticate.ts --headful",
+    "auth:mda": "tsx scripts/authenticate.ts --mda",
+    "auth:mda:headful": "tsx scripts/authenticate.ts --headful --mda",
+    "record:apis": "tsx scripts/record-apis.ts",
+    "record:apis:headful": "tsx scripts/record-apis.ts --headful",
+    "test": "playwright test",
+    "test:headful": "playwright test --headed",
+    "test:debug": "playwright test --debug",
+    "test:ui": "playwright test --ui",
+    "report": "playwright show-report",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\""
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.57.0",
+    "@types/node": "^25.0.3",
+    "dotenv": "^16.4.7",
+    "playwright-ai-reporter": "^0.0.9",
+    "prettier": "^3.7.4",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "power-platform-playwright-toolkit": "workspace:*"
+  }
+}

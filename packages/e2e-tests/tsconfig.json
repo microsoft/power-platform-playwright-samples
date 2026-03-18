@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "commonjs",
+    "lib": ["ES2020", "DOM"],
+    "strict": false,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "types": ["node", "@playwright/test"],
+    "allowSyntheticDefaultImports": true,
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/utils/*": ["utils/*"],
+      "@/tests/*": ["tests/*"],
+      "@/fixtures/*": ["fixtures/*"]
+    }
+  },
+  "include": ["playwright.config.ts", "tests/**/*", "fixtures/**/*", "scripts/**/*", "utils/**/*"],
+  "exclude": ["node_modules", "test-results", "playwright-report"]
+}

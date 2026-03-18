@@ -1,0 +1,4 @@
+# .npmrc file used by rush publish, the auth token is passed as an environment variable by the CI pipeline
+//registry.npmjs.org/:_authToken=${NPM_TOKEN}
+registry=https://registry.npmjs.org/
+always-auth=true

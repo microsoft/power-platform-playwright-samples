@@ -1,0 +1,394 @@
+# Quick Reference Card
+
+## 🚀 Launch Your App (3 Ways)
+
+### Method 1: By ID (Fastest - Recommended)
+
+```typescript
+import { AppProvider, AppType, AppLaunchMode } from '../lib';
+
+const provider = new AppProvider(page);
+
+await provider.launch({
+  app: { id: 'your-app-id-here' },
+  type: AppType.Canvas,
+  mode: AppLaunchMode.Play,
+  baseUrl: 'https://make.powerapps.com',
+});
+```
+
+### Method 2: By Name
+
+```typescript
+import { PowerAppsPage, AppProvider } from '../lib';
+
+const powerApps = new PowerAppsPage(page);
+await powerApps.navigateToApps();
+
+const provider = new AppProvider(page, powerApps.findApp.bind(powerApps));
+
+await provider.launch({
+  app: { name: 'My Sales App' },
+  type: AppType.Canvas,
+  mode: AppLaunchMode.Play,
+});
+```
+
+### Method 3: Simple String (treated as name)
+
+```typescript
+await provider.launch({
+  app: 'My Sales App',
+  type: AppType.Canvas,
+});
+```
+
+---
+
+## 🎮 Interact with Your App
+
+### Click a Control
+
+```typescript
+import { CanvasControlType } from '../lib';
+
+await provider.click({
+  name: 'Submit',
+  type: CanvasControlType.Button,
+});
+```
+
+### Fill a Text Input
+
+```typescript
+await provider.fill(
+  {
+    name: 'Email',
+    type: CanvasControlType.TextInput,
+  },
+  'user@example.com'
+);
+```
+
+### Fill Entire Form
+
+```typescript
+await provider.fillForm({
+  'First Name': 'John',
+  'Last Name': 'Doe',
+  Email: 'john.doe@example.com',
+  Phone: '555-0123',
+});
+```
+
+### Get a Control
+
+```typescript
+const submitButton = provider.getControl({
+  name: 'Submit',
+  type: CanvasControlType.Button,
+});
+
+await submitButton.click();
+```
+
+---
+
+## ✅ Assertions
+
+### Assert Control is Visible
+
+```typescript
+await provider.assertVisible({
+  name: 'Success Message',
+});
+```
+
+### Assert Control Text
+
+```typescript
+await provider.assertText(
+  {
+    name: 'Status Label',
+  },
+  'Success'
+);
+```
+
+---
+
+## 📊 Check App State
+
+```typescript
+// Is app ready?
+const ready = provider.isReady();
+
+// Get current app type
+const type = provider.getCurrentAppType(); // AppType.Canvas
+
+// Get current app ID
+const id = provider.getCurrentAppId();
+
+// Get current app URL
+const url = provider.getCurrentAppUrl();
+
+// Get all launched apps
+const apps = provider.getLaunchedApps();
+console.log(`Tested ${apps.length} apps`);
+```
+
+---
+
+## 🧹 Clean Up
+
+```typescript
+// Close current app
+await provider.close();
+
+// Reset provider state
+provider.reset();
+
+// Clear factory cache (between tests)
+import { AppLauncherFactory } from '../lib';
+AppLauncherFactory.clearCache();
+```
+
+---
+
+## 📝 Complete Test Example
+
+```typescript
+import { test, expect } from '@playwright/test';
+import { AppProvider, AppType, AppLaunchMode, CanvasControlType } from '../lib';
+
+test('Test my Canvas app', async ({ page }) => {
+  const provider = new AppProvider(page);
+
+  // Launch app
+  await provider.launch({
+    app: { id: process.env.CANVAS_APP_ID! },
+    type: AppType.Canvas,
+    mode: AppLaunchMode.Play,
+    baseUrl: 'https://make.powerapps.com',
+  });
+
+  // Interact
+  await provider.fillForm({
+    Name: 'John Doe',
+    Email: 'john@example.com',
+  });
+
+  await provider.click({
+    name: 'Submit',
+    type: CanvasControlType.Button,
+  });
+
+  // Assert
+  await provider.assertVisible({ name: 'Success' });
+  await provider.assertText({ name: 'Status' }, 'Submitted');
+
+  // Clean up
+  await provider.close();
+});
+```
+
+---
+
+## 🎯 App Types
+
+```typescript
+import { AppType } from '../lib';
+
+AppType.Canvas; // Canvas Apps
+AppType.ModelDriven; // Model Driven Apps
+AppType.Portal; // Portal Apps (coming soon)
+```
+
+---
+
+## 🔄 Launch Modes
+
+```typescript
+import { AppLaunchMode } from '../lib';
+
+AppLaunchMode.Play; // Play mode (runtime)
+AppLaunchMode.Edit; // Edit mode (studio)
+AppLaunchMode.Preview; // Preview mode
+```
+
+---
+
+## 🎨 Canvas Control Types
+
+```typescript
+import { CanvasControlType } from '../lib';
+
+CanvasControlType.Button;
+CanvasControlType.TextInput;
+CanvasControlType.Label;
+CanvasControlType.Dropdown;
+CanvasControlType.Checkbox;
+CanvasControlType.DatePicker;
+CanvasControlType.Gallery;
+// ... and 20+ more
+```
+
+---
+
+## 🗂️ Model Driven Control Types
+
+```typescript
+import { ModelDrivenControlType } from '../lib';
+
+ModelDrivenControlType.Button;
+ModelDrivenControlType.TextInput;
+ModelDrivenControlType.Dropdown;
+ModelDrivenControlType.Checkbox;
+ModelDrivenControlType.DatePicker;
+ModelDrivenControlType.Lookup;
+ModelDrivenControlType.NavigationItem;
+// ... and more
+```
+
+---
+
+## 🔧 Advanced: Factory Pattern
+
+```typescript
+import { AppLauncherFactory, AppType } from '../lib';
+
+// Create launcher
+const launcher = AppLauncherFactory.createLauncher(page, AppType.Canvas);
+
+// Launch by ID
+await launcher.launchById('app-id', 'https://make.powerapps.com', AppLaunchMode.Play);
+
+// Interact
+await launcher.clickControl({ name: 'Submit' });
+await launcher.fillControl({ name: 'Email' }, 'test@example.com');
+
+// State
+const ready = launcher.isAppReady();
+const id = launcher.getAppId();
+const url = launcher.getAppUrl();
+
+// Clean up
+await launcher.closeApp();
+launcher.reset();
+```
+
+---
+
+## 📚 Documentation
+
+| Document                                                                                                              | Description                      |
+| --------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
+| [Getting Started](/guide/getting-started)                                                                             | Complete guide with examples     |
+| [Architecture Overview](/architecture/overview)                                                                       | System architecture and patterns |
+| [Architecture Diagram](/architecture/diagram)                                                                         | Visual architecture diagram      |
+| [API Reference](/reference)                                                                                           | Complete API documentation       |
+| [Example Tests](https://github.com/microsoft/power-platform-playwright-samples/tree/main/packages/e2e-tests/tests) | Runnable test examples           |
+
+---
+
+## 🌟 Best Practices
+
+### 1. Use Environment Variables
+
+```typescript
+const appId = process.env.CANVAS_APP_ID!;
+const baseUrl = process.env.BASE_URL || 'https://make.powerapps.com';
+```
+
+### 2. Launch by ID for Speed
+
+```typescript
+// ✅ Fast
+await provider.launch({ app: { id: 'abc-123' }, type: AppType.Canvas });
+
+// ❌ Slower (requires navigation and search)
+await provider.launch({ app: { name: 'My App' }, type: AppType.Canvas });
+```
+
+### 3. Proper Setup and Teardown
+
+```typescript
+test.beforeEach(async ({ page }) => {
+  provider = new AppProvider(page);
+});
+
+test.afterEach(async () => {
+  await provider.close();
+  provider.reset();
+});
+```
+
+### 4. Use test.step() for Organization
+
+```typescript
+await test.step('Launch app', async () => {
+  await provider.launch({ ... });
+});
+
+await test.step('Fill form', async () => {
+  await provider.fillForm({ ... });
+});
+
+await test.step('Verify result', async () => {
+  await provider.assertVisible({ ... });
+});
+```
+
+---
+
+## ❓ Common Scenarios
+
+### Test Multiple Apps
+
+```typescript
+// Test Canvas app
+await provider.launch({ app: { id: 'canvas-id' }, type: AppType.Canvas });
+await provider.click({ name: 'Button1' });
+await provider.close();
+
+// Test Model Driven app
+await provider.launch({ app: { id: 'model-id' }, type: AppType.ModelDriven });
+await provider.click({ name: 'Contacts' });
+await provider.close();
+```
+
+### Error Handling
+
+```typescript
+try {
+  await provider.launch({ app: { id: 'bad-id' }, type: AppType.Canvas });
+} catch (error) {
+  console.error('Launch failed:', error);
+}
+```
+
+### Custom Timeout
+
+```typescript
+await provider.launch({
+  app: { id: 'app-id' },
+  type: AppType.Canvas,
+  options: {
+    timeout: 60000,
+    waitForReady: true,
+  },
+});
+```
+
+---
+
+## 🆘 Need Help?
+
+- Check [Getting Started Guide](/guide/getting-started) for detailed examples
+- Review [Example Tests](https://github.com/microsoft/power-platform-playwright-samples/tree/main/packages/e2e-tests/tests) for code samples
+- See [API Reference](/reference) for complete API documentation
+- Visit [Architecture Overview](/architecture/overview) for system design details
+
+---
+
+**Happy Testing!** 🚀
