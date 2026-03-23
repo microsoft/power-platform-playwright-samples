@@ -35,8 +35,6 @@ jobs:
         with:
           node-version: '20'
           registry-url: 'https://registry.npmjs.org'
-          cache: 'npm'
-          cache-dependency-path: '**/package-lock.json'
 
       - name: Install Rush
         run: npm install -g @microsoft/rush
@@ -47,40 +45,42 @@ jobs:
           git config --local user.email "actions@github.com"
 
       - name: Install dependencies
-        run: |
-          rush update
-          rush install
+        run: rush install
 
       - name: Install prettier
         run: npm install --no-save prettier
 
       - name: Run format check
-        run: |
-          npm run format
-          if ! git diff --quiet; then
-            echo "❌ Formatting issues found. Please run 'npm run format' locally and commit the changes."
-            git diff --name-only
-            exit 1
-          fi
-          echo "✅ No formatting issues found"
+        run: npm run format:check
 
       - name: Run linting
         run: rush lint
 
+      - name: Verify version matches release tag
+        if: github.event_name == 'release'
+        run: |
+          PKG_VERSION=$(node -p "require('./packages/power-platform-playwright-toolkit/package.json').version")
+          RELEASE_TAG="${{ github.event.release.tag_name }}"
+          if [ "v$PKG_VERSION" != "$RELEASE_TAG" ]; then
+            echo "Version mismatch: package.json=$PKG_VERSION, release tag=$RELEASE_TAG"
+            exit 1
+          fi
+          echo "Version verified: $PKG_VERSION matches $RELEASE_TAG"
+
       - name: Update package version (manual dispatch only)
         if: github.event_name == 'workflow_dispatch'
         run: |
-          cd packages/playwright-power-platform-toolkit
+          cd packages/power-platform-playwright-toolkit
           npm version ${{ github.event.inputs.version }} --no-git-tag-version
           echo "Updated version to ${{ github.event.inputs.version }}"
           cat package.json | grep version
 
       - name: Build package
-        run: rush build --to playwright-power-platform-toolkit
+        run: rush build --to power-platform-playwright-toolkit
 
       - name: Verify build output
         run: |
-          cd packages/playwright-power-platform-toolkit
+          cd packages/power-platform-playwright-toolkit
           if [ ! -d "dist" ]; then
             echo "Error: dist/ directory not found"
             exit 1
@@ -104,26 +104,26 @@ jobs:
           echo "## 📦 Package Size" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
-          if [ -d "packages/playwright-power-platform-toolkit/dist" ]; then
-            toolkit_size=$(du -sh packages/playwright-power-platform-toolkit/dist | cut -f1)
-            echo "- **playwright-power-platform-toolkit dist**: \`$toolkit_size\`" >> $GITHUB_STEP_SUMMARY
+          if [ -d "packages/power-platform-playwright-toolkit/dist" ]; then
+            toolkit_size=$(du -sh packages/power-platform-playwright-toolkit/dist | cut -f1)
+            echo "- **power-platform-playwright-toolkit dist**: \`$toolkit_size\`" >> $GITHUB_STEP_SUMMARY
           fi
 
       - name: Run package tests
         run: |
-          cd packages/playwright-power-platform-toolkit
+          cd packages/power-platform-playwright-toolkit
           npm test || echo "No tests configured, skipping"
 
       - name: Create tarball
         run: |
-          cd packages/playwright-power-platform-toolkit
+          cd packages/power-platform-playwright-toolkit
           npm pack
           echo "TARBALL=$(ls *.tgz)" >> $GITHUB_ENV
 
       - name: Get package info
         id: package-info
         run: |
-          cd packages/playwright-power-platform-toolkit
+          cd packages/power-platform-playwright-toolkit
           PACKAGE_VERSION=$(node -p "require('./package.json').version")
           PACKAGE_NAME=$(node -p "require('./package.json').name")
           echo "version=$PACKAGE_VERSION" >> $GITHUB_OUTPUT
@@ -132,7 +132,7 @@ jobs:
 
       - name: Publish to NPM
         run: |
-          cd packages/playwright-power-platform-toolkit
+          cd packages/power-platform-playwright-toolkit
 
           # Determine dist-tag
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
@@ -142,7 +142,7 @@ jobs:
           fi
 
           echo "Publishing with dist-tag: $DIST_TAG"
-          npm publish --provenance --access public --tag $DIST_TAG
+          npm publish --provenance --access public --tag "$DIST_TAG"
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
@@ -150,12 +150,12 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: npm-package
-          path: packages/playwright-power-platform-toolkit/*.tgz
+          path: packages/power-platform-playwright-toolkit/*.tgz
           retention-days: 90
 
       - name: Create GitHub Release (manual dispatch only)
         if: github.event_name == 'workflow_dispatch'
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@153bb8e04406b158c6c84fc1615b65b24149a1fe # v2.6.1
         with:
           tag_name: v${{ steps.package-info.outputs.version }}
           name: Release v${{ steps.package-info.outputs.version }}
@@ -171,7 +171,7 @@ jobs:
 
             ### Changes
             See the [changelog](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details.
-          files: packages/playwright-power-platform-toolkit/*.tgz
+          files: packages/power-platform-playwright-toolkit/*.tgz
           draft: false
           prerelease: ${{ github.event.inputs.tag != 'latest' }}
 
