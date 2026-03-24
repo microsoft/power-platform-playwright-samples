@@ -396,15 +396,107 @@ rush build
 
 ### Run the sample tests
 
+#### Step 1 — Install the Northwind Traders sample solution
+
+The sample tests target the **Northwind Traders** solution, which includes a Model-Driven App, a Canvas App, and a Custom Page. You must install it into your Power Platform environment before running any tests.
+
+Follow the official installation guide: [Install Northwind Traders database and apps](https://learn.microsoft.com/en-us/power-apps/maker/canvas-apps/northwind-install)
+
+Once installed you will have:
+
+- **Northwind Orders (MDA)** — used by the `model-driven-app` test project
+- **Northwind Orders (Canvas)** — used by the `default` test project
+- **Custom Page** — used by the MDA custom page tests
+
+#### Step 2 — Set up environment variables
+
+The tests read all configuration from a `.env` file inside `packages/e2e-tests/`. Copy the example and fill in your values:
+
 ```bash
 cd packages/e2e-tests
-
-# Copy and fill in environment variables
 cp .env.example .env
+```
 
-# Authenticate (first time — opens a browser for sign-in)
+Then open `packages/e2e-tests/.env` and assign values to every variable:
+
+```bash
+# -----------------------------------------------------------------------
+# Power Apps / Maker Portal
+# -----------------------------------------------------------------------
+# Base URL of the Maker Portal (leave as-is unless using a preview URL)
+POWER_APPS_BASE_URL=https://make.powerapps.com
+
+# Your environment GUID — find it in the Maker Portal URL:
+#   make.powerapps.com/environments/<GUID>/...
+POWER_APPS_ENVIRONMENT_ID=Default-00000000-0000-0000-0000-000000000000
+
+# -----------------------------------------------------------------------
+# Model-Driven App
+# -----------------------------------------------------------------------
+# Full URL of your MDA including the ?appid= parameter.
+# How to find: open your app in the browser and copy the URL.
+MODEL_DRIVEN_APP_URL=https://your-org.crm.dynamics.com/main.aspx?appid=00000000-0000-0000-0000-000000000000
+
+# -----------------------------------------------------------------------
+# Canvas App
+# -----------------------------------------------------------------------
+# Option A — component IDs (toolkit builds the play URL automatically):
+#   App ID:    Maker Portal → select app → Details → App ID
+#   Tenant ID: Azure Portal → Azure Active Directory → Overview → Tenant ID
+CANVAS_APP_ID=00000000-0000-0000-0000-000000000000
+CANVAS_APP_TENANT_ID=00000000-0000-0000-0000-000000000000
+
+# Option B — full play URL (takes precedence over IDs above if set):
+# CANVAS_APP_URL=https://apps.powerapps.com/play/e/<env-id>/a/<app-id>?tenantId=<tenant-id>
+
+# -----------------------------------------------------------------------
+# Microsoft Authentication
+# -----------------------------------------------------------------------
+# The email address of the test user account
+MS_AUTH_EMAIL=user@contoso.com
+
+# Password authentication (simplest for local development):
+MS_AUTH_CREDENTIAL_TYPE=password
+MS_AUTH_CREDENTIAL_PROVIDER=environment
+MS_AUTH_ENV_VARIABLE_NAME=MS_USER_PASSWORD
+MS_USER_PASSWORD=your-password-here
+
+# Certificate authentication (recommended for CI/CD — uncomment to use):
+# MS_AUTH_CREDENTIAL_TYPE=certificate
+# MS_AUTH_CREDENTIAL_PROVIDER=local-file
+# MS_AUTH_LOCAL_FILE_PATH=./cert/your-cert.pfx
+# MS_AUTH_CERTIFICATE_PASSWORD=your-cert-password
+
+# Run the auth browser headlessly (set to false to watch the sign-in)
+MS_AUTH_HEADLESS=true
+MS_AUTH_WAIT_FOR_MSAL_TOKENS=true
+MS_AUTH_MSAL_TOKEN_TIMEOUT=30000
+AUTH_ENDPOINT=https://login.microsoftonline.com
+
+# -----------------------------------------------------------------------
+# Test Runner
+# -----------------------------------------------------------------------
+HEADLESS=true
+WORKERS=1
+RETRIES=0
+TEST_TIMEOUT=120000
+OUTPUT_DIRECTORY=./test-results
+```
+
+> All variable descriptions and available options are documented in
+> [`packages/e2e-tests/.env.example`](packages/e2e-tests/.env.example).
+
+#### Step 2 — Authenticate
+
+Run this once to open a browser, complete Microsoft sign-in, and save the session:
+
+```bash
 npm run auth:headful
+```
 
+#### Step 3 — Run tests
+
+```bash
 # Run all tests
 npx playwright test
 
