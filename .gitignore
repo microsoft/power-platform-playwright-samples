@@ -92,6 +92,10 @@ packages/docs/pages/reference/api/
 packages/e2e-tests/.playwright-ms-auth/
 packages/e2e-tests/cert/
 packages/e2e-tests/screenshots/
+packages/e2e-tests/.envcopy
+packages/e2e-tests/test-results*/
+packages/e2e-tests/playwright-report/
+packages/e2e-tests/.playwright-test-results/
 
 # Certificates (never push to source control)
 cert/
