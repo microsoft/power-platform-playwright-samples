@@ -520,6 +520,20 @@ npm run auth:mda:headful
 
 Storage state files are saved automatically to the path returned by `getStorageStatePath(email)` and picked up by `playwright.config.ts` via the `storageState` option.
 
+> **Tokens expired?** If you see `Authentication tokens have expired!` when running tests, simply re-running `npm run auth:headful` may not resolve it because the old state file is still present and being detected as valid by the script. **Delete the stale state file first**, then re-authenticate:
+>
+> ```bash
+> # Delete the stale state file (path printed in the error message), e.g.:
+> rm .playwright-ms-auth/state-<your-email>.json
+>
+> # For MDA tests, also delete the MDA state file:
+> rm .playwright-ms-auth/state-mda-<your-email>.json
+>
+> # Then re-authenticate
+> npm run auth:headful
+> npm run auth:mda:headful
+> ```
+
 #### Step 3 — Run tests
 
 ```bash
