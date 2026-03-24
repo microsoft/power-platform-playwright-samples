@@ -96,8 +96,8 @@ export function validateAuthState(): AuthValidationResult {
       try {
         unlinkSync(storageStatePath);
         console.log(`🗑️  Removed expired state file: ${storageStatePath}`);
-      } catch {
-        // Best-effort cleanup — continue even if delete fails
+      } catch (cleanupError: any) {
+        console.warn(`⚠️  Could not remove expired state file: ${cleanupError.message}`);
       }
 
       let message = 'Authentication tokens have expired!';
