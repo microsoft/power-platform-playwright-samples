@@ -5,7 +5,7 @@
  * Utility to validate authentication state based on test project
  */
 
-import { existsSync } from 'fs';
+import { existsSync, unlinkSync } from 'fs';
 import { getStorageStatePath, ConfigHelper } from 'power-platform-playwright-toolkit';
 import * as path from 'path';
 
@@ -92,12 +92,20 @@ export function validateAuthState(): AuthValidationResult {
       const authCommand =
         projectType === 'mda' ? 'npm run auth:mda:headful' : 'npm run auth:headful';
 
+      // Remove stale state file so re-auth creates a clean one
+      try {
+        unlinkSync(storageStatePath);
+        console.log(`🗑️  Removed expired state file: ${storageStatePath}`);
+      } catch (cleanupError: any) {
+        console.warn(`⚠️  Could not remove expired state file: ${cleanupError.message}`);
+      }
+
       let message = 'Authentication tokens have expired!';
       if (expirationCheck.expiresOn) {
         const expiryDate = new Date(expirationCheck.expiresOn * 1000);
         message += `\nToken expired at: ${expiryDate.toLocaleString()}`;
       }
-      message += `\nPlease re-authenticate: ${authCommand}`;
+      message += `\nStale state file removed. Please re-authenticate: ${authCommand}`;
 
       return {
         valid: false,

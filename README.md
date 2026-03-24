@@ -155,6 +155,9 @@ export default defineConfig({
   use: {
     channel: 'msedge',
     headless: process.env.HEADLESS !== 'false',
+    // Use viewport to control resolution — do NOT combine with --start-maximized
+    // or --window-size in launchOptions.args. Those flags conflict with viewport
+    // and produce inconsistent behaviour across headed and headless modes.
     viewport: { width: 1920, height: 1080 },
     baseURL: ConfigHelper.getBaseUrl(),
     storageState: process.env.MS_AUTH_EMAIL
@@ -189,15 +192,19 @@ Add a helper script to your `package.json`:
 }
 ```
 
-Run it once to open a browser and complete sign-in:
+Run these once before your first test run. You need two sessions — one per domain:
 
 ```bash
-npm run auth
+# Maker Portal session (Canvas Apps, Gen UX)
+npm run auth:headful
+
+# Model-Driven App session (Dynamics 365 / CRM domain)
+npm run auth:mda:headful
 ```
 
-The saved state file is written to the path returned by `getStorageStatePath(email)` and picked up automatically by the Playwright config above.
+Storage state files are saved automatically to paths returned by `getStorageStatePath(email)` and picked up by the Playwright config via `storageState`.
 
-> In CI, supply credentials via environment variables (`MS_AUTH_CREDENTIAL_TYPE=password` or `certificate`). The storage state is acquired headlessly during `globalSetup`.
+> In CI, supply credentials via environment variables (`MS_AUTH_CREDENTIAL_TYPE=password` or `certificate`). Storage state is acquired headlessly during `globalSetup`.
 
 ### 5. Write tests
 
@@ -488,11 +495,44 @@ OUTPUT_DIRECTORY=./test-results
 
 #### Step 2 — Authenticate
 
-Run this once to open a browser, complete Microsoft sign-in, and save the session:
+Authentication is handled by [`packages/e2e-tests/scripts/authenticate.ts`](packages/e2e-tests/scripts/authenticate.ts), which uses `playwright-ms-auth` to acquire and cache browser storage state (cookies + localStorage tokens). Run it once before your first test run — you only need to re-run it if your session expires.
+
+The script is exposed via these npm scripts from inside `packages/e2e-tests/`:
+
+| Command                    | Description                                                                          |
+| -------------------------- | ------------------------------------------------------------------------------------ |
+| `npm run auth:headful`     | Authenticate to the **Maker Portal** (Canvas Apps, Gen UX) — opens a visible browser |
+| `npm run auth:mda:headful` | Authenticate to the **Model-Driven App** (CRM domain) — opens a visible browser      |
+| `npm run auth`             | Headless Maker Portal auth (for CI or scripted flows)                                |
+| `npm run auth:mda`         | Headless MDA auth (for CI or scripted flows)                                         |
+
+For running both MDA and Canvas/Gen UX tests you need to authenticate twice — once for each domain:
 
 ```bash
+cd packages/e2e-tests
+
+# 1. Authenticate to Maker Portal (Canvas + Gen UX tests)
 npm run auth:headful
+
+# 2. Authenticate to the Model-Driven App domain (MDA tests)
+npm run auth:mda:headful
 ```
+
+Storage state files are saved automatically to the path returned by `getStorageStatePath(email)` and picked up by `playwright.config.ts` via the `storageState` option.
+
+> **Tokens expired?** If you see `Authentication tokens have expired!` when running tests, simply re-running `npm run auth:headful` may not resolve it because the old state file is still present and being detected as valid by the script. **Delete the stale state file first**, then re-authenticate:
+>
+> ```bash
+> # Delete the stale state file (path printed in the error message), e.g.:
+> rm .playwright-ms-auth/state-<your-email>.json
+>
+> # For MDA tests, also delete the MDA state file:
+> rm .playwright-ms-auth/state-mda-<your-email>.json
+>
+> # Then re-authenticate
+> npm run auth:headful
+> npm run auth:mda:headful
+> ```
 
 #### Step 3 — Run tests
 

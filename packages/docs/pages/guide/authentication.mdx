@@ -183,7 +183,7 @@ before any tests run, giving a clear error instead of a cryptic authentication f
 Create `utils/validate-auth-state.ts`:
 
 ```typescript
-import { existsSync } from 'fs';
+import { existsSync, unlinkSync } from 'fs';
 import { getStorageStatePath, ConfigHelper } from 'power-platform-playwright-toolkit';
 import * as path from 'path';
 
@@ -204,8 +204,17 @@ export function validateAuthState(email: string, isMda = false): void {
   if (check.expired) {
     const cmd = isMda ? 'npm run auth:mda:headful' : 'npm run auth:headful';
     const expiry = check.expiresOn ? new Date(check.expiresOn * 1000).toLocaleString() : 'unknown';
+
+    // Remove stale state file so re-auth creates a clean one
+    try {
+      unlinkSync(statePath);
+      console.log(`Removed expired state file: ${statePath}`);
+    } catch {
+      // Best-effort cleanup
+    }
+
     throw new Error(
-      `Auth token expired at ${expiry}.\nRe-authenticate: ${cmd}`
+      `Auth token expired at ${expiry}.\nStale state file removed. Re-authenticate: ${cmd}`
     );
   }
 
@@ -330,7 +339,7 @@ if (!process.argv.includes('list-files') && !process.env.CI && isMainProcess) {
 | Symptom | Cause | Fix |
 |---------|-------|-----|
 | `Storage state not found` | Auth script not run | Run `npm run auth:headful` |
-| `Auth token expired` | MSAL token > 1 hour old | Re-run `npm run auth:headful` |
+| `Auth token expired` | MSAL token > 1 hour old | Stale state file is auto-deleted — re-run `npm run auth:headful` |
 | Tests show login page | Wrong storage state path | Check `MS_AUTH_EMAIL` env var is set |
 | MFA prompt during auth | Account has MFA enabled | Use headful mode; disable MFA on test account |
 | `Permission denied` to app | Account lacks app access | Grant the test account access in Power Platform Admin |
