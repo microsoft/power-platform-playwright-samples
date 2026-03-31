@@ -1,0 +1,27 @@
+# Shared step template: publish Playwright test results to ADO test runs.
+# Publishes JUnit XML so results appear in the ADO Tests tab.
+
+parameters:
+  - name: jobName
+    type: string
+  - name: resultsDir
+    type: string
+
+steps:
+  - task: PublishTestResults@2
+    displayName: 'Publish test results — ${{ parameters.jobName }}'
+    condition: succeededOrFailed()
+    inputs:
+      testResultsFormat: JUnit
+      testResultsFiles: '${{ parameters.resultsDir }}/artifacts/testResults/*.xml'
+      mergeTestResults: true
+      testRunTitle: 'E2E — ${{ parameters.jobName }} — $(Build.BuildNumber)'
+      failTaskOnFailedTests: true
+
+  - task: PublishPipelineArtifact@1
+    displayName: 'Publish blob report — ${{ parameters.jobName }}'
+    condition: succeededOrFailed()
+    inputs:
+      targetPath: '${{ parameters.resultsDir }}/blob-report'
+      artifact: 'BlobReport-${{ parameters.jobName }}'
+      publishLocation: pipeline
