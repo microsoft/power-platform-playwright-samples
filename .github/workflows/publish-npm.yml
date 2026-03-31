@@ -1,19 +1,29 @@
+# DISABLED: Superseded by .azure-pipelines/npm-release.yml (ESRP publishing via ADO).
+# To re-enable, restore the commented `on:` block below and remove the replacement block.
 name: Release and Publish
 
+# on:
+#   release:
+#     types: [published]
+#   workflow_dispatch:
+#     inputs:
+#       version:
+#         description: 'Version to publish (e.g., 1.0.0)'
+#         required: true
+#         type: string
+#       tag:
+#         description: 'NPM dist-tag (e.g., latest, beta)'
+#         required: false
+#         default: 'latest'
+#         type: string
+
 on:
-  release:
-    types: [published]
   workflow_dispatch:
     inputs:
-      version:
-        description: 'Version to publish (e.g., 1.0.0)'
-        required: true
-        type: string
-      tag:
-        description: 'NPM dist-tag (e.g., latest, beta)'
+      _disabled:
+        description: 'This workflow is disabled. Use the ADO pipeline (.azure-pipelines/npm-release.yml) for publishing.'
         required: false
-        default: 'latest'
-        type: string
+        default: 'true'
 
 permissions:
   contents: write
@@ -23,6 +33,7 @@ jobs:
   publish:
     name: Build, Test, and Publish Package
     runs-on: ubuntu-latest
+    if: false # Disabled: use .azure-pipelines/npm-release.yml
 
     steps:
       - name: Checkout repository

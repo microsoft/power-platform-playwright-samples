@@ -1,0 +1,18 @@
+parameters:
+  - name: nodeVersion
+    type: string
+    default: '20.x'
+
+steps:
+  - task: NodeTool@0
+    displayName: 'Use Node.js ${{ parameters.nodeVersion }}'
+    inputs:
+      versionSpec: ${{ parameters.nodeVersion }}
+
+  - script: |
+      corepack enable
+      corepack prepare pnpm@10.28.1 --activate
+    displayName: Enable corepack + pnpm
+
+  - script: npm install -g @microsoft/rush
+    displayName: Install Rush
