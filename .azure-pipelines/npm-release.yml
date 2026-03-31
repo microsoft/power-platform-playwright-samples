@@ -1,0 +1,331 @@
+name: pp-playwright-npm-$(Rev:rrr)
+
+pr: none
+trigger:
+  branches:
+    include:
+      - main
+      - 'release/*'
+
+resources:
+  repositories:
+    - repository: OfficePipelineTemplates
+      type: git
+      name: 1ESPipelineTemplates/OfficePipelineTemplates
+      ref: refs/tags/release
+
+variables:
+  - name: tags
+    value: production,externalfacing
+  - name: ReleaseBranch
+    value: release/beachball/rel$(Build.BuildId)
+
+parameters:
+  - name: nodeVersions
+    type: object
+    default:
+      - 20.x
+      - 22.x
+
+extends:
+  template: v1/Office.Official.PipelineTemplate.yml@OfficePipelineTemplates
+  parameters:
+    pool:
+      name: Azure-Pipelines-1ESPT-ExDShared
+      image: windows-latest
+      os: windows
+
+    sdl:
+      codeql:
+        compiled:
+          enabled: true
+        runSourceLanguagesInSourceAnalysis: true
+      eslint:
+        configuration: recommended
+        parser: '@typescript-eslint/parser'
+        parserOptions: ''
+
+    stages:
+      # ─────────────────────────────────────────────────────────────────
+      # Stage 1: Verify build and tests on all platforms and Node versions
+      # ─────────────────────────────────────────────────────────────────
+      - stage: Verification
+        displayName: 'Verification (Build + Test)'
+        jobs:
+          - ${{ each nodeVersion in parameters.nodeVersions }}:
+              - job: build_linux_${{ replace(nodeVersion, '.', '_') }}
+                displayName: 'Build on Linux - Node ${{ nodeVersion }}'
+                pool:
+                  name: Azure-Pipelines-1ESPT-ExDShared
+                  image: ubuntu-latest
+                  os: linux
+                templateContext:
+                  outputs:
+                    - output: pipelineArtifact
+                      targetPath: $(System.DefaultWorkingDirectory)
+                      artifactName: verify-linux-${{ replace(nodeVersion, '.', '_') }}
+                steps:
+                  - template: /.azure-pipelines/prep-node.yml@self
+                    parameters:
+                      nodeVersion: ${{ nodeVersion }}
+
+                  - script: node common/scripts/install-run-rush.js install
+                    displayName: Rush Install
+
+                  - script: node common/scripts/install-run-rush.js build --to power-platform-playwright-toolkit
+                    displayName: Rush Build
+
+                  - script: node common/scripts/install-run-rush.js lint
+                    displayName: Rush Lint
+
+              - job: build_windows_${{ replace(nodeVersion, '.', '_') }}
+                displayName: 'Build on Windows - Node ${{ nodeVersion }}'
+                pool:
+                  name: Azure-Pipelines-1ESPT-ExDShared
+                  image: windows-latest
+                  os: windows
+                templateContext:
+                  outputs:
+                    - output: pipelineArtifact
+                      targetPath: $(System.DefaultWorkingDirectory)
+                      artifactName: verify-windows-${{ replace(nodeVersion, '.', '_') }}
+                steps:
+                  - template: /.azure-pipelines/prep-node.yml@self
+                    parameters:
+                      nodeVersion: ${{ nodeVersion }}
+
+                  - script: node common/scripts/install-run-rush.js install
+                    displayName: Rush Install
+
+                  - script: node common/scripts/install-run-rush.js build --to power-platform-playwright-toolkit
+                    displayName: Rush Build
+
+                  - task: PowerShell@2
+                    inputs:
+                      targetType: inline
+                      script: |
+                        Get-ChildItem -Recurse -File -Filter 'esbuild.exe' |
+                          Remove-Item -Force -ErrorAction SilentlyContinue
+                    displayName: Remove esbuild binaries (BinSkim false-positive avoidance)
+
+      # ─────────────────────────────────────────────────────────────────
+      # Stage 2: Build, version-bump, and pack tarballs
+      # ─────────────────────────────────────────────────────────────────
+      - stage: Build
+        displayName: 'Build & Pack npm Artifacts'
+        dependsOn: Verification
+        jobs:
+          - job: Pack
+            displayName: 'Rush Build, Beachball Bump, npm pack'
+            pool:
+              name: Azure-Pipelines-1ESPT-ExDShared
+              image: ubuntu-latest
+              os: linux
+            templateContext:
+              outputs:
+                - output: pipelineArtifact
+                  targetPath: $(Pipeline.Workspace)/published-packages
+                  artifactName: NpmPackedTarballs
+                  displayName: 'Publish npm pack artifacts'
+                  condition: succeededOrFailed()
+            steps:
+              - checkout: self
+
+              - template: /.azure-pipelines/prep-node.yml@self
+                parameters:
+                  nodeVersion: 20.x
+
+              - script: node common/scripts/install-run-rush.js install
+                displayName: Rush Install
+
+              - script: node common/scripts/install-run-rush.js build --to power-platform-playwright-toolkit
+                displayName: Rush Build
+
+              - task: AzureKeyVault@2
+                displayName: Obtain GitHub auth token
+                inputs:
+                  azureSubscription: 'pp-playwright-release-sc'
+                  KeyVaultName: 'pp-playwright-kv'
+                  SecretsFilter: 'githubAuthToken'
+
+              - script: |
+                  git config --global user.email "github-actions[bot]@users.noreply.github.com"
+                  git config --global user.name "GitHub Actions"
+                  git remote set-url origin https://x-access-token:$GH_TOKEN@github.com/microsoft/power-platform-playwright-samples
+                displayName: Configure Git
+                env:
+                  GH_TOKEN: $(githubAuthToken)
+
+              - script: npx beachball bump --verbose --yes
+                displayName: Beachball Version Bump
+
+              - script: |
+                  git add --all
+                  git commit -m "📦 Apply beachball version bumps"
+                  git push origin HEAD:refs/heads/$(ReleaseBranch) --force-with-lease
+                displayName: Push version-bump branch
+                env:
+                  GH_TOKEN: $(githubAuthToken)
+
+              - script: git reset HEAD~ --hard
+                displayName: Reset local to pre-bump state
+
+              - script: |
+                  rm -rf "$(Pipeline.Workspace)/published-packages"
+                  mkdir -p "$(Pipeline.Workspace)/published-packages"
+                displayName: Clear previous artifacts
+
+              - script: |
+                  npx beachball publish \
+                    --verbose \
+                    --access public \
+                    --no-publish \
+                    --no-push \
+                    --pack-to-path "$(Pipeline.Workspace)/published-packages" \
+                    --yes
+                displayName: Pack tarballs (no publish, no push)
+
+              - script: ls -la "$(Pipeline.Workspace)/published-packages"
+                displayName: Show packed artifacts
+
+      # ─────────────────────────────────────────────────────────────────
+      # Stage 3: Create PR to main and wait for merge
+      # ─────────────────────────────────────────────────────────────────
+      - stage: CreatePullRequestAndMerge
+        displayName: 'Create & Merge Version Bump PR'
+        dependsOn: Build
+        jobs:
+          - job: CreatePullRequest
+            displayName: 'Create beachball PR'
+            pool:
+              name: Azure-Pipelines-1ESPT-ExDShared
+              image: ubuntu-latest
+              os: linux
+            steps:
+              - checkout: self
+
+              - task: AzureKeyVault@2
+                displayName: Obtain GitHub auth token
+                inputs:
+                  azureSubscription: 'pp-playwright-release-sc'
+                  KeyVaultName: 'pp-playwright-kv'
+                  SecretsFilter: 'githubAuthToken'
+
+              - script: |
+                  set -euo pipefail
+                  if [ -z "$branch" ]; then
+                    echo "No release branch; skipping PR creation."
+                    exit 0
+                  fi
+                  pr_title="📦 Apply package version bumps ***NO_CI***"
+                  pr_body="Automated version bump for release build $(Build.BuildNumber)"
+                  pr_number=$(gh pr list --head "$branch" --json number --jq '.[0].number' || true)
+                  if [ -z "$pr_number" ]; then
+                    gh pr create --head "$branch" --base main --title "$pr_title" --body "$pr_body"
+                    pr_number=$(gh pr list --head "$branch" --json number --jq '.[0].number' || true)
+                  else
+                    echo "PR #$pr_number already exists."
+                  fi
+                  if [ -n "$pr_number" ]; then
+                    echo "##vso[task.setvariable variable=BeachballPRNumber;isOutput=true]$pr_number"
+                  fi
+                env:
+                  GH_TOKEN: $(githubAuthToken)
+                  GH_REPO: microsoft/power-platform-playwright-samples
+                  branch: $(ReleaseBranch)
+                displayName: Create or locate beachball PR
+                name: RecordBeachballPR
+
+          - job: WaitForPRMerge
+            displayName: 'Wait for PR merge'
+            dependsOn: CreatePullRequest
+            timeoutInMinutes: 480
+            pool:
+              name: Azure-Pipelines-1ESPT-ExDShared
+              image: ubuntu-latest
+              os: linux
+            variables:
+              BeachballPRNumber: $[ dependencies.CreatePullRequest.outputs['RecordBeachballPR.BeachballPRNumber'] ]
+            steps:
+              - checkout: self
+
+              - task: AzureKeyVault@2
+                displayName: Obtain GitHub auth token
+                inputs:
+                  azureSubscription: 'pp-playwright-release-sc'
+                  KeyVaultName: 'pp-playwright-kv'
+                  SecretsFilter: 'githubAuthToken'
+
+              - script: |
+                  set -euo pipefail
+                  if [ -z "$pr_branch" ]; then
+                    echo "No release branch; skipping wait."
+                    exit 0
+                  fi
+                  if [ -z "$pr_number" ]; then
+                    pr_number=$(gh pr list --head "$pr_branch" --json number --jq '.[0].number' || true)
+                  fi
+                  if [ -z "$pr_number" ]; then
+                    echo "No PR found; nothing to wait on."
+                    exit 0
+                  fi
+                  echo "Waiting for PR #$pr_number to be merged..."
+                  while true; do
+                    state=$(gh pr view "$pr_number" --json state --jq '.state' || true)
+                    case "$state" in
+                      MERGED)
+                        echo "PR #$pr_number merged. Proceeding."
+                        break
+                        ;;
+                      CLOSED)
+                        echo "PR #$pr_number closed without merge." >&2
+                        exit 1
+                        ;;
+                      *)
+                        echo "[$(date +"%H:%M:%S")] Still open. Merge: https://github.com/microsoft/power-platform-playwright-samples/pull/$pr_number"
+                        sleep 120
+                        ;;
+                    esac
+                  done
+                env:
+                  GH_TOKEN: $(githubAuthToken)
+                  GH_REPO: microsoft/power-platform-playwright-samples
+                  pr_number: $(BeachballPRNumber)
+                  pr_branch: $(ReleaseBranch)
+                displayName: Wait for PR merge
+
+      # ─────────────────────────────────────────────────────────────────
+      # Stage 4: ESRP Release to npmjs.com (must run on Windows)
+      # ─────────────────────────────────────────────────────────────────
+      - stage: PublishNpmPackages
+        displayName: 'Publish to npm via ESRP'
+        dependsOn: CreatePullRequestAndMerge
+        jobs:
+          - job: PublishNpmPackages
+            displayName: 'ESRP Release'
+            pool:
+              name: Azure-Pipelines-1ESPT-ExDShared
+              image: windows-latest
+              os: windows
+            steps:
+              - task: DownloadPipelineArtifact@2
+                displayName: Download packed npm artifacts
+                inputs:
+                  buildType: current
+                  artifact: NpmPackedTarballs
+                  path: $(Pipeline.Workspace)\published-packages
+
+              - task: 'SFP.release-tasks.custom-build-release-task.EsrpRelease@9'
+                displayName: 'ESRP Release to npmjs.com'
+                inputs:
+                  connectedservicename: 'ESRP-PPPlaywright'
+                  usemanagedidentity: false
+                  keyvaultname: 'pp-playwright-kv'
+                  authcertname: 'pp-playwright-auth-cert'
+                  signcertname: 'pp-playwright-sign-cert'
+                  clientid: '<YOUR_AAD_APP_CLIENT_ID>'
+                  domaintenantid: '<YOUR_AAD_TENANT_ID>'
+                  contenttype: npm
+                  folderlocation: $(Pipeline.Workspace)\published-packages
+                  owners: '<owner-email@microsoft.com>'
+                  approvers: '<approver-email@microsoft.com>'
