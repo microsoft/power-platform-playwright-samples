@@ -131,8 +131,7 @@ export function validateAuthState(): AuthValidationResult {
     const expirationCheck = ConfigHelper.checkStorageStateExpiration(storageStatePath);
 
     if (expirationCheck.expired) {
-      const authCommand =
-        projectType === 'mda' ? 'npm run auth:mda:headful' : 'npm run auth:headful';
+      const authCommand = 'npm run auth:headful';
 
       // Remove stale state file so re-auth creates a clean one
       try {
