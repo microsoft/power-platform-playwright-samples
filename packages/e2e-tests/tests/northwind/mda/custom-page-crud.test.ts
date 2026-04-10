@@ -131,7 +131,7 @@ async function createAccount(
   await page.locator(SEL.btnSave).waitFor({ state: 'visible', timeout: 10000 });
   await page.locator(SEL.btnSave).click();
   // Wait for Dataverse write to commit before reloading the canvas app
-  await page.waitForTimeout(5000);
+  await page.waitForTimeout(8000);
 
   // Full URL navigation to the app root forces the canvas page to reinitialize and
   // reload its gallery data. A sidebar re-click when already on AccountsCustomPage
@@ -143,9 +143,11 @@ async function createAccount(
   const refreshSidebar = page.locator(`[role="presentation"][title="${CUSTOM_PAGE_NAME}"]`).first();
   await refreshSidebar.waitFor({ state: 'visible', timeout: 30000 });
   await refreshSidebar.click();
-  // Wait for the gallery to be populated (confirms canvas app has finished loading)
-  // rather than relying on a fixed timeout
-  await page.locator(SEL.galleryItem).first().waitFor({ state: 'visible', timeout: 20000 });
+  // Wait for the newly created account to appear in the gallery
+  const specificItem = page
+    .locator(SEL.galleryItem)
+    .filter({ has: page.locator(SEL.galleryItemTitle).getByText(accountName, { exact: true }) });
+  await specificItem.waitFor({ state: 'visible', timeout: 60000 });
 }
 
 /** Waits for the delete confirmation dialog then clicks the Delete button */

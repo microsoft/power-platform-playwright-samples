@@ -23,9 +23,14 @@ const canvasAppSelector = {
 
   // Runtime Mode (Player) selectors - Northwind specific
   canvasAppFrame: 'iframe[name="fullscreen-app-host"]',
-  orderGalleryItem: '[data-control-name="Gallery1"] [data-control-part="item"]',
+  orderGalleryItem: '[data-control-name="Gallery1"] [data-control-part="gallery-item"]',
+  orderTitle: '[data-control-name="Title1"]',
   orderDetailView: '[data-control-name="DetailScreen1"]',
-  saveButton: '[data-control-name="IconSave1"]',
+  // Toolbar buttons
+  addButton: '[data-control-name="icon3"]',
+  saveButton: '[data-control-name="icon5"]',
+  cancelButton: '[data-control-name="icon4"]',
+  reloadButton: '[data-control-name="icon6"]',
   backButton: '[data-control-name="IconBackarrow1"]',
   orderStatus: '[data-control-name="StatusDropdown"]',
 };
@@ -141,6 +146,13 @@ export class NorthwindCanvasAppPage {
   }
 
   /**
+   * Get the count of gallery items
+   */
+  async getGalleryItemCount(): Promise<number> {
+    return await this.canvasFrame.locator(canvasAppSelector.orderGalleryItem).count();
+  }
+
+  /**
    * Open First Order Record from Gallery
    */
   async openFirstOrderRecord(): Promise<void> {
@@ -158,11 +170,64 @@ export class NorthwindCanvasAppPage {
   }
 
   /**
-   * Click Save Button
+   * Click Add Button (plus icon in toolbar)
+   */
+  async clickAddButton(): Promise<void> {
+    const button = this.canvasFrame.locator(canvasAppSelector.addButton);
+    await button.waitFor({ state: 'visible', timeout: 10000 });
+    await button.click();
+  }
+
+  /**
+   * Click Save Button (check icon in toolbar)
    */
   async clickSaveButton(): Promise<void> {
     await this.canvasFrame.locator(canvasAppSelector.saveButton).click();
     await this.appPage.waitForTimeout(2000);
+  }
+
+  /**
+   * Click Reload Button
+   */
+  async clickReloadButton(): Promise<void> {
+    const button = this.canvasFrame.locator(canvasAppSelector.reloadButton);
+    await button.waitFor({ state: 'visible', timeout: 10000 });
+    await button.click();
+  }
+
+  /**
+   * Check if Add button is visible
+   */
+  async isAddButtonVisible(): Promise<boolean> {
+    return await this.canvasFrame.locator(canvasAppSelector.addButton).isVisible();
+  }
+
+  /**
+   * Check if Reload button is visible
+   */
+  async isReloadButtonVisible(): Promise<boolean> {
+    return await this.canvasFrame.locator(canvasAppSelector.reloadButton).isVisible();
+  }
+
+  /**
+   * Check if Save button exists in the DOM
+   */
+  async saveButtonExists(): Promise<boolean> {
+    return (await this.canvasFrame.locator(canvasAppSelector.saveButton).count()) > 0;
+  }
+
+  /**
+   * Check if Cancel button exists in the DOM
+   */
+  async cancelButtonExists(): Promise<boolean> {
+    return (await this.canvasFrame.locator(canvasAppSelector.cancelButton).count()) > 0;
+  }
+
+  /**
+   * Get the canvas frame locator for advanced interactions
+   */
+  getCanvasFrame() {
+    return this.canvasFrame;
   }
 
   /**

@@ -88,7 +88,7 @@ test.describe('Canvas App - Northwind Orders Operations', () => {
     // Wait for gallery to be visible (confirms app is loaded)
     await canvasFrame.locator(selectors.orderGalleryItem).first().waitFor({
       state: 'visible',
-      timeout: 30000,
+      timeout: 60000,
     });
     console.log('✅ Canvas App loaded successfully!\n');
   });

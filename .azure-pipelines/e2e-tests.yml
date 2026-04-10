@@ -1,0 +1,215 @@
+name: pp-playwright-e2e-$(Rev:rrr)
+
+# Run on schedule (weekdays 6 AM UTC) and allow manual trigger.
+# Not triggered on push — tests require a live Power Platform environment.
+trigger: none
+pr: none
+
+schedules:
+  - cron: '0 6 * * 1-5'
+    displayName: Daily E2E (weekdays 06:00 UTC)
+    branches:
+      include:
+        - main
+    always: true
+
+resources:
+  repositories:
+    - repository: OfficePipelineTemplates
+      type: git
+      name: 1ESPipelineTemplates/OfficePipelineTemplates
+      ref: refs/tags/release
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Pipeline-level variables (non-secret, environment-specific URLs).
+# Secrets (email, cert, cert password) are fetched from Key Vault at runtime.
+# ─────────────────────────────────────────────────────────────────────────────
+variables:
+  - name: nodeVersion
+    value: '20.x'
+  - name: testResultsDir
+    value: $(Build.ArtifactStagingDirectory)/test-results
+
+parameters:
+  - name: testEnvironment
+    displayName: Target environment
+    type: string
+    default: dev
+    values:
+      - dev
+      - staging
+
+extends:
+  template: v1/Office.Official.PipelineTemplate.yml@OfficePipelineTemplates
+  parameters:
+    pool:
+      name: Azure-Pipelines-1ESPT-ExDShared
+      image: ubuntu-latest
+      os: linux
+
+    sdl:
+      codeql:
+        compiled:
+          enabled: false # TypeScript — no compiled analysis needed
+
+    stages:
+      - stage: E2ETests
+        displayName: 'E2E Playwright Tests'
+        jobs:
+          # ───────────────────────────────────────────────────────────────────
+          # Job 1: Gen UX tests
+          # Runs tests under tests/gen-ux using the 'gen-ux' Playwright project.
+          # Uses canvas/maker-portal storage state (standard auth).
+          # ───────────────────────────────────────────────────────────────────
+          - job: GenUXTests
+            displayName: 'Gen UX Tests'
+            pool:
+              name: Azure-Pipelines-1ESPT-ExDShared
+              image: ubuntu-latest
+              os: linux
+            timeoutInMinutes: 60
+            templateContext:
+              outputs:
+                - output: pipelineArtifact
+                  targetPath: $(testResultsDir)/gen-ux
+                  artifactName: TestResults-GenUX
+                  displayName: Publish Gen UX test results
+                  condition: succeededOrFailed()
+            steps:
+              - template: /.azure-pipelines/steps/e2e-setup.yml@self
+                parameters:
+                  nodeVersion: $(nodeVersion)
+                  keyVaultServiceConnection: 'pp-playwright-release-sc'
+                  keyVaultName: 'pp-playwright-kv'
+                  testEnvironment: ${{ parameters.testEnvironment }}
+
+              - script: |
+                  cd packages/e2e-tests
+                  npx playwright test tests/gen-ux \
+                    --project=gen-ux \
+                    --reporter=dot,blob,junit \
+                    --output="$(testResultsDir)/gen-ux/artifacts"
+                displayName: Run Gen UX tests
+                env:
+                  CI: true
+                  MS_AUTH_EMAIL: $(msAuthEmail)
+                  MS_AUTH_CREDENTIAL_TYPE: certificate
+                  MS_AUTH_CREDENTIAL_PROVIDER: local-file
+                  MS_AUTH_LOCAL_FILE_PATH: $(Agent.TempDirectory)/auth-cert.pfx
+                  MS_AUTH_CERTIFICATE_PASSWORD: $(msAuthCertificatePassword)
+                  MS_AUTH_HEADLESS: true
+                  POWER_APPS_BASE_URL: $(powerAppsBaseUrl)
+                  POWER_APPS_ENVIRONMENT_ID: $(powerAppsEnvironmentId)
+                  MAKER_PORTAL_URL: $(makerPortalUrl)
+                  OUTPUT_DIRECTORY: $(testResultsDir)/gen-ux
+
+              - template: /.azure-pipelines/steps/e2e-publish-results.yml@self
+                parameters:
+                  jobName: GenUX
+                  resultsDir: $(testResultsDir)/gen-ux
+
+          # ───────────────────────────────────────────────────────────────────
+          # Job 2: Northwind Canvas App tests
+          # Runs tests under tests/northwind/canvas using the 'default' project.
+          # Uses canvas/maker-portal storage state.
+          # ───────────────────────────────────────────────────────────────────
+          - job: NorthwindCanvasTests
+            displayName: 'Northwind Canvas Tests'
+            pool:
+              name: Azure-Pipelines-1ESPT-ExDShared
+              image: ubuntu-latest
+              os: linux
+            timeoutInMinutes: 60
+            templateContext:
+              outputs:
+                - output: pipelineArtifact
+                  targetPath: $(testResultsDir)/northwind-canvas
+                  artifactName: TestResults-NorthwindCanvas
+                  displayName: Publish Northwind Canvas test results
+                  condition: succeededOrFailed()
+            steps:
+              - template: /.azure-pipelines/steps/e2e-setup.yml@self
+                parameters:
+                  nodeVersion: $(nodeVersion)
+                  keyVaultServiceConnection: 'pp-playwright-release-sc'
+                  keyVaultName: 'pp-playwright-kv'
+                  testEnvironment: ${{ parameters.testEnvironment }}
+
+              - script: |
+                  cd packages/e2e-tests
+                  npx playwright test tests/northwind/canvas \
+                    --project=default \
+                    --reporter=dot,blob,junit \
+                    --output="$(testResultsDir)/northwind-canvas/artifacts"
+                displayName: Run Northwind Canvas tests
+                env:
+                  CI: true
+                  MS_AUTH_EMAIL: $(msAuthEmail)
+                  MS_AUTH_CREDENTIAL_TYPE: certificate
+                  MS_AUTH_CREDENTIAL_PROVIDER: local-file
+                  MS_AUTH_LOCAL_FILE_PATH: $(Agent.TempDirectory)/auth-cert.pfx
+                  MS_AUTH_CERTIFICATE_PASSWORD: $(msAuthCertificatePassword)
+                  MS_AUTH_HEADLESS: true
+                  POWER_APPS_BASE_URL: $(powerAppsBaseUrl)
+                  POWER_APPS_ENVIRONMENT_ID: $(powerAppsEnvironmentId)
+                  CANVAS_APP_ID: $(canvasAppId)
+                  CANVAS_APP_TENANT_ID: $(canvasAppTenantId)
+                  OUTPUT_DIRECTORY: $(testResultsDir)/northwind-canvas
+
+              - template: /.azure-pipelines/steps/e2e-publish-results.yml@self
+                parameters:
+                  jobName: NorthwindCanvas
+                  resultsDir: $(testResultsDir)/northwind-canvas
+
+          # ───────────────────────────────────────────────────────────────────
+          # Job 3: Northwind Model-Driven App tests
+          # Runs tests under tests/northwind/mda using the 'model-driven-app' project.
+          # Requires both canvas auth state AND a separate MDA auth state.
+          # ───────────────────────────────────────────────────────────────────
+          - job: NorthwindMDATests
+            displayName: 'Northwind Model-Driven App Tests'
+            pool:
+              name: Azure-Pipelines-1ESPT-ExDShared
+              image: ubuntu-latest
+              os: linux
+            timeoutInMinutes: 60
+            templateContext:
+              outputs:
+                - output: pipelineArtifact
+                  targetPath: $(testResultsDir)/northwind-mda
+                  artifactName: TestResults-NorthwindMDA
+                  displayName: Publish Northwind MDA test results
+                  condition: succeededOrFailed()
+            steps:
+              - template: /.azure-pipelines/steps/e2e-setup.yml@self
+                parameters:
+                  nodeVersion: $(nodeVersion)
+                  keyVaultServiceConnection: 'pp-playwright-release-sc'
+                  keyVaultName: 'pp-playwright-kv'
+                  testEnvironment: ${{ parameters.testEnvironment }}
+                  authenticateMDA: true
+
+              - script: |
+                  cd packages/e2e-tests
+                  npx playwright test tests/northwind/mda \
+                    --project=model-driven-app \
+                    --reporter=dot,blob,junit \
+                    --output="$(testResultsDir)/northwind-mda/artifacts"
+                displayName: Run Northwind MDA tests
+                env:
+                  CI: true
+                  MS_AUTH_EMAIL: $(msAuthEmail)
+                  MS_AUTH_CREDENTIAL_TYPE: certificate
+                  MS_AUTH_CREDENTIAL_PROVIDER: local-file
+                  MS_AUTH_LOCAL_FILE_PATH: $(Agent.TempDirectory)/auth-cert.pfx
+                  MS_AUTH_CERTIFICATE_PASSWORD: $(msAuthCertificatePassword)
+                  MS_AUTH_HEADLESS: true
+                  POWER_APPS_BASE_URL: $(powerAppsBaseUrl)
+                  POWER_APPS_ENVIRONMENT_ID: $(powerAppsEnvironmentId)
+                  MODEL_DRIVEN_APP_URL: $(modelDrivenAppUrl)
+                  OUTPUT_DIRECTORY: $(testResultsDir)/northwind-mda
+
+              - template: /.azure-pipelines/steps/e2e-publish-results.yml@self
+                parameters:
+                  jobName: NorthwindMDA
+                  resultsDir: $(testResultsDir)/northwind-mda

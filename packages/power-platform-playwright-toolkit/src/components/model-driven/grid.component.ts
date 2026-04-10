@@ -117,7 +117,8 @@ export class GridComponent {
     const hasCheckbox = await checkbox.isVisible().catch(() => false);
 
     if (hasCheckbox) {
-      await checkbox.click();
+      // force: true bypasses overlay elements (e.g. CheckMark icon) that intercept pointer events
+      await checkbox.click({ force: true });
       console.log(`[GridComponent] Selected row ${rowNumber} via checkbox`);
     } else {
       await row.click();

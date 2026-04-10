@@ -5,7 +5,7 @@
  * Utility to validate authentication state based on test project
  */
 
-import { existsSync, unlinkSync } from 'fs';
+import { existsSync, unlinkSync, readFileSync } from 'fs';
 import { getStorageStatePath, ConfigHelper } from 'power-platform-playwright-toolkit';
 import * as path from 'path';
 
@@ -84,13 +84,54 @@ export function validateAuthState(): AuthValidationResult {
     };
   }
 
+  // For MDA project: only validate CRM domain cookies (not maker portal MSAL tokens)
+  // MDA tests use certificate auth on the CRM domain; MSAL tokens are irrelevant
+  if (projectType === 'mda') {
+    try {
+      const stateData = JSON.parse(readFileSync(storageStatePath, 'utf-8'));
+      const currentTime = Math.floor(Date.now() / 1000);
+      const crmCookies = (stateData.cookies || []).filter(
+        (c: any) => c.domain && c.domain.includes('crm.dynamics.com')
+      );
+      if (crmCookies.length === 0) {
+        return {
+          valid: false,
+          storageStatePath,
+          projectType,
+          message: 'MDA state has no CRM cookies. Please re-authenticate: npm run auth:mda:headful',
+        };
+      }
+      const expiredCrm = crmCookies.find(
+        (c: any) => c.expires && c.expires > 0 && Math.floor(c.expires) < currentTime
+      );
+      if (expiredCrm) {
+        try {
+          unlinkSync(storageStatePath);
+        } catch {}
+        const expiryDate = new Date(expiredCrm.expires * 1000);
+        return {
+          valid: false,
+          storageStatePath,
+          projectType,
+          message: `CRM session cookie expired at: ${expiryDate.toLocaleString()}\nStale state file removed. Please re-authenticate: npm run auth:mda:headful`,
+        };
+      }
+      console.log(`🔐 Storage state loaded: ${storageStatePath}`);
+      console.log(`🔐 CRM cookies valid (${crmCookies.length} CRM cookies found)`);
+      return { valid: true, storageStatePath, projectType };
+    } catch (error: any) {
+      console.log(`⚠️  Could not check MDA token expiration: ${error.message}`);
+      console.log(`📝 Assuming storage state is valid...`);
+      return { valid: true, storageStatePath, projectType };
+    }
+  }
+
   // Check if storage state has expired
   try {
     const expirationCheck = ConfigHelper.checkStorageStateExpiration(storageStatePath);
 
     if (expirationCheck.expired) {
-      const authCommand =
-        projectType === 'mda' ? 'npm run auth:mda:headful' : 'npm run auth:headful';
+      const authCommand = 'npm run auth:headful';
 
       // Remove stale state file so re-auth creates a clean one
       try {

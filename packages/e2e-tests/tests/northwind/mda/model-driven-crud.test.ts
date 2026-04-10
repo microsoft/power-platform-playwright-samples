@@ -173,8 +173,8 @@ test.describe('Model-Driven App - CRUD Operations', () => {
     console.log('⏳ Waiting for form to load...');
     await page.waitForTimeout(3000);
 
-    // Update Order Number with modified suffix
-    const updatedOrderNumber = `${testOrderNumber}-UPDATED`;
+    // Update Order Number with modified suffix (no hyphens to avoid keyword filter issues)
+    const updatedOrderNumber = `${testOrderNumber}UP`;
     console.log(`✍️  Updating Order Number to: ${updatedOrderNumber}`);
 
     const editOrderNumberInput = page.locator(
@@ -221,6 +221,14 @@ test.describe('Model-Driven App - CRUD Operations', () => {
     await page.waitForTimeout(3000);
     console.log('✅ Record updated successfully!\n');
 
+    // Verify update persisted by checking field value on the form (before navigating away)
+    const savedOrderNumber = await page
+      .locator('input[data-id="nwind_ordernumber.fieldControl-text-box-text"]')
+      .inputValue()
+      .catch(() => '');
+    console.log(`✅ Form shows updated Order Number: "${savedOrderNumber}"`);
+    expect(savedOrderNumber).toContain(updatedOrderNumber);
+
     // Update our test variable for deletion step
     testOrderNumber = updatedOrderNumber;
 
@@ -232,9 +240,9 @@ test.describe('Model-Driven App - CRUD Operations', () => {
     await modelDrivenApp.navigateToGridView(ENTITY_NAME);
     await modelDrivenApp.grid.waitForGridLoad();
 
-    // Filter by updated order number
-    console.log(`🔎 Filtering grid for updated order: ${updatedOrderNumber}`);
-    await modelDrivenApp.grid.filterByKeyword(updatedOrderNumber);
+    // Filter by the updated order number
+    console.log(`🔎 Filtering grid for updated order: ${testOrderNumber}`);
+    await modelDrivenApp.grid.filterByKeyword(testOrderNumber);
     await modelDrivenApp.grid.waitForGridLoad();
 
     const updatedRowCount = await modelDrivenApp.grid.getRowCount();
@@ -250,7 +258,9 @@ test.describe('Model-Driven App - CRUD Operations', () => {
       updatedFoundRow,
       'Order Number'
     );
-    console.log(`✅ Found updated record: "${updatedCellValue}"\n`);
+    console.log(`✅ Found updated record: "${updatedCellValue}"`);
+    expect(updatedCellValue).toContain(testOrderNumber);
+    console.log();
 
     // ========================================
     // STEP 5: DELETE - Remove the record

@@ -17,9 +17,23 @@
  *   npm test -- tests/northwind/mda/custom-page.test.ts -- --headed
  */
 
+import * as path from 'path';
 import { test } from '@playwright/test';
-import { AppProvider, AppType, AppLaunchMode } from 'power-platform-playwright-toolkit';
+import {
+  AppProvider,
+  AppType,
+  AppLaunchMode,
+  getStorageStatePath,
+} from 'power-platform-playwright-toolkit';
 import { CustomPage } from '../../../pages/northwind/CustomPage.page';
+
+// This test opens the app in Edit mode (maker portal), so it needs the standard
+// MSAL-token storage state rather than the MDA cert-auth state
+test.use({
+  storageState: process.env.MS_AUTH_EMAIL
+    ? getStorageStatePath(process.env.MS_AUTH_EMAIL)
+    : undefined,
+});
 
 const POWER_APPS_URL = process.env.POWER_APPS_BASE_URL;
 const ENTITY_NAME = 'nwind_orders'; // Northwind Orders entity
@@ -64,12 +78,13 @@ test.describe('Custom Page - Northwind App', () => {
       await customPageHelper.navigateToPreviewScreen();
     });
 
+    const accountName = `Test Account ${Date.now()}`;
     await test.step('Add New Record in Preview Mode', async () => {
-      await customPageHelper.addNewRecordInPreviewMode('Test Account');
+      await customPageHelper.addNewRecordInPreviewMode(accountName);
     });
 
     await test.step('Delete New Record in Preview Mode', async () => {
-      await customPageHelper.deleteRecordInPreviewMode();
+      await customPageHelper.deleteRecordInPreviewMode(accountName);
     });
   });
 });

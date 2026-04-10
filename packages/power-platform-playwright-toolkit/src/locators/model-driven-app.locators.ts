@@ -226,12 +226,12 @@ export const ModelDrivenAppLocators = {
 
         // Rows
         Row: '[role="row"]',
-        RowByIndex: (index: number) => `[role="row"]:nth-child(${index + 2})`, // +2 for header
+        RowByIndex: (index: number) => `[role="row"][row-index="${index}"]`,
 
         // Cells
         Cell: '[role="gridcell"]',
         CellByRowAndColumn: (row: number, col: number) =>
-          `[role="row"]:nth-child(${row + 2}) [role="gridcell"]:nth-child(${col + 1})`,
+          `[role="row"][row-index="${row}"] [role="gridcell"]:nth-child(${col + 1})`,
         LinkCell: '[role="gridcell"] a',
         CheckboxCell: '[role="gridcell"] input[type="checkbox"]',
 

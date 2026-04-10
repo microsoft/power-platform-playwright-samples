@@ -140,22 +140,35 @@ export class CustomPage {
     console.log('[CustomPage] Saving record');
     await clickSelector(this.studioFrame, canvasAppSelector.saveRecord);
     console.log('[CustomPage] Verifying record is visible');
-    await expect(this.studioFrame.locator(canvasAppSelector.addedRecord)).toBeVisible();
+    await expect(
+      this.studioFrame
+        .locator(canvasAppSelector.addedRecord)
+        .getByText(accountName, { exact: true })
+    ).toBeVisible({ timeout: 30000 });
     console.log('[CustomPage] Record added successfully');
   }
 
   /**
    * Delete Record in Preview Mode
+   * @param accountName Account name to select and delete
    */
-  public async deleteRecordInPreviewMode() {
+  public async deleteRecordInPreviewMode(accountName: string) {
     console.log('[CustomPage] Selecting record to delete');
-    await clickSelector(this.studioFrame, canvasAppSelector.addedRecord);
+    await this.studioFrame
+      .locator(canvasAppSelector.addedRecord)
+      .getByText(accountName, { exact: true })
+      .first()
+      .click();
     console.log('[CustomPage] Clicking Delete');
     await clickSelector(this.studioFrame, canvasAppSelector.deleteRecord);
     console.log('[CustomPage] Confirming deletion');
     await clickSelector(this.studioFrame, canvasAppSelector.deleteRecordConfirmButton);
     console.log('[CustomPage] Verifying record is gone');
-    await expect(this.studioFrame.locator(canvasAppSelector.addedRecord)).toBeHidden();
+    await expect(
+      this.studioFrame
+        .locator(canvasAppSelector.addedRecord)
+        .getByText(accountName, { exact: true })
+    ).toHaveCount(0);
     console.log('[CustomPage] Record deleted successfully');
   }
 }

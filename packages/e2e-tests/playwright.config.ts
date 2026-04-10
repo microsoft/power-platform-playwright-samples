@@ -63,7 +63,7 @@ export default defineConfig({
 
   /* Retry configuration */
   repeatEach: getEnvironmentConfig().repeatEach,
-  retries: getEnvironmentConfig().retries,
+  retries: 0,
 
   /* Test directory and matching */
   testDir: getEnvironmentConfig().testDirectory,
