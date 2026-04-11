@@ -157,6 +157,7 @@ export default defineConfig({
   projects: [
     {
       name: 'model-driven-app',
+      testDir: path.join(getEnvironmentConfig().testDirectory, 'northwind', 'mda'),
       testMatch: '**/*.test.ts',
       use: {
         // Use MDA-specific storage state
@@ -169,11 +170,20 @@ export default defineConfig({
       },
     },
     {
+      name: 'canvas-app',
+      testDir: path.join(getEnvironmentConfig().testDirectory, 'northwind', 'canvas'),
+      testMatch: '**/*.test.ts',
+      use: {
+        storageState: process.env.MS_AUTH_EMAIL
+          ? getStorageStatePath(process.env.MS_AUTH_EMAIL!)
+          : undefined,
+      },
+    },
+    {
       name: 'gen-ux',
       testDir: path.join(getEnvironmentConfig().testDirectory, 'gen-ux'),
       testMatch: '**/*.test.ts',
       use: {
-        // Use default (canvas/maker portal) storage state
         storageState: process.env.MS_AUTH_EMAIL
           ? getStorageStatePath(process.env.MS_AUTH_EMAIL!)
           : undefined,
@@ -181,7 +191,9 @@ export default defineConfig({
     },
     {
       name: 'default',
-      testIgnore: ['**/mda/**/*.test.ts', '**/gen-ux/**/*.test.ts'],
+      testDir: getEnvironmentConfig().testDirectory,
+      testMatch: '**/*.test.ts',
+      // testIgnore: ['**/mda/**/*.test.ts', '**/gen-ux/**/*.test.ts'],
       use: {
         // Use default storage state
         storageState: process.env.MS_AUTH_EMAIL
