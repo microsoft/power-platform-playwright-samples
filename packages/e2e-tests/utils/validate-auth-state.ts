@@ -5,8 +5,8 @@
  * Utility to validate authentication state based on test project
  */
 
-import { existsSync, unlinkSync, readFileSync } from 'fs';
-import { getStorageStatePath, ConfigHelper } from 'power-platform-playwright-toolkit';
+import { existsSync, unlinkSync, readFileSync, statSync } from 'fs';
+import { getStorageStatePath } from 'power-platform-playwright-toolkit';
 import * as path from 'path';
 
 export interface AuthValidationResult {
@@ -84,12 +84,12 @@ export function validateAuthState(): AuthValidationResult {
     };
   }
 
-  // For MDA project: only validate CRM domain cookies (not maker portal MSAL tokens)
-  // MDA tests use certificate auth on the CRM domain; MSAL tokens are irrelevant
+  // For MDA project: verify CRM cookies are present before the age check.
+  // We don't check individual cookie expiry — session cookies on crm.dynamics.com
+  // typically last longer than a day, and the file-age check below is the authority.
   if (projectType === 'mda') {
     try {
       const stateData = JSON.parse(readFileSync(storageStatePath, 'utf-8'));
-      const currentTime = Math.floor(Date.now() / 1000);
       const crmCookies = (stateData.cookies || []).filter(
         (c: any) => c.domain && c.domain.includes('crm.dynamics.com')
       );
@@ -101,87 +101,53 @@ export function validateAuthState(): AuthValidationResult {
           message: 'MDA state has no CRM cookies. Please re-authenticate: npm run auth:mda:headful',
         };
       }
-      const expiredCrm = crmCookies.find(
-        (c: any) => c.expires && c.expires > 0 && Math.floor(c.expires) < currentTime
-      );
-      if (expiredCrm) {
-        try {
-          unlinkSync(storageStatePath);
-        } catch {}
-        const expiryDate = new Date(expiredCrm.expires * 1000);
-        return {
-          valid: false,
-          storageStatePath,
-          projectType,
-          message: `CRM session cookie expired at: ${expiryDate.toLocaleString()}\nStale state file removed. Please re-authenticate: npm run auth:mda:headful`,
-        };
-      }
-      console.log(`🔐 Storage state loaded: ${storageStatePath}`);
-      console.log(`🔐 CRM cookies valid (${crmCookies.length} CRM cookies found)`);
-      return { valid: true, storageStatePath, projectType };
+      console.log(`🔐 CRM cookies present (${crmCookies.length} found)`);
     } catch (error: any) {
-      console.log(`⚠️  Could not check MDA token expiration: ${error.message}`);
+      console.log(`⚠️  Could not read MDA state file: ${error.message}`);
       console.log(`📝 Assuming storage state is valid...`);
       return { valid: true, storageStatePath, projectType };
     }
   }
 
-  // Check if storage state has expired
+  // Check storage state file age for all project types.
+  // Both canvas/maker-portal and MDA state files are considered valid for 24 hours
+  // after creation (overridable via MS_AUTH_STORAGE_STATE_EXPIRATION in hours).
+  // Browser session cookies and refresh tokens outlive MSAL access tokens (~1h),
+  // so file age is a better proxy for "is this state still useful".
+  const maxAgeHours = parseInt(process.env.MS_AUTH_STORAGE_STATE_EXPIRATION || '24', 10);
+  const maxAgeMs = maxAgeHours * 60 * 60 * 1000;
+  const authCommand = projectType === 'mda' ? 'npm run auth:mda:headful' : 'npm run auth:headful';
+
   try {
-    const expirationCheck = ConfigHelper.checkStorageStateExpiration(storageStatePath);
+    const { mtimeMs } = statSync(storageStatePath);
+    const ageMs = Date.now() - mtimeMs;
 
-    if (expirationCheck.expired) {
-      const authCommand = 'npm run auth:headful';
-
-      // Remove stale state file so re-auth creates a clean one
+    if (ageMs > maxAgeMs) {
       try {
         unlinkSync(storageStatePath);
-        console.log(`🗑️  Removed expired state file: ${storageStatePath}`);
+        console.log(`🗑️  Removed stale state file: ${storageStatePath}`);
       } catch (cleanupError: any) {
-        console.warn(`⚠️  Could not remove expired state file: ${cleanupError.message}`);
+        console.warn(`⚠️  Could not remove stale state file: ${cleanupError.message}`);
       }
 
-      let message = 'Authentication tokens have expired!';
-      if (expirationCheck.expiresOn) {
-        const expiryDate = new Date(expirationCheck.expiresOn * 1000);
-        message += `\nToken expired at: ${expiryDate.toLocaleString()}`;
-      }
-      message += `\nStale state file removed. Please re-authenticate: ${authCommand}`;
-
+      const ageHours = Math.floor(ageMs / (1000 * 60 * 60));
       return {
         valid: false,
         storageStatePath,
         projectType,
-        message,
+        message: `Storage state is ${ageHours}h old (max: ${maxAgeHours}h).\nStale state file removed. Please re-authenticate: ${authCommand}`,
       };
     }
 
-    // Log success info
+    const remainingHours = Math.floor((maxAgeMs - ageMs) / (1000 * 60 * 60));
+    const remainingMinutes = Math.floor(((maxAgeMs - ageMs) % (1000 * 60 * 60)) / (1000 * 60));
     console.log(`🔐 Storage state loaded: ${storageStatePath}`);
+    console.log(`⏰ State valid for ${remainingHours}h ${remainingMinutes}m more`);
 
-    if (expirationCheck.expiresOn) {
-      const expiryDate = new Date(expirationCheck.expiresOn * 1000);
-      const timeUntilExpiry = Math.floor((expirationCheck.expiresOn - Date.now() / 1000) / 60);
-      console.log(
-        `⏰ Token expires: ${expiryDate.toLocaleString()} (in ${timeUntilExpiry} minutes)`
-      );
-    }
-
-    return {
-      valid: true,
-      storageStatePath,
-      projectType,
-    };
+    return { valid: true, storageStatePath, projectType };
   } catch (error: any) {
-    // If expiration check fails (e.g., missing fields), assume valid
-    // This can happen with certificate-based auth that doesn't store expiration
-    console.log(`⚠️  Could not check token expiration: ${error.message}`);
+    console.log(`⚠️  Could not check state file age: ${error.message}`);
     console.log(`📝 Assuming storage state is valid...`);
-
-    return {
-      valid: true,
-      storageStatePath,
-      projectType,
-    };
+    return { valid: true, storageStatePath, projectType };
   }
 }

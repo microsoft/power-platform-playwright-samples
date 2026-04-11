@@ -71,8 +71,7 @@ npm run auth:headful
 npm run auth:mda:headful
 ```
 
-Authentication tokens are saved under `.playwright-ms-auth/`. Re-run authentication when tests
-fail with auth errors (MSAL tokens expire after ~1 hour).
+Authentication tokens are saved under `.playwright-ms-auth/`. Storage state is valid for **24 hours** — re-run authentication when tests fail with auth errors.
 
 ## Project Structure
 
@@ -121,8 +120,8 @@ e2e-tests/
 npx playwright test
 
 # By project
-npx playwright test --project=mda
-npx playwright test --project=canvas
+npx playwright test --project=model-driven-app
+npx playwright test --project=canvas-app
 npx playwright test --project=gen-ux
 
 # Specific file
@@ -142,11 +141,11 @@ npx playwright test --ui
 
 Defined in `playwright.config.ts`:
 
-| Project  | Test directory            | Auth storage state       |
-| -------- | ------------------------- | ------------------------ |
-| `mda`    | `tests/northwind/mda/`    | `state-mda-{email}.json` |
-| `canvas` | `tests/northwind/canvas/` | `state-{email}.json`     |
-| `gen-ux` | `tests/gen-ux/`           | `state-{email}.json`     |
+| Project            | Test directory            | Auth storage state       |
+| ------------------ | ------------------------- | ------------------------ |
+| `model-driven-app` | `tests/northwind/mda/`    | `state-mda-{email}.json` |
+| `canvas-app`       | `tests/northwind/canvas/` | `state-{email}.json`     |
+| `gen-ux`           | `tests/gen-ux/`           | `state-{email}.json`     |
 
 ## What the Tests Cover
 

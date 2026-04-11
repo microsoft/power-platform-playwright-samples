@@ -56,19 +56,21 @@ variables:
   - name: MAKER_PORTAL_URL
     value: 'https://make.preview.powerapps.com'
   - name: POWER_APPS_ENVIRONMENT_ID
-    value: '708dad9d-6a5a-ec7b-b819-27125680cd02'
+    value: 'default-91bee3d9-0c15-4f17-8624-c92bb8b36ead'
   - name: CANVAS_DESIGNER_URL
     value: 'https://apps.preview.powerapps.com/'
   - name: MODEL_DRIVEN_APP_URL
-    value: 'https://northwindapptest.crm.dynamics.com/main.aspx?appid=244a4a68-2b2d-4789-8141-5cddbd100e15'
+    value: 'https://orgfbb52bb7.crm.dynamics.com/main.aspx?appid=83c9479a-5a3c-4161-a04d-42d9a83750cd'
   - name: ENVIRONMENT_NAME
     value: 'NorthwindAppTest'
   - name: CUSTOM_PAGE_NAME
     value: 'AccountsCustomPage'
   - name: CANVAS_APP_ID
-    value: '9d8cac4e-05d7-4705-8929-138297405ac6'
+    value: '2de395f4-90cc-476d-ba9b-3db3f85392a7'
   - name: CANVAS_APP_TENANT_ID
     value: '91bee3d9-0c15-4f17-8624-c92bb8b36ead'
+  - name: MS_AUTH_STORAGE_STATE_EXPIRATION
+    value: '24'
 
 parameters:
   - name: testEnvironment
