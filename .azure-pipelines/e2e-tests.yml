@@ -1,6 +1,5 @@
 name: pp-playwright-e2e-$(Rev:rrr)
 
-# https://dev.azure.com/msazure/OneAgile/_build/index?definitionId=456263&_a=completed
 # Run on schedule (weekdays 6 AM UTC) and allow manual trigger.
 # Not triggered on push — tests require a live Power Platform environment.
 trigger: none
@@ -16,10 +15,10 @@ schedules:
 
 resources:
   repositories:
-    - repository: OfficePipelineTemplates
+    - repository: templates
       type: git
-      name: 1ESPipelineTemplates/OfficePipelineTemplates
-      ref: refs/tags/release
+      name: OneBranch.Pipelines/GovernedTemplates
+      ref: refs/heads/main
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Pipeline-level variables.
@@ -57,223 +56,212 @@ variables:
   - name: MAKER_PORTAL_URL
     value: 'https://make.preview.powerapps.com'
   - name: POWER_APPS_ENVIRONMENT_ID
-    value: 'default-91bee3d9-0c15-4f17-8624-c92bb8b36ead'
+    value: '708dad9d-6a5a-ec7b-b819-27125680cd02'
   - name: CANVAS_DESIGNER_URL
     value: 'https://apps.preview.powerapps.com/'
   - name: MODEL_DRIVEN_APP_URL
-    value: 'https://orgfbb52bb7.crm.dynamics.com/main.aspx?appid=83c9479a-5a3c-4161-a04d-42d9a83750cd'
+    value: 'https://northwindapptest.crm.dynamics.com/main.aspx?appid=244a4a68-2b2d-4789-8141-5cddbd100e15'
   - name: ENVIRONMENT_NAME
     value: 'NorthwindAppTest'
   - name: CUSTOM_PAGE_NAME
     value: 'AccountsCustomPage'
   - name: CANVAS_APP_ID
-    value: '2de395f4-90cc-476d-ba9b-3db3f85392a7'
+    value: '9d8cac4e-05d7-4705-8929-138297405ac6'
   - name: CANVAS_APP_TENANT_ID
     value: '91bee3d9-0c15-4f17-8624-c92bb8b36ead'
-  - name: MS_AUTH_STORAGE_STATE_EXPIRATION
-    value: '24'
 
 parameters:
   - name: testEnvironment
     displayName: Target environment
     type: string
-    default: preview
+    default: dev
     values:
       - dev
       - staging
-      - preview
 
-extends:
-  template: v1/Office.Unofficial.PipelineTemplate.yml@OfficePipelineTemplates
-  parameters:
-    sdl:
-      codeql:
-        compiled:
-          enabled: false # TypeScript — no compiled analysis needed
+stages:
+  - stage: E2ETests
+    displayName: 'E2E Playwright Tests'
+    jobs:
+      # ───────────────────────────────────────────────────────────────────────
+      # Job 1: Gen UX tests
+      # Uses the 'gen-ux' Playwright project (testDir set in playwright.config.ts).
+      # Uses canvas/maker-portal storage state (standard auth).
+      # ───────────────────────────────────────────────────────────────────────
+      - job: GenUXTests
+        displayName: 'Gen UX Tests'
+        timeoutInMinutes: 60
+        steps:
+          - template: /.azure-pipelines/steps/e2e-setup.yml@self
+            parameters:
+              nodeVersion: $(nodeVersion)
+              testEnvironment: ${{ parameters.testEnvironment }}
 
-    stages:
-      - stage: E2ETests
-        displayName: 'E2E Playwright Tests'
-        jobs:
-          # ───────────────────────────────────────────────────────────────────
-          # Job 1: Gen UX tests
-          # Uses the 'gen-ux' Playwright project (testDir set in playwright.config.ts).
-          # Uses canvas/maker-portal storage state (standard auth).
-          # ───────────────────────────────────────────────────────────────────
-          - job: GenUXTests
-            displayName: 'Gen UX Tests'
-            timeoutInMinutes: 60
-            templateContext:
-              outputs:
-                - output: pipelineArtifact
-                  targetPath: $(testResultsDir)
-                  artifactName: BlobReport-GenUX
-                  displayName: Publish Gen UX blob report
-                  condition: succeededOrFailed()
-            steps:
-              - template: /.azure-pipelines/steps/e2e-setup.yml@self
-                parameters:
-                  nodeVersion: $(nodeVersion)
-                  testEnvironment: ${{ parameters.testEnvironment }}
+          - script: |
+              cd packages/e2e-tests
+              npx playwright test \
+                --project=gen-ux \
+                --reporter=dot,blob,junit \
+                --output="$(testResultsDir)/artifacts"
+            displayName: Run Gen UX tests
+            env:
+              CI: true
+              MS_AUTH_EMAIL: $(msAuthEmail)
+              OUTPUT_DIRECTORY: $(testResultsDir)
 
-              - script: |
-                  cd packages/e2e-tests
-                  npx playwright test \
-                    --project=gen-ux \
-                    --reporter=dot,blob,junit \
-                    --output="$(testResultsDir)/artifacts"
-                displayName: Run Gen UX tests
-                env:
-                  CI: true
-                  MS_AUTH_EMAIL: $(msAuthEmail)
-                  OUTPUT_DIRECTORY: $(testResultsDir)
-
-          # ───────────────────────────────────────────────────────────────────
-          # Job 2: Northwind Canvas App tests
-          # Uses the 'canvas-app' Playwright project (testDir set in playwright.config.ts).
-          # Uses canvas/maker-portal storage state.
-          # ───────────────────────────────────────────────────────────────────
-          - job: NorthwindCanvasTests
-            displayName: 'Northwind Canvas Tests'
-            timeoutInMinutes: 60
-            templateContext:
-              outputs:
-                - output: pipelineArtifact
-                  targetPath: $(testResultsDir)
-                  artifactName: BlobReport-NorthwindCanvas
-                  displayName: Publish Northwind Canvas blob report
-                  condition: succeededOrFailed()
-            steps:
-              - template: /.azure-pipelines/steps/e2e-setup.yml@self
-                parameters:
-                  nodeVersion: $(nodeVersion)
-                  testEnvironment: ${{ parameters.testEnvironment }}
-
-              - script: |
-                  cd packages/e2e-tests
-                  npx playwright test \
-                    --project=canvas-app \
-                    --reporter=dot,blob,junit \
-                    --output="$(testResultsDir)/artifacts"
-                displayName: Run Northwind Canvas tests
-                env:
-                  CI: true
-                  MS_AUTH_EMAIL: $(msAuthEmail)
-                  OUTPUT_DIRECTORY: $(testResultsDir)
-
-          # ───────────────────────────────────────────────────────────────────
-          # Job 3: Northwind Model-Driven App tests
-          # Uses the 'model-driven-app' Playwright project (testDir set in playwright.config.ts).
-          # Requires both canvas auth state AND a separate MDA auth state.
-          # ───────────────────────────────────────────────────────────────────
-          - job: NorthwindMDATests
-            displayName: 'Northwind Model-Driven App Tests'
-            timeoutInMinutes: 60
-            templateContext:
-              outputs:
-                - output: pipelineArtifact
-                  targetPath: $(testResultsDir)
-                  artifactName: BlobReport-NorthwindMDA
-                  displayName: Publish Northwind MDA blob report
-                  condition: succeededOrFailed()
-            steps:
-              - template: /.azure-pipelines/steps/e2e-setup.yml@self
-                parameters:
-                  nodeVersion: $(nodeVersion)
-                  testEnvironment: ${{ parameters.testEnvironment }}
-                  authenticateMDA: true
-
-              - script: |
-                  cd packages/e2e-tests
-                  npx playwright test \
-                    --project=model-driven-app \
-                    --reporter=dot,blob,junit \
-                    --output="$(testResultsDir)/artifacts"
-                displayName: Run Northwind MDA tests
-                env:
-                  CI: true
-                  MS_AUTH_EMAIL: $(msAuthEmail)
-                  OUTPUT_DIRECTORY: $(testResultsDir)
-
-          # ───────────────────────────────────────────────────────────────────
-          # Job 4: Merge all blob reports → single HTML report + JUnit XML.
-          # Runs after all test jobs (even on failure) so results are always
-          # consolidated. Blob reports from each job are downloaded and merged
-          # using the Playwright merge-reports CLI.
-          # ───────────────────────────────────────────────────────────────────
-          - job: MergeReports
-            displayName: 'Merge Test Reports'
-            dependsOn:
-              - GenUXTests
-              - NorthwindCanvasTests
-              - NorthwindMDATests
+          - task: PublishPipelineArtifact@1
+            displayName: Publish Gen UX blob report
             condition: succeededOrFailed()
-            timeoutInMinutes: 30
-            templateContext:
-              outputs:
-                - output: pipelineArtifact
-                  targetPath: $(Build.ArtifactStagingDirectory)/merged-report
-                  artifactName: TestResults-Merged
-                  displayName: Publish merged HTML report
-                  condition: succeededOrFailed()
-            steps:
-              - checkout: self
+            inputs:
+              targetPath: $(testResultsDir)
+              artifact: BlobReport-GenUX
 
-              - task: NodeTool@0
-                displayName: 'Use Node.js $(nodeVersion)'
-                inputs:
-                  versionSpec: $(nodeVersion)
+      # ───────────────────────────────────────────────────────────────────────
+      # Job 2: Northwind Canvas App tests
+      # Uses the 'canvas-app' Playwright project (testDir set in playwright.config.ts).
+      # Uses canvas/maker-portal storage state.
+      # ───────────────────────────────────────────────────────────────────────
+      - job: NorthwindCanvasTests
+        displayName: 'Northwind Canvas Tests'
+        timeoutInMinutes: 60
+        steps:
+          - template: /.azure-pipelines/steps/e2e-setup.yml@self
+            parameters:
+              nodeVersion: $(nodeVersion)
+              testEnvironment: ${{ parameters.testEnvironment }}
 
-              - script: |
-                  corepack enable
-                  corepack prepare pnpm@10.28.1 --activate
-                displayName: Enable corepack + pnpm
+          - script: |
+              cd packages/e2e-tests
+              npx playwright test \
+                --project=canvas-app \
+                --reporter=dot,blob,junit \
+                --output="$(testResultsDir)/artifacts"
+            displayName: Run Northwind Canvas tests
+            env:
+              CI: true
+              MS_AUTH_EMAIL: $(msAuthEmail)
+              OUTPUT_DIRECTORY: $(testResultsDir)
 
-              - script: npm install -g @microsoft/rush
-                displayName: Install Rush
+          - task: PublishPipelineArtifact@1
+            displayName: Publish Northwind Canvas blob report
+            condition: succeededOrFailed()
+            inputs:
+              targetPath: $(testResultsDir)
+              artifact: BlobReport-NorthwindCanvas
 
-              - script: node common/scripts/install-run-rush.js install
-                displayName: Rush Install
+      # ───────────────────────────────────────────────────────────────────────
+      # Job 3: Northwind Model-Driven App tests
+      # Uses the 'model-driven-app' Playwright project (testDir set in playwright.config.ts).
+      # Requires both canvas auth state AND a separate MDA auth state.
+      # ───────────────────────────────────────────────────────────────────────
+      - job: NorthwindMDATests
+        displayName: 'Northwind Model-Driven App Tests'
+        timeoutInMinutes: 60
+        steps:
+          - template: /.azure-pipelines/steps/e2e-setup.yml@self
+            parameters:
+              nodeVersion: $(nodeVersion)
+              testEnvironment: ${{ parameters.testEnvironment }}
+              authenticateMDA: true
 
-              # Download blob reports from each test job into named subdirs
-              - task: DownloadPipelineArtifact@2
-                displayName: 'Download blob report — GenUX'
-                inputs:
-                  artifact: BlobReport-GenUX
-                  path: $(Pipeline.Workspace)/blob-reports/gen-ux
+          - script: |
+              cd packages/e2e-tests
+              npx playwright test \
+                --project=model-driven-app \
+                --reporter=dot,blob,junit \
+                --output="$(testResultsDir)/artifacts"
+            displayName: Run Northwind MDA tests
+            env:
+              CI: true
+              MS_AUTH_EMAIL: $(msAuthEmail)
+              OUTPUT_DIRECTORY: $(testResultsDir)
 
-              - task: DownloadPipelineArtifact@2
-                displayName: 'Download blob report — NorthwindCanvas'
-                inputs:
-                  artifact: BlobReport-NorthwindCanvas
-                  path: $(Pipeline.Workspace)/blob-reports/northwind-canvas
+          - task: PublishPipelineArtifact@1
+            displayName: Publish Northwind MDA blob report
+            condition: succeededOrFailed()
+            inputs:
+              targetPath: $(testResultsDir)
+              artifact: BlobReport-NorthwindMDA
 
-              - task: DownloadPipelineArtifact@2
-                displayName: 'Download blob report — NorthwindMDA'
-                inputs:
-                  artifact: BlobReport-NorthwindMDA
-                  path: $(Pipeline.Workspace)/blob-reports/northwind-mda
+      # ───────────────────────────────────────────────────────────────────────
+      # Job 4: Merge all blob reports → single HTML report + JUnit XML.
+      # Runs after all test jobs (even on failure) so results are always
+      # consolidated. Blob reports from each job are downloaded and merged
+      # using the Playwright merge-reports CLI.
+      # ───────────────────────────────────────────────────────────────────────
+      - job: MergeReports
+        displayName: 'Merge Test Reports'
+        dependsOn:
+          - GenUXTests
+          - NorthwindCanvasTests
+          - NorthwindMDATests
+        condition: succeededOrFailed()
+        timeoutInMinutes: 30
+        steps:
+          - checkout: self
 
-              # Merge all blob dirs → unified HTML report + JUnit XML
-              - script: |
-                  cd packages/e2e-tests
-                  npx playwright merge-reports \
-                    --reporter=html,junit \
-                    $(Pipeline.Workspace)/blob-reports/gen-ux \
-                    $(Pipeline.Workspace)/blob-reports/northwind-canvas \
-                    $(Pipeline.Workspace)/blob-reports/northwind-mda
-                displayName: Merge Playwright reports
-                env:
-                  PLAYWRIGHT_HTML_OUTPUT_FOLDER: $(Build.ArtifactStagingDirectory)/merged-report
-                  PLAYWRIGHT_JUNIT_OUTPUT_NAME: $(Build.ArtifactStagingDirectory)/merged-report/test-results.xml
+          - task: NodeTool@0
+            displayName: 'Use Node.js $(nodeVersion)'
+            inputs:
+              versionSpec: $(nodeVersion)
 
-              # Publish merged results to ADO Tests tab
-              - task: PublishTestResults@2
-                displayName: 'Publish merged test results'
-                condition: succeededOrFailed()
-                inputs:
-                  testResultsFormat: JUnit
-                  testResultsFiles: '$(Build.ArtifactStagingDirectory)/merged-report/test-results.xml'
-                  mergeTestResults: true
-                  testRunTitle: 'E2E — Merged — $(Build.BuildNumber)'
-                  failTaskOnFailedTests: true
+          - script: |
+              corepack enable
+              corepack prepare pnpm@10.28.1 --activate
+            displayName: Enable corepack + pnpm
+
+          - script: npm install -g @microsoft/rush
+            displayName: Install Rush
+
+          - script: node common/scripts/install-run-rush.js install
+            displayName: Rush Install
+
+          # Download blob reports from each test job into named subdirs
+          - task: DownloadPipelineArtifact@2
+            displayName: 'Download blob report — GenUX'
+            inputs:
+              artifact: BlobReport-GenUX
+              path: $(Pipeline.Workspace)/blob-reports/gen-ux
+
+          - task: DownloadPipelineArtifact@2
+            displayName: 'Download blob report — NorthwindCanvas'
+            inputs:
+              artifact: BlobReport-NorthwindCanvas
+              path: $(Pipeline.Workspace)/blob-reports/northwind-canvas
+
+          - task: DownloadPipelineArtifact@2
+            displayName: 'Download blob report — NorthwindMDA'
+            inputs:
+              artifact: BlobReport-NorthwindMDA
+              path: $(Pipeline.Workspace)/blob-reports/northwind-mda
+
+          # Merge all blob dirs → unified HTML report + JUnit XML
+          - script: |
+              cd packages/e2e-tests
+              npx playwright merge-reports \
+                --reporter=html,junit \
+                $(Pipeline.Workspace)/blob-reports/gen-ux \
+                $(Pipeline.Workspace)/blob-reports/northwind-canvas \
+                $(Pipeline.Workspace)/blob-reports/northwind-mda
+            displayName: Merge Playwright reports
+            env:
+              PLAYWRIGHT_HTML_OUTPUT_FOLDER: $(Build.ArtifactStagingDirectory)/merged-report
+              PLAYWRIGHT_JUNIT_OUTPUT_NAME: $(Build.ArtifactStagingDirectory)/merged-report/test-results.xml
+
+          # Publish merged results to ADO Tests tab
+          - task: PublishTestResults@2
+            displayName: 'Publish merged test results'
+            condition: succeededOrFailed()
+            inputs:
+              testResultsFormat: JUnit
+              testResultsFiles: '$(Build.ArtifactStagingDirectory)/merged-report/test-results.xml'
+              mergeTestResults: true
+              testRunTitle: 'E2E — Merged — $(Build.BuildNumber)'
+              failTaskOnFailedTests: true
+
+          - task: PublishPipelineArtifact@1
+            displayName: Publish merged HTML report
+            condition: succeededOrFailed()
+            inputs:
+              targetPath: $(Build.ArtifactStagingDirectory)/merged-report
+              artifact: TestResults-Merged
