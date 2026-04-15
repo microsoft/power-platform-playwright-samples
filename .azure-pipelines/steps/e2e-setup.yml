@@ -14,9 +14,6 @@ parameters:
   - name: nodeVersion
     type: string
     default: '20.x'
-  - name: testEnvironment
-    type: string
-    default: dev
   - name: authenticateMDA
     type: boolean
     default: false

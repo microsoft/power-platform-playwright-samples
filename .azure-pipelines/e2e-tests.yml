@@ -63,15 +63,6 @@ variables:
   - name: CANVAS_APP_TENANT_ID
     value: '91bee3d9-0c15-4f17-8624-c92bb8b36ead'
 
-parameters:
-  - name: testEnvironment
-    displayName: Target environment
-    type: string
-    default: dev
-    values:
-      - dev
-      - staging
-
 stages:
   - stage: E2ETests
     displayName: 'E2E Playwright Tests'
@@ -89,7 +80,6 @@ stages:
           - template: /.azure-pipelines/steps/e2e-setup.yml@self
             parameters:
               nodeVersion: $(nodeVersion)
-              testEnvironment: ${{ parameters.testEnvironment }}
 
           - script: |
               cd packages/e2e-tests
@@ -123,7 +113,6 @@ stages:
           - template: /.azure-pipelines/steps/e2e-setup.yml@self
             parameters:
               nodeVersion: $(nodeVersion)
-              testEnvironment: ${{ parameters.testEnvironment }}
 
           - script: |
               cd packages/e2e-tests
@@ -157,7 +146,6 @@ stages:
           - template: /.azure-pipelines/steps/e2e-setup.yml@self
             parameters:
               nodeVersion: $(nodeVersion)
-              testEnvironment: ${{ parameters.testEnvironment }}
               authenticateMDA: true
 
           - script: |
