@@ -21,7 +21,7 @@ const playwrightTestRunName = 'Playwright Power Platform E2E Tests';
  * Helper function to get grep pattern from environment
  */
 function getGrepPattern(): RegExp | undefined {
-  const grepPattern = process.env.GREP;
+  const grepPattern = process.env.PW_GREP;
   return grepPattern ? new RegExp(grepPattern) : undefined;
 }
 
