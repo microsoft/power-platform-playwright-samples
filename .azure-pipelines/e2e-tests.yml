@@ -28,12 +28,6 @@ variables:
   # ── Auth ────────────────────────────────────────────────────────────────────
   - name: msAuthEmail
     value: 'aurorauser06@capintegration01.onmicrosoft.com'
-  - name: MS_AUTH_CREDENTIAL_PROVIDER
-    value: azure-keyvault
-  - name: MS_AUTH_KEYVAULT_ENDPOINT
-    value: 'https://ltimauroracertificates.vault.azure.net/'
-  - name: MS_AUTH_KEYVAULT_SECRET_NAME
-    value: ''
   - name: MS_AUTH_HEADLESS
     value: true
   - name: MS_AUTH_WAIT_FOR_MSAL_TOKENS
