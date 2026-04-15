@@ -594,14 +594,9 @@ power-platform-playwright-samples/
 
 ## Contributing
 
-Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) and follow the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
+For now, we are not accepting external contributions. Our goal is to keep these samples simple, easy to use, and avoid adding extra layers or complexity.
 
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feat/my-feature`
-3. Make changes in `packages/power-platform-playwright-toolkit/src/`
-4. Build: `rush build`
-5. Test: `cd packages/e2e-tests && npx playwright test`
-6. Submit a pull request to `main`
+We recommend that individuals fork the repository and customize it to their specific needs. Feedback is always welcome, and we may consider contributions in the future as the project matures.
 
 ---
 
