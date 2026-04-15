@@ -85,6 +85,10 @@ steps:
       Write-Host "##vso[task.setvariable variable=certFilePath]$certPath"
     displayName: 'Decode test user cert to disk'
     failOnStderr: true
+    env:
+      auroracapintuser04: $(auroracapintuser04)
+      auroracapintuser06: $(auroracapintuser06)
+      auroracapintuser11: $(auroracapintuser11)
 
   # 3. Create canvas / maker-portal auth state (used by gen-ux and canvas jobs).
   #    Overrides MS_AUTH_CREDENTIAL_PROVIDER to use the locally decoded cert file
