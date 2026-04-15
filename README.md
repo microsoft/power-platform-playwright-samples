@@ -2,7 +2,6 @@
   <h1><strong>Power Platform Playwright Samples</strong></h1>
 
 [![Build Status](https://github.com/microsoft/power-platform-playwright-samples/actions/workflows/ci.yml/badge.svg)](https://github.com/microsoft/power-platform-playwright-samples/actions/workflows/ci.yml)
-[![npm version](https://img.shields.io/npm/v/power-platform-playwright-toolkit.svg)](https://www.npmjs.com/package/power-platform-playwright-toolkit)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9%2B-blue)](https://www.typescriptlang.org/)
 [![Playwright](https://img.shields.io/badge/Playwright-1.57%2B-green)](https://playwright.dev/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -18,280 +17,11 @@
 
 This monorepo contains three packages:
 
-| Package                                                                                      | Description                                                            |
-| -------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| [`packages/power-platform-playwright-toolkit/`](packages/power-platform-playwright-toolkit/) | Core library — published to npm as `power-platform-playwright-toolkit` |
-| [`packages/e2e-tests/`](packages/e2e-tests/)                                                 | Sample tests demonstrating real-world usage patterns                   |
-| [`packages/docs/`](packages/docs/)                                                           | Documentation site (Nextra/Next.js)                                    |
-
----
-
-## Using the npm Package
-
-```mermaid
-flowchart TD
-    A([Start]) --> B[npm install\npower-platform-playwright-toolkit]
-    B --> C[Create .env\nfrom template]
-    C --> D{Auth method?}
-
-    D -->|Local dev| E[Password\nMS_AUTH_CREDENTIAL_TYPE=password]
-    D -->|CI/CD| F[Certificate\nMS_AUTH_CREDENTIAL_TYPE=certificate]
-
-    E --> G[npm run auth\nopens browser for sign-in]
-    F --> H[Storage state acquired\nin globalSetup - headless]
-
-    G --> I[Storage state saved\ngetStorageStatePath email]
-    H --> I
-
-    I --> J[Create playwright.config.ts\npoint storageState at saved file]
-    J --> K{App type?}
-
-    K -->|Model-Driven / D365| L[AppType.ModelDriven\nMODEL_DRIVEN_APP_URL]
-    K -->|Canvas App| M[AppType.Canvas\nCANVAS_APP_ID + CANVAS_APP_TENANT_ID]
-    K -->|Maker Portal / Gen UX| N[AppType.PowerApps\nPOWER_APPS_BASE_URL]
-
-    L --> O[new AppProvider\napp.launch + getModelDrivenAppPage]
-    M --> P[new AppProvider\napp.launch + getCanvasAppPage]
-    N --> Q[new AppProvider\napp.launch + getGenUxPage]
-
-    O --> R([npx playwright test])
-    P --> R
-    Q --> R
-```
-
-### Prerequisites
-
-- Node.js 20+
-- An M365 / Dynamics 365 tenant with a test user account
-- Microsoft Edge (recommended) or Chromium
-
-### 1. Install
-
-```bash
-npm install power-platform-playwright-toolkit @playwright/test --save-dev
-```
-
-Install browser binaries (first time only):
-
-```bash
-npx playwright install msedge
-```
-
-### 2. Configure environment variables
-
-Create a `.env` file in your project root. All available variables:
-
-```bash
-# =============================================================================
-# Power Apps / Maker Portal
-# =============================================================================
-POWER_APPS_BASE_URL=https://make.powerapps.com
-POWER_APPS_ENVIRONMENT_ID=Default-00000000-0000-0000-0000-000000000000
-
-# =============================================================================
-# Model-Driven App
-# =============================================================================
-# Full URL — open your MDA in the browser and copy the URL including ?appid=
-MODEL_DRIVEN_APP_URL=https://your-org.crm.dynamics.com/main.aspx?appid=00000000-0000-0000-0000-000000000000
-
-# =============================================================================
-# Canvas App
-# =============================================================================
-# Option A: Component IDs (toolkit builds the play URL automatically)
-CANVAS_APP_ID=00000000-0000-0000-0000-000000000000
-CANVAS_APP_TENANT_ID=00000000-0000-0000-0000-000000000000
-
-# Option B: Full play URL (takes precedence over IDs if set)
-# CANVAS_APP_URL=https://apps.powerapps.com/play/e/<env-id>/a/<app-id>?tenantId=<tenant-id>
-
-# =============================================================================
-# Microsoft Authentication (playwright-ms-auth)
-# =============================================================================
-MS_AUTH_EMAIL=user@contoso.com
-
-# Password auth (simplest for local dev)
-MS_AUTH_CREDENTIAL_TYPE=password
-MS_AUTH_CREDENTIAL_PROVIDER=environment
-MS_AUTH_ENV_VARIABLE_NAME=MS_USER_PASSWORD
-MS_USER_PASSWORD=your-password-here
-
-# Certificate auth (recommended for CI/CD)
-# MS_AUTH_CREDENTIAL_TYPE=certificate
-# MS_AUTH_CREDENTIAL_PROVIDER=local-file
-# MS_AUTH_LOCAL_FILE_PATH=./cert/your-cert.pfx
-# MS_AUTH_CERTIFICATE_PASSWORD=your-cert-password
-
-MS_AUTH_HEADLESS=true
-MS_AUTH_WAIT_FOR_MSAL_TOKENS=true
-MS_AUTH_MSAL_TOKEN_TIMEOUT=30000
-AUTH_ENDPOINT=https://login.microsoftonline.com
-
-# =============================================================================
-# Test Runner
-# =============================================================================
-HEADLESS=true
-WORKERS=1
-RETRIES=0
-TEST_TIMEOUT=120000
-OUTPUT_DIRECTORY=./test-results
-```
-
-### 3. Set up Playwright config
-
-```typescript
-// playwright.config.ts
-import { defineConfig } from '@playwright/test';
-import dotenv from 'dotenv';
-import { getStorageStatePath, TimeOut, ConfigHelper } from 'power-platform-playwright-toolkit';
-
-dotenv.config();
-
-export default defineConfig({
-  testDir: './tests',
-  timeout: 120_000,
-  fullyParallel: false,
-  retries: process.env.CI ? 1 : 0,
-
-  use: {
-    channel: 'msedge',
-    headless: process.env.HEADLESS !== 'false',
-    // Use viewport to control resolution — do NOT combine with --start-maximized
-    // or --window-size in launchOptions.args. Those flags conflict with viewport
-    // and produce inconsistent behaviour across headed and headless modes.
-    viewport: { width: 1920, height: 1080 },
-    baseURL: ConfigHelper.getBaseUrl(),
-    storageState: process.env.MS_AUTH_EMAIL
-      ? getStorageStatePath(process.env.MS_AUTH_EMAIL)
-      : undefined,
-    screenshot: 'only-on-failure',
-    video: 'on',
-    trace: 'retain-on-failure',
-    actionTimeout: TimeOut.OneMinuteTimeOut,
-    navigationTimeout: TimeOut.OneMinuteTimeOut,
-    ignoreHTTPSErrors: true,
-    locale: 'en-US',
-  },
-
-  expect: {
-    timeout: TimeOut.DefaultWaitTime,
-  },
-});
-```
-
-### 4. Authenticate (first time)
-
-The toolkit uses [`playwright-ms-auth`](https://www.npmjs.com/package/playwright-ms-auth) to acquire and cache browser storage state (cookies + localStorage) so tests do not re-authenticate on every run.
-
-Add a helper script to your `package.json`:
-
-```json
-{
-  "scripts": {
-    "auth": "playwright-ms-auth --headed"
-  }
-}
-```
-
-Run these once before your first test run. You need two sessions — one per domain:
-
-```bash
-# Maker Portal session (Canvas Apps, Gen UX)
-npm run auth:headful
-
-# Model-Driven App session (Dynamics 365 / CRM domain)
-npm run auth:mda:headful
-```
-
-Storage state files are saved automatically to paths returned by `getStorageStatePath(email)` and picked up by the Playwright config via `storageState`.
-
-> In CI, supply credentials via environment variables (`MS_AUTH_CREDENTIAL_TYPE=password` or `certificate`). Storage state is acquired headlessly during `globalSetup`.
-
-### 5. Write tests
-
-#### Model-Driven App
-
-```typescript
-import { test, expect } from '@playwright/test';
-import { AppProvider, AppType } from 'power-platform-playwright-toolkit';
-
-test('navigate grid and open a record', async ({ page, context }) => {
-  const app = new AppProvider(page, context);
-
-  await app.launch({
-    app: 'Accounts',
-    type: AppType.ModelDriven,
-    directUrl: process.env.MODEL_DRIVEN_APP_URL!,
-    skipMakerPortal: true,
-  });
-
-  const mda = app.getModelDrivenAppPage();
-
-  // Navigate to the Accounts grid view
-  await mda.grid.navigateToGridView();
-  const rowCount = await mda.grid.getRowCount();
-  expect(rowCount).toBeGreaterThan(0);
-
-  // Open the first row
-  await mda.grid.openRow(0);
-
-  // Read and update a form field
-  const name = await mda.form.getEntityAttribute('name');
-  expect(name).toBeTruthy();
-
-  await mda.form.setEntityAttribute('description', 'Updated by Playwright');
-  await mda.form.saveForm();
-  expect(await mda.form.isFormDirty()).toBe(false);
-});
-```
-
-#### Canvas App
-
-```typescript
-import { test, expect } from '@playwright/test';
-import { AppProvider, AppType, buildCanvasAppUrlFromEnv } from 'power-platform-playwright-toolkit';
-
-test('interact with a canvas app control', async ({ page, context }) => {
-  const app = new AppProvider(page, context);
-
-  await app.launch({
-    app: 'My Canvas App',
-    type: AppType.Canvas,
-    directUrl: buildCanvasAppUrlFromEnv(), // reads CANVAS_APP_ID + CANVAS_APP_TENANT_ID
-  });
-
-  const canvas = app.getCanvasAppPage();
-
-  await canvas.clickControl('Submit Button');
-  await canvas.waitForScreen('Confirmation Screen');
-
-  const label = await canvas.getLabelText('Status Label');
-  expect(label).toBe('Submitted successfully');
-});
-```
-
-#### Gen UX (AI-generated apps in the Maker Portal designer)
-
-```typescript
-import { test, expect } from '@playwright/test';
-import { AppProvider, AppType } from 'power-platform-playwright-toolkit';
-
-test('verify gen-ux app preview', async ({ page, context }) => {
-  const app = new AppProvider(page, context);
-
-  await app.launch({
-    app: 'My Gen UX App',
-    type: AppType.PowerApps,
-    directUrl: process.env.POWER_APPS_BASE_URL!,
-  });
-
-  const genUx = app.getGenUxPage();
-  await genUx.waitForDesignerReady();
-
-  // Interact with the UCI Preview iframe
-  const preview = await genUx.getPreviewFrame();
-  await preview.locator('[data-testid="submit-btn"]').click();
-});
-```
+| Package                                                                                      | Description                                             |
+| -------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| [`packages/power-platform-playwright-toolkit/`](packages/power-platform-playwright-toolkit/) | Core library — clone the repo to use it in your project |
+| [`packages/e2e-tests/`](packages/e2e-tests/)                                                 | Sample tests demonstrating real-world usage patterns    |
+| [`packages/docs/`](packages/docs/)                                                           | Documentation site (Nextra/Next.js)                     |
 
 ---
 
@@ -361,9 +91,9 @@ test('verify gen-ux app preview', async ({ page, context }) => {
 ## Architecture
 
 ```
-Your Test Project
+Your Test Project (clone this repo and reference the toolkit locally)
       │
-      │  npm install power-platform-playwright-toolkit
+      │  rush build → packages/power-platform-playwright-toolkit/dist/
       ▼
 ┌─────────────────────────────────────────────────────────┐
 │           power-platform-playwright-toolkit              │
@@ -384,7 +114,7 @@ playwright-ms-auth  +  @playwright/test
 
 ---
 
-## Getting Started from Source
+## Getting Started
 
 ```bash
 # Clone
@@ -493,7 +223,7 @@ OUTPUT_DIRECTORY=./test-results
 > All variable descriptions and available options are documented in
 > [`packages/e2e-tests/.env.example`](packages/e2e-tests/.env.example).
 
-#### Step 2 — Authenticate
+#### Step 3 — Authenticate
 
 Authentication is handled by [`packages/e2e-tests/scripts/authenticate.ts`](packages/e2e-tests/scripts/authenticate.ts), which uses `playwright-ms-auth` to acquire and cache browser storage state (cookies + localStorage tokens). Run it once before your first test run — you only need to re-run it if your session expires.
 
@@ -534,7 +264,7 @@ Storage state files are saved automatically to the path returned by `getStorageS
 > npm run auth:mda:headful
 > ```
 
-#### Step 3 — Run tests
+#### Step 4 — Run tests
 
 ```bash
 # Run all tests
@@ -553,7 +283,7 @@ npx playwright test --project=gen-ux
 ```
 power-platform-playwright-samples/
 ├── packages/
-│   ├── power-platform-playwright-toolkit/  # npm library
+│   ├── power-platform-playwright-toolkit/  # core toolkit (use by cloning this repo)
 │   │   ├── src/
 │   │   │   ├── core/           # AppProvider, AppLauncherFactory, waiters
 │   │   │   ├── components/     # ModelDrivenAppPage, CanvasAppPage, GenUxPage
