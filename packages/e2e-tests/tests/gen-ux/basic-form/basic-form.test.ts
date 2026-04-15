@@ -88,9 +88,9 @@ test.describe.serial('GenUX — Basic Form Generation', () => {
   // Allow up to 15 minutes per test to accommodate slow generation under load.
   test.setTimeout(15 * 60 * 1000);
 
-  let page: Page;
-  let context: BrowserContext;
-  let genUxPage: GenUxPage;
+  let page: Page | undefined;
+  let context: BrowserContext | undefined;
+  let genUxPage: GenUxPage | undefined;
   const appsCreated: string[] = [];
 
   test.beforeEach(async ({ browser }) => {
@@ -117,12 +117,18 @@ test.describe.serial('GenUX — Basic Form Generation', () => {
   });
 
   test.afterEach(async () => {
-    console.log(`[afterEach] Cleaning up ${appsCreated.length} app(s): ${appsCreated.join(', ')}`);
-    await performGenUxBasicTeardown(genUxPage, appsCreated);
+    if (genUxPage) {
+      console.log(
+        `[afterEach] Cleaning up ${appsCreated.length} app(s): ${appsCreated.join(', ')}`
+      );
+      await performGenUxBasicTeardown(genUxPage, appsCreated);
+    } else {
+      console.warn('[afterEach] Skipping teardown — genUxPage not initialized (beforeEach failed)');
+    }
 
     // Capture video reference BEFORE closing — path() resolves after context close
-    const video = page.video();
-    await context.close().catch((e: Error) => {
+    const video = page?.video();
+    await context?.close().catch((e: Error) => {
       console.warn(`[afterEach] Context close warning (non-fatal): ${e.message}`);
     });
 

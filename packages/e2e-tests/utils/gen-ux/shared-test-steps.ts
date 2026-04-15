@@ -89,6 +89,7 @@ export async function performGenUxBasicTeardown(
   genUxPage: GenUxPage,
   appsToDelete: string[]
 ): Promise<void> {
+  if (appsToDelete.length === 0) return;
   await test.step('Clean up created apps', async () => {
     await genUxPage.goToAppsPage();
     for (const appName of appsToDelete) {
