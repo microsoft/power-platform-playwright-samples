@@ -25,6 +25,7 @@ blob-report/
 
 # Common config
 common/config/rush/
+common/scripts/
 
 # Temp
 .temp/
