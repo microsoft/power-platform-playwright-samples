@@ -594,9 +594,10 @@ power-platform-playwright-samples/
 
 ## Contributing
 
-For now, we are not accepting external contributions. Our goal is to keep these samples simple, easy to use, and avoid adding extra layers or complexity.
-
-We recommend that individuals fork the repository and customize it to their specific needs. Feedback is always welcome, and we may consider contributions in the future as the project matures.
+> [!NOTE]
+> For now, we are not accepting external contributions. Our goal is to keep these samples simple, easy to use, and avoid adding extra layers or complexity.
+>
+> We recommend that individuals fork the repository and customize it to their specific needs. Feedback is always welcome, and we may consider contributions in the future as the project matures.
 
 ---
 
