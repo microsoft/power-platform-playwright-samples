@@ -158,19 +158,24 @@ export class GenUxPage {
   }
 
   /**
-   * Click "Add new page" then select "Describe a page" to open the GenUX prompt panel.
+   * Click "Add new page" then select "Generative page" to open the GenUX prompt panel.
    *
-   * Uses `getByRole('button')` for "Describe a page". The add-page placeholder
+   * Uses `getByRole('button')` for "Generative page". The add-page placeholder
    * has no semantic role so falls back to `locator()` with its stable ID.
    */
   public async addNewPage(): Promise<void> {
     // locator() — no semantic role on the placeholder; ID is the only stable hook
     await this.page.locator('#add-new-page-in-canvas-placeholder').click();
 
-    // getByRole('button') — "Describe a page" option button in the panel
+    // getByRole('button') — "Generative page" option in the Add page dialog
+    // (previously labelled "Describe a page")
     await this.page
-      .getByRole('button', { name: 'Describe a page' })
+      .getByRole('button', { name: 'Generative page' })
       .click({ timeout: Timeout.default });
+
+    // "Generative page" now opens a "Select a generative page" sub-dialog.
+    // Click "+ Describe a new page" to open the AI prompt panel.
+    await this.page.getByText('Describe a new page').click({ timeout: Timeout.default });
   }
 
   // ── AI GENERATION ─────────────────────────────────────────────────────────
@@ -547,7 +552,7 @@ export class GenUxPage {
   public async waitForSubmitSuccess(timeout = 30_000): Promise<void> {
     // Broad regex covers the most common AI-generated notification phrases.
     // Power Fx Notify() banners render inside the UCI Preview iframe canvas.
-    const successPattern = /submitted|saved|success|created|added/i;
+    const successPattern = /submitted|saved|success|created|added|thank/i;
 
     const successLocator = this.uciPreviewFrame.getByText(successPattern).first();
     await successLocator.waitFor({ state: 'visible', timeout });
