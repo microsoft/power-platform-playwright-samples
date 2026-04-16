@@ -51,10 +51,16 @@ async function waitForEntityContext(page: Page, timeout = 30_000): Promise<void>
       if (!entity) return false;
       try {
         // In Dynamics 365 v9.2+, Xrm.Page.data.entity exists once form navigation
-        // begins. Checking getEntityName() ensures the entity API is functional
-        // without relying on attribute collection population timing.
+        // begins. Check entity name first (fast path), then confirm at least one
+        // attribute is accessible via forEach — guards against the brief window
+        // where entity name is available but attribute bindings are not yet complete.
         const name = entity.getEntityName?.();
-        return typeof name === 'string' && name.length > 0;
+        if (typeof name !== 'string' || name.length === 0) return false;
+        let attrCount = 0;
+        entity.attributes.forEach(() => {
+          attrCount++;
+        });
+        return attrCount > 0;
       } catch {
         return false;
       }

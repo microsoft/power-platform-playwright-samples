@@ -109,7 +109,8 @@ export class CustomPage {
     // Power Apps Studio v3 replaced the Callout flyout with a "Select a data source"
     // dialog/panel that has a search box. Type the data source name to filter the list.
     console.log('[CustomPage] Waiting for data source search panel to appear');
-    const searchInput = this.studioFrame.locator(canvasAppSelector.dataSourceSearch);
+    // Use .first() — Studio may render multiple search inputs in the dialog (strict mode guard)
+    const searchInput = this.studioFrame.locator(canvasAppSelector.dataSourceSearch).first();
     await searchInput.waitFor({ state: 'visible', timeout: 30000 });
 
     console.log(`[CustomPage] Searching for data source: "${dataSource}"`);
