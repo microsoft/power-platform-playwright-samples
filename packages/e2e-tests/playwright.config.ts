@@ -84,6 +84,10 @@ export default defineConfig({
     ? [
         ['dot'],
         ['blob', { outputDir: path.join(getEnvironmentConfig().outputDirectory, 'blob-report') }],
+        [
+          'junit',
+          { outputFile: path.join(getEnvironmentConfig().outputDirectory, 'junit-results.xml') },
+        ],
       ]
     : [['list'], ['html', { open: 'never' }]],
 
@@ -93,6 +97,7 @@ export default defineConfig({
     baseURL: ConfigHelper.getBaseUrl(),
 
     /* Browser options */
+    browserName: 'chromium',
     channel: 'msedge',
     headless: getEnvironmentConfig().headless,
     viewport: { width: 1920, height: 1080 },

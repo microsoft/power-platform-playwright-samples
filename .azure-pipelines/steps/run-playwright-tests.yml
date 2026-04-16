@@ -8,10 +8,7 @@ parameters:
     type: string
 
 steps:
-  - bash: |
-      npx playwright test \
-        --project=${{ parameters.project }} \
-        --output="$(testResultsDir)"
+  - bash: npx playwright test --project=${{ parameters.project }}
     displayName: 'Run Playwright Tests (${{ parameters.project }})'
     workingDirectory: $(Build.SourcesDirectory)/packages/e2e-tests
     env:
@@ -21,14 +18,13 @@ steps:
       MS_AUTH_CREDENTIAL_TYPE: certificate
       MS_AUTH_LOCAL_FILE_PATH: $(certFilePath)
       OUTPUT_DIRECTORY: $(testResultsDir)
-      PLAYWRIGHT_JUNIT_OUTPUT_NAME: $(testResultsDir)/junit-${{ parameters.project }}.xml
 
   - task: PublishTestResults@2
     displayName: 'Publish JUnit test results (${{ parameters.artifactName }})'
     condition: succeededOrFailed()
     inputs:
       testResultsFormat: JUnit
-      testResultsFiles: '$(testResultsDir)/junit-${{ parameters.project }}.xml'
+      testResultsFiles: '$(testResultsDir)/junit-results.xml'
       testRunTitle: '${{ parameters.artifactName }}'
       failTaskOnFailedTests: false
 
