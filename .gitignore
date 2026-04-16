@@ -104,3 +104,8 @@ cert/
 *.crt
 *.key
 *.p12
+
+# Local dev / scratch files
+bugs.json
+ms-learn/
+*.pdf
