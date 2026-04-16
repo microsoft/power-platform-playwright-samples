@@ -19,6 +19,7 @@
  */
 
 import { BrowserContext, expect, FrameLocator, Page } from '@playwright/test';
+import { findWithFallback } from '../../utils/locator-helpers';
 
 /** Timeout values in milliseconds */
 const Timeout = {
@@ -164,8 +165,24 @@ export class GenUxPage {
    * has no semantic role so falls back to `locator()` with its stable ID.
    */
   public async addNewPage(): Promise<void> {
-    // locator() — no semantic role on the placeholder; ID is the only stable hook
-    await this.page.locator('#add-new-page-in-canvas-placeholder').click();
+    // The add-page entry point ID has changed across Studio versions.
+    // findWithFallback probes each selector with a short timeout so the method
+    // adapts without a full 60-second wait on a stale ID.
+    //
+    // Known variants (in order of preference):
+    //   canvas placeholder — Studio v2 (add-new-page-in-canvas-placeholder)
+    //   command bar button — Studio v3 (add-new-page-in-command-bar)
+    //   partial ID match   — forward compatibility for future renames
+    const addPageBtn = await findWithFallback(
+      this.page,
+      [
+        '#add-new-page-in-canvas-placeholder', // Studio v2: canvas + button
+        '#add-new-page-in-command-bar', // Studio v3: command bar button
+        '[id*="add-new-page"]', // Partial ID — catches future renames
+      ],
+      { timeout: 5_000 }
+    );
+    await addPageBtn.click({ timeout: Timeout.default });
 
     // getByRole('button') — "Generative page" option in the Add page dialog
     // (previously labelled "Describe a page")

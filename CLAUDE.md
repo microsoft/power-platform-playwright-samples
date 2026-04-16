@@ -507,16 +507,35 @@ whenever a UI element has been renamed or restructured across versions.
 
 ---
 
-### 8. Gen UX `addNewPage()` — 3-Step Flow
+### 8. Gen UX `addNewPage()` — 3-Step Flow with `findWithFallback`
 
-The "Describe a new page" flow in Power Apps Studio requires three sequential clicks:
+The "Describe a new page" flow in Power Apps Studio requires three sequential clicks.
+The step-1 ID has changed across Studio versions — use `findWithFallback` so the method
+adapts automatically rather than hard-coding a single ID:
 
-1. `#add-new-page-in-canvas-placeholder` (the `+` placeholder)
-2. The "Generative page" option button
-3. The "Describe a new page" text link
+```typescript
+const addPageBtn = await findWithFallback(
+  page,
+  [
+    '#add-new-page-in-canvas-placeholder', // Studio v2: canvas placeholder
+    '#add-new-page-in-command-bar', // Studio v3: command bar button
+    '[id*="add-new-page"]', // Partial — forward compatibility
+  ],
+  { timeout: 5_000 }
+);
+await addPageBtn.click();
 
-If any step fails with a timeout, check whether the Studio UI renamed a step. Use the trace viewer
-(`npx playwright show-trace`) to inspect which selector was not found.
+// Step 2 — "Generative page" option
+await page.getByRole('button', { name: 'Generative page' }).click();
+
+// Step 3 — opens the AI prompt panel
+await page.getByText('Describe a new page').click();
+```
+
+If any step times out: open the trace (`npx playwright show-trace`) and check the DOM for
+the current IDs/labels — then add the new variant to the selector array above.
+
+> **File affected:** `packages/power-platform-playwright-toolkit/src/components/gen-ux/gen-ux.page.ts`
 
 ---
 
