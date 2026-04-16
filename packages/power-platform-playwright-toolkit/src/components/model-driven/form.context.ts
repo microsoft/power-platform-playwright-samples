@@ -40,6 +40,9 @@ import { Page } from '@playwright/test';
  * There is a brief window after navigation where entity exists but attributes.get()
  * returns an empty array because form controls have not yet bound to the entity.
  * Waiting for attributes.length > 0 ensures all attribute controls are registered.
+ *
+ * @internal Used only by isFormDirty / isFormValid which do NOT access attributes.
+ *           All functions that read/write attributes must use waitForEntityAttributes instead.
  */
 async function waitForEntityContext(page: Page, timeout = 30_000): Promise<void> {
   // NOTE: page.waitForFunction(fn, arg, options) — the options object MUST be the
@@ -51,16 +54,15 @@ async function waitForEntityContext(page: Page, timeout = 30_000): Promise<void>
       if (!entity) return false;
       try {
         // In Dynamics 365 v9.2+, Xrm.Page.data.entity exists once form navigation
-        // begins. Check entity name first (fast path), then confirm at least one
-        // attribute is accessible via forEach — guards against the brief window
-        // where entity name is available but attribute bindings are not yet complete.
+        // begins. Checking getEntityName() ensures the entity API is functional
+        // without relying on attribute collection population timing.
+        //
+        // NOTE: do NOT add an attribute-count check here. attributes.forEach() may
+        // return 0 during the polling loop even when attributes are fully bound —
+        // it only works reliably in a one-shot page.evaluate() call. Checking only
+        // getEntityName() keeps this guard fast and CI-safe.
         const name = entity.getEntityName?.();
-        if (typeof name !== 'string' || name.length === 0) return false;
-        let attrCount = 0;
-        entity.attributes.forEach(() => {
-          attrCount++;
-        });
-        return attrCount > 0;
+        return typeof name === 'string' && name.length > 0;
       } catch {
         return false;
       }
@@ -68,6 +70,107 @@ async function waitForEntityContext(page: Page, timeout = 30_000): Promise<void>
     undefined, // arg (pageFunction receives no argument)
     { timeout } // options — timeout in the correct 3rd-argument position
   );
+}
+
+/**
+ * Wait until the entity attributes collection is populated and ready for access.
+ *
+ * This is the solid-proof readiness guard for all functions that read or write
+ * form attributes (getFormContext, getEntityAttribute, setEntityAttribute,
+ * getAllEntityAttributes).
+ *
+ * ## Why this uses page.evaluate polling, NOT page.waitForFunction
+ *
+ * In Dynamics 365 v9.2+, `entity.attributes.forEach()` does NOT work reliably
+ * inside `page.waitForFunction` polling bodies — the Xrm.Page legacy shim always
+ * returns 0 items during repeated polling, even when the form is fully loaded.
+ * Only one-shot `page.evaluate()` calls see the live collection correctly.
+ *
+ * Polling with `page.evaluate + page.waitForTimeout` is the only CI-safe way to
+ * wait for the attribute collection to be populated.
+ *
+ * ## Sign-in dialog handling
+ *
+ * A "Sign in to continue" dialog can appear mid-session for embedded sub-components
+ * (Canvas Apps, Power BI, etc.) and temporarily disrupts the Xrm attributes
+ * collection. This function dismisses the dialog if present, then continues polling.
+ *
+ * ## Read-only / inactive records
+ *
+ * For deactivated or read-only records, `Xrm.Page.data.entity.attributes` is
+ * intentionally empty (D365 does not bind attributes in read-only form mode).
+ * This function waits up to `attributeBindMs` for attributes to appear, then
+ * RETURNS SILENTLY rather than throwing — individual callers (setEntityAttribute,
+ * getEntityAttribute) will throw a fast "Attribute not found" error at that point,
+ * which is the correct behaviour. This avoids hanging for 30 s on every read-only
+ * record access.
+ *
+ * @param page - Playwright page object
+ * @param entityReadyTimeout - Max ms to wait for entity context (default: 30 000)
+ * @param attributeBindMs - Max ms to wait for attributes after entity ready (default: 10 000)
+ *
+ * @internal
+ */
+async function waitForEntityAttributes(
+  page: Page,
+  entityReadyTimeout = 30_000,
+  attributeBindMs = 10_000
+): Promise<void> {
+  // Phase 1: Fast wait for the entity name using waitForFunction.
+  // This is CI-safe because it only checks getEntityName(), not the
+  // attributes collection (see waitForEntityContext for the reasoning).
+  await waitForEntityContext(page, entityReadyTimeout);
+
+  // Phase 2: Dismiss "Sign in to continue" dialog if present.
+  // This dialog can appear for embedded sub-components and may temporarily
+  // clear the Xrm attributes collection. Dismissing it allows the form to
+  // finish initialising.
+  try {
+    const dialog = page.getByRole('dialog', { name: 'Sign in to continue' });
+    if (await dialog.isVisible({ timeout: 300 })) {
+      await dialog.getByRole('button', { name: 'Close' }).click({ timeout: 1_000 });
+      // Give the form a moment to recover after the dialog closes.
+      await page.waitForTimeout(1_000);
+    }
+  } catch {
+    // Dialog not present — continue.
+  }
+
+  // Phase 3: Poll using page.evaluate until the attributes collection is populated
+  // or until attributeBindMs elapses. Does NOT throw on timeout — read-only /
+  // inactive records will never have attributes bound, and individual operations
+  // should fail fast with a clear "Attribute not found" error instead.
+  //
+  // Polling interval: 500 ms.
+  const deadline = Date.now() + attributeBindMs;
+
+  while (Date.now() < deadline) {
+    const ready = await page.evaluate(() => {
+      const entity = (window as any).Xrm?.Page?.data?.entity;
+      if (!entity) return false;
+      try {
+        // Count attributes via forEach (the only reliable API in D365 v9.2+).
+        // get() with no arguments returns an empty array; forEach iterates the
+        // live collection correctly in a one-shot page.evaluate call.
+        let count = 0;
+        entity.attributes.forEach(() => {
+          count++;
+        });
+        return count > 0;
+      } catch {
+        return false;
+      }
+    });
+
+    if (ready) return;
+
+    const remaining = deadline - Date.now();
+    if (remaining <= 0) break;
+    await page.waitForTimeout(Math.min(500, remaining));
+  }
+
+  // Attribute binding timed out — this is expected for read-only / inactive
+  // records. Proceed silently; individual callers handle empty attributes.
 }
 
 /**
@@ -106,7 +209,7 @@ export interface FormContextData {
  * ```
  */
 export async function getFormContext(page: Page): Promise<FormContextData> {
-  await waitForEntityContext(page);
+  await waitForEntityAttributes(page);
   return await page.evaluate(() => {
     // Access Xrm.Page (legacy) or pass formContext from event handler
     // In UCI, formContext is available via Xrm.Page for compatibility
@@ -154,7 +257,7 @@ export async function getFormContext(page: Page): Promise<FormContextData> {
  * ```
  */
 export async function getEntityAttribute(page: Page, attributeName: string): Promise<any> {
-  await waitForEntityContext(page);
+  await waitForEntityAttributes(page);
   return await page.evaluate((attrName) => {
     const formContext = (window as any).Xrm?.Page;
     if (!formContext) {
@@ -201,7 +304,7 @@ export async function setEntityAttribute(
   attributeName: string,
   value: any
 ): Promise<void> {
-  await waitForEntityContext(page);
+  await waitForEntityAttributes(page);
   await page.evaluate(
     ({ attrName, val }) => {
       const formContext = (window as any).Xrm?.Page;
@@ -234,21 +337,22 @@ export async function setEntityAttribute(
  * ```
  */
 export async function getAllEntityAttributes(page: Page): Promise<Record<string, any>> {
-  await waitForEntityContext(page);
+  // waitForEntityAttributes polls until BOTH entity name AND the attributes
+  // collection are ready (up to 30 s). This replaces the old retry loop and
+  // is CI-safe because it uses page.evaluate, not waitForFunction.
+  await waitForEntityAttributes(page);
+
   return await page.evaluate(() => {
     const formContext = (window as any).Xrm?.Page;
     if (!formContext) {
       throw new Error('formContext not available');
     }
-
     const result: Record<string, any> = {};
-
     // Use forEach (Xrm Collection API) — works in Dynamics 365 v9.2+ where
     // get() with no arguments may return an empty array.
     formContext.data.entity.attributes.forEach((attr: any) => {
       result[attr.getName()] = attr.getValue();
     });
-
     return result;
   });
 }

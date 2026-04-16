@@ -18,7 +18,6 @@
  */
 
 import { test, expect } from '@playwright/test';
-import { get } from 'node:http';
 import {
   AppProvider,
   AppType,
@@ -71,10 +70,48 @@ test.describe('FormContext API - Northwind Orders', () => {
     await modelDrivenApp.navigateToGridView(ENTITY_NAME);
     await page.waitForTimeout(3000);
 
-    // Open first order record
-    console.log('Opening first order record...');
-    await modelDrivenApp.grid.openRecord({ rowNumber: 0 });
-    await page.waitForTimeout(3000);
+    // Open the first editable (active/non-read-only) order record.
+    // In Dynamics 365, closed/inactive records have no Xrm attribute bindings,
+    // so attribute-based tests would fail on them. Try up to 5 rows to find
+    // one whose Xrm.Page.data.entity.attributes collection is populated.
+    let editableRecordFound = false;
+    for (let row = 0; row < 5; row++) {
+      console.log(`Opening record at row ${row}...`);
+      await modelDrivenApp.grid.openRecord({ rowNumber: row });
+      await page.waitForURL(/pagetype=entityrecord/, { timeout: 15_000 });
+      await page.waitForTimeout(2_000);
+
+      const hasAttributes = await page.evaluate(() => {
+        const entity = (window as any).Xrm?.Page?.data?.entity;
+        if (!entity) return false;
+        let count = 0;
+        try {
+          entity.attributes.forEach(() => {
+            count++;
+          });
+        } catch {
+          /* ignore */
+        }
+        return count > 0;
+      });
+
+      if (hasAttributes) {
+        console.log(`Found editable record at row ${row}`);
+        editableRecordFound = true;
+        break;
+      }
+
+      console.log(`Row ${row} is read-only/inactive — trying next row...`);
+      await modelDrivenApp.navigateToGridView(ENTITY_NAME);
+      await page.waitForTimeout(2_000);
+    }
+
+    if (!editableRecordFound) {
+      throw new Error(
+        'No editable order record found in the first 5 rows of the grid. ' +
+          'Ensure there are active Northwind Orders in the environment.'
+      );
+    }
   });
 
   test('should get form context information', async ({ page }) => {

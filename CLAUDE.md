@@ -374,19 +374,64 @@ very hard to diagnose. Always pass `undefined` as `arg` when the function needs 
 
 `Xrm.Page.data.entity.attributes` is an **Xrm Collection**, not a plain JS array.
 
-| API                             | Behaviour in D365 v9.2+                                     |
-| ------------------------------- | ----------------------------------------------------------- |
-| `entity.attributes.get()`       | Returns **empty array** — do NOT use to enumerate all attrs |
-| `entity.attributes.getLength()` | Returns **0** via the `Xrm.Page` legacy shim                |
-| `Array.isArray(attrs)`          | Returns `false` — Xrm Collections are not plain arrays      |
-| `entity.attributes.forEach(cb)` | **Works** — iterates the live collection correctly          |
-| `entity.attributes.get(name)`   | **Works** — direct name lookup always resolves              |
-| `entity.getEntityName()`        | **Works** — use this as the "form is ready" readiness check |
+| API                             | Behaviour in D365 v9.2+                                                                            |
+| ------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `entity.attributes.get()`       | Returns **empty array** — do NOT use to enumerate all attrs                                        |
+| `entity.attributes.getLength()` | Returns **0** via the `Xrm.Page` legacy shim                                                       |
+| `Array.isArray(attrs)`          | Returns `false` — Xrm Collections are not plain arrays                                             |
+| `entity.attributes.forEach(cb)` | **Works in one-shot `page.evaluate`** — DO NOT use in `waitForFunction` polling (always returns 0) |
+| `entity.attributes.get(name)`   | **Works** — direct name lookup resolves (if form is editable)                                      |
+| `entity.getEntityName()`        | **Works everywhere** — use as the "form is ready" readiness check                                  |
 
-**Rule:** When enumerating form attributes, use `forEach()`. When checking form readiness, poll
-`entity.getEntityName()` returning a non-empty string, not attribute count.
+**Rule:** Use `forEach()` only inside one-shot `page.evaluate()` calls. For attribute binding wait,
+use the `waitForEntityAttributes` helper (which polls via `page.evaluate`, not `waitForFunction`).
+
+**Inactive / read-only records:** For deactivated or closed records, `attributes.forEach()` returns
+**0 items by design** — D365 does not bind attributes in read-only form mode. `waitForEntityAttributes`
+waits up to 10 s for attributes, then proceeds silently. `setEntityAttribute`/`getEntityAttribute`
+will throw "Attribute not found" fast — this is the correct signal.
 
 > **File affected:** `packages/power-platform-playwright-toolkit/src/components/model-driven/form.context.ts`
+
+### 2a. Finding an Editable Record in Tests (Northwind Orders Pattern)
+
+Some Northwind Order records have `Order Status = Closed`. For **system-inactive** records D365
+renders a read-only form where `attributes.forEach()` always returns 0. Tests that need to read
+or modify attributes must ensure they open an **active / editable** record.
+
+**Pattern (beforeEach in form-context tests):**
+
+```typescript
+// Try up to 5 rows to find one whose Xrm attributes collection is populated
+for (let row = 0; row < 5; row++) {
+  await modelDrivenApp.grid.openRecord({ rowNumber: row });
+  await page.waitForURL(/pagetype=entityrecord/, { timeout: 15_000 });
+  await page.waitForTimeout(2_000);
+
+  const hasAttributes = await page.evaluate(() => {
+    const entity = (window as any).Xrm?.Page?.data?.entity;
+    if (!entity) return false;
+    let count = 0;
+    try {
+      entity.attributes.forEach(() => {
+        count++;
+      });
+    } catch {
+      /* ignore */
+    }
+    return count > 0;
+  });
+
+  if (hasAttributes) break;
+
+  await modelDrivenApp.navigateToGridView(ENTITY_NAME);
+  await page.waitForTimeout(2_000);
+}
+```
+
+This prevents the test from silently running on a read-only record and failing at assertions.
+
+> **File affected:** `packages/e2e-tests/tests/northwind/mda/form-context.test.ts`
 
 ---
 
