@@ -23,7 +23,7 @@ variables:
   - name: nodeVersion
     value: '20.x'
   - name: testResultsDir
-    value: $(Build.ArtifactStagingDirectory)
+    value: '$(Build.Repository.LocalPath)'
   - name: SYSTEM_DEBUG
     value: 'true'
 
@@ -117,11 +117,7 @@ stages:
     displayName: 'Merge Test Reports'
     dependsOn: E2ETests
     condition: >-
-      or(
-        eq(stageDependencies.E2ETests.GenUXTests.result, 'Succeeded'),
-        eq(stageDependencies.E2ETests.NorthwindCanvasTests.result, 'Succeeded'),
-        eq(stageDependencies.E2ETests.NorthwindMDATests.result, 'Succeeded')
-      )
+      in(stageDependencies.E2ETests.result, 'Succeeded', 'Failed', 'SucceededWithIssues')
     jobs:
       - job: MergeReports
         displayName: 'Merge Test Reports'
@@ -149,18 +145,21 @@ stages:
           # Download blob reports from each test job into named subdirs
           - task: DownloadPipelineArtifact@2
             displayName: 'Download blob report — GenUX'
+            continueOnError: true
             inputs:
               artifact: BlobReport-GenUX
               path: $(Pipeline.Workspace)/blob-reports/gen-ux
 
           - task: DownloadPipelineArtifact@2
             displayName: 'Download blob report — NorthwindCanvas'
+            continueOnError: true
             inputs:
               artifact: BlobReport-NorthwindCanvas
               path: $(Pipeline.Workspace)/blob-reports/northwind-canvas
 
           - task: DownloadPipelineArtifact@2
             displayName: 'Download blob report — NorthwindMDA'
+            continueOnError: true
             inputs:
               artifact: BlobReport-NorthwindMDA
               path: $(Pipeline.Workspace)/blob-reports/northwind-mda
