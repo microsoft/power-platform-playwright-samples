@@ -14,8 +14,8 @@
  * - Authentication completed (npm run auth)
  *
  * Run this test:
- *   npm test -- tests/northwind/mda/custom-page-crud.test.ts
- *   npm test -- tests/northwind/mda/custom-page-crud.test.ts -- --headed
+ *   npx playwright test --project=custom-page
+ *   npx playwright test --project=custom-page --headed
  */
 
 import * as path from 'path';

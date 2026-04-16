@@ -152,6 +152,21 @@ export default defineConfig({
       },
     },
     {
+      name: 'custom-page',
+      testDir: path.join(getEnvironmentConfig().testDirectory, 'northwind', 'custom-page'),
+      testMatch: '**/*.test.ts',
+      use: {
+        // custom-page-crud uses MDA cert-auth state (via beforeAll).
+        // custom-page.test.ts overrides to standard state via test.use().
+        storageState: process.env.MS_AUTH_EMAIL
+          ? path.join(
+              path.dirname(getStorageStatePath(process.env.MS_AUTH_EMAIL!)),
+              `state-mda-${process.env.MS_AUTH_EMAIL}.json`
+            )
+          : undefined,
+      },
+    },
+    {
       name: 'gen-ux',
       testDir: path.join(getEnvironmentConfig().testDirectory, 'gen-ux'),
       testMatch: '**/*.test.ts',

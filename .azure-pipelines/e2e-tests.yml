@@ -108,3 +108,23 @@ stages:
             parameters:
               project: model-driven-app
               artifactName: TestArtifacts-NorthwindMDA
+
+      # ───────────────────────────────────────────────────────────────────────
+      # Job: Custom Page tests
+      # Uses the 'custom-page' Playwright project (testDir: tests/northwind/custom-page/).
+      # Needs both auth states: MDA cert-auth (custom-page-crud) and canvas/maker-portal
+      # state (custom-page.test.ts overrides via test.use).
+      # ───────────────────────────────────────────────────────────────────────
+      - job: NorthwindCustomPageTests
+        displayName: 'Northwind Custom Page Tests'
+        timeoutInMinutes: 60
+        pool: '1ES-UCI-Playwright-PME-V3'
+        steps:
+          - template: /.azure-pipelines/steps/e2e-setup.yml@self
+            parameters:
+              nodeVersion: $(nodeVersion)
+              authenticateMDA: true
+          - template: /.azure-pipelines/steps/run-playwright-tests.yml@self
+            parameters:
+              project: custom-page
+              artifactName: TestArtifacts-NorthwindCustomPage
