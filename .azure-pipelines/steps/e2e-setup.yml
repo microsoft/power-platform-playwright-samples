@@ -40,13 +40,12 @@ steps:
   - script: node common/scripts/install-run-rush.js build --to power-platform-playwright-toolkit
     displayName: Rush Build (toolkit only)
 
-  # Install Playwright browsers — msedge channel is used in playwright.config.ts
-  - script: |
-      npx playwright install --with-deps chromium
-    workingDirectory: '$(Build.SourcesDirectory)/packages/e2e-tests'
+  # Install Playwright Chromium — used by all test jobs
+  - script: npx playwright install chromium --with-deps
+    workingDirectory: $(Build.SourcesDirectory)/packages/e2e-tests
     failOnStderr: false
     timeoutInMinutes: 20
-    displayName: 'Install Playwright Dependencies'
+    displayName: Install Playwright browsers (chromium)
 
   # ── Cert fetch — runs for every job (canvas and MDA both need the same cert) ──
 
@@ -95,7 +94,7 @@ steps:
   # 3. Create canvas / maker-portal auth state (used by gen-ux and canvas jobs).
   #    Overrides MS_AUTH_CREDENTIAL_PROVIDER to use the locally decoded cert file
   #    instead of re-fetching from Key Vault at runtime.
-  - script: npx tsx scripts/authenticate.ts
+  - script: pnpm run auth:headful
     displayName: Authenticate — canvas / maker portal
     workingDirectory: $(Build.SourcesDirectory)/packages/e2e-tests
     env:

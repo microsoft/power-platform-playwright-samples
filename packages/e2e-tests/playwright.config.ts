@@ -83,7 +83,6 @@ export default defineConfig({
   reporter: process.env.CI
     ? [
         ['dot'],
-        ['blob', { outputDir: path.join(getEnvironmentConfig().outputDirectory, 'blob-report') }],
         [
           'junit',
           { outputFile: path.join(getEnvironmentConfig().outputDirectory, 'junit-results.xml') },
@@ -98,7 +97,6 @@ export default defineConfig({
 
     /* Browser options */
     browserName: 'chromium',
-    channel: 'msedge',
     headless: getEnvironmentConfig().headless,
     viewport: { width: 1920, height: 1080 },
 

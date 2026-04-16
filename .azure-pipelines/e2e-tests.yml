@@ -79,7 +79,7 @@ stages:
           - template: /.azure-pipelines/steps/run-playwright-tests.yml@self
             parameters:
               project: gen-ux
-              artifactName: BlobReport-GenUX
+              artifactName: TestArtifacts-GenUX
 
       - job: NorthwindCanvasTests
         displayName: 'Northwind Canvas Tests'
@@ -92,7 +92,7 @@ stages:
           - template: /.azure-pipelines/steps/run-playwright-tests.yml@self
             parameters:
               project: canvas-app
-              artifactName: BlobReport-NorthwindCanvas
+              artifactName: TestArtifacts-NorthwindCanvas
 
       - job: NorthwindMDATests
         displayName: 'Northwind Model-Driven App Tests'
@@ -106,91 +106,4 @@ stages:
           - template: /.azure-pipelines/steps/run-playwright-tests.yml@self
             parameters:
               project: model-driven-app
-              artifactName: BlobReport-NorthwindMDA
-
-  # ─────────────────────────────────────────────────────────────────────────
-  # Stage 2: Merge all blob reports → single HTML report + JUnit XML.
-  # Only runs if at least one test job succeeded (produced a blob report).
-  # Skipped when all test jobs fail — nothing to merge.
-  # ─────────────────────────────────────────────────────────────────────────
-  - stage: MergeReports
-    displayName: 'Merge Test Reports'
-    dependsOn: E2ETests
-    condition: >-
-      in(stageDependencies.E2ETests.result, 'Succeeded', 'Failed', 'SucceededWithIssues')
-    jobs:
-      - job: MergeReports
-        displayName: 'Merge Test Reports'
-        pool: '1ES-UCI-Playwright-PME-V3'
-        timeoutInMinutes: 30
-        steps:
-          - checkout: self
-
-          - task: NodeTool@0
-            displayName: 'Use Node.js $(nodeVersion)'
-            inputs:
-              versionSpec: $(nodeVersion)
-
-          - script: |
-              corepack enable
-              corepack prepare pnpm@10.28.1 --activate
-            displayName: Enable corepack + pnpm
-
-          - script: npm install -g @microsoft/rush
-            displayName: Install Rush
-
-          - script: node common/scripts/install-run-rush.js install --bypass-policy
-            displayName: Rush Install
-
-          # Download blob reports from each test job into named subdirs
-          - task: DownloadPipelineArtifact@2
-            displayName: 'Download blob report — GenUX'
-            continueOnError: true
-            inputs:
-              artifact: BlobReport-GenUX
-              path: $(Pipeline.Workspace)/blob-reports/gen-ux
-
-          - task: DownloadPipelineArtifact@2
-            displayName: 'Download blob report — NorthwindCanvas'
-            continueOnError: true
-            inputs:
-              artifact: BlobReport-NorthwindCanvas
-              path: $(Pipeline.Workspace)/blob-reports/northwind-canvas
-
-          - task: DownloadPipelineArtifact@2
-            displayName: 'Download blob report — NorthwindMDA'
-            continueOnError: true
-            inputs:
-              artifact: BlobReport-NorthwindMDA
-              path: $(Pipeline.Workspace)/blob-reports/northwind-mda
-
-          # Merge all blob dirs → unified HTML report + JUnit XML
-          - bash: |
-              npx playwright merge-reports \
-                --reporter=html,junit \
-                $(Pipeline.Workspace)/blob-reports/gen-ux \
-                $(Pipeline.Workspace)/blob-reports/northwind-canvas \
-                $(Pipeline.Workspace)/blob-reports/northwind-mda
-            displayName: Merge Playwright reports
-            workingDirectory: $(Build.SourcesDirectory)/packages/e2e-tests
-            env:
-              PLAYWRIGHT_HTML_OUTPUT_FOLDER: $(Build.ArtifactStagingDirectory)/merged-report
-              PLAYWRIGHT_JUNIT_OUTPUT_NAME: $(Build.ArtifactStagingDirectory)/merged-report/test-results.xml
-
-          # Publish merged results to ADO Tests tab
-          - task: PublishTestResults@2
-            displayName: 'Publish merged test results'
-            condition: succeededOrFailed()
-            inputs:
-              testResultsFormat: JUnit
-              testResultsFiles: '$(Build.ArtifactStagingDirectory)/merged-report/test-results.xml'
-              mergeTestResults: true
-              testRunTitle: 'E2E — Merged — $(Build.BuildNumber)'
-              failTaskOnFailedTests: true
-
-          - task: PublishPipelineArtifact@1
-            displayName: Publish merged HTML report
-            condition: succeededOrFailed()
-            inputs:
-              targetPath: $(Build.ArtifactStagingDirectory)/merged-report
-              artifact: TestResults-Merged
+              artifactName: TestArtifacts-NorthwindMDA

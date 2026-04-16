@@ -1,4 +1,4 @@
-# Reusable step template for running Playwright tests and publishing the blob report.
+# Reusable step template for running Playwright tests and publishing artifacts.
 # Used by GenUXTests, NorthwindCanvasTests, and NorthwindMDATests jobs.
 
 parameters:
@@ -29,20 +29,20 @@ steps:
       failTaskOnFailedTests: false
 
   - pwsh: |
-      $blobReportDir = "$(testResultsDir)/blob-report"
-      if (Test-Path $blobReportDir) {
-        Write-Host "Blob report found: $blobReportDir"
-        Write-Host "##vso[task.setvariable variable=BLOB_REPORT_EXISTS]true"
+      $artifactsDir = "$(testResultsDir)/artifacts"
+      if (Test-Path $artifactsDir) {
+        Write-Host "Artifacts folder found: $artifactsDir"
+        Write-Host "##vso[task.setvariable variable=ARTIFACTS_EXISTS]true"
       } else {
-        Write-Host "Blob report not found: $blobReportDir"
-        Write-Host "##vso[task.setvariable variable=BLOB_REPORT_EXISTS]false"
+        Write-Host "Artifacts folder not found: $artifactsDir"
+        Write-Host "##vso[task.setvariable variable=ARTIFACTS_EXISTS]false"
       }
-    displayName: 'Check if blob report exists'
+    displayName: 'Check if artifacts exist'
     condition: succeededOrFailed()
 
   - task: PublishPipelineArtifact@1
-    displayName: 'Publish blob report (${{ parameters.artifactName }})'
-    condition: and(succeededOrFailed(), eq(variables.BLOB_REPORT_EXISTS, 'true'))
+    displayName: 'Publish artifacts (${{ parameters.artifactName }})'
+    condition: and(succeededOrFailed(), eq(variables.ARTIFACTS_EXISTS, 'true'))
     inputs:
-      targetPath: $(testResultsDir)/blob-report
+      targetPath: $(testResultsDir)/artifacts
       artifact: ${{ parameters.artifactName }}
