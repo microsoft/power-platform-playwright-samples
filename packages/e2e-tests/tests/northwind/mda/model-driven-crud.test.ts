@@ -124,10 +124,10 @@ test.describe.serial('Model-Driven App - CRUD Operations', () => {
     const saveButton = page.locator('button[aria-label*="Save"]').first();
     await saveButton.click();
 
-    // Wait for save to complete — URL changes to include the real GUID; networkidle
-    // ensures the POST body has been written before we capture the URL.
+    // waitForURL fires only after the server responds with the new GUID and the client
+    // updates the URL — the POST is committed at that point. MDA keeps persistent
+    // WebSocket connections so networkidle never fires; waitForURL is sufficient.
     await page.waitForURL(/pagetype=entityrecord/, { timeout: 30000 });
-    await page.waitForLoadState('networkidle', { timeout: 30000 });
 
     // Capture the record URL so we can navigate back without relying on grid search
     const recordUrl = page.url();
@@ -203,9 +203,16 @@ test.describe.serial('Model-Driven App - CRUD Operations', () => {
     const editSaveButton = page.locator('button[aria-label*="Save"]').first();
     await editSaveButton.click();
 
-    // Wait for the PATCH request to complete — networkidle ensures the save persists
-    // before we navigate away. A fixed timeout is not reliable here.
-    await page.waitForLoadState('networkidle', { timeout: 30000 });
+    // Poll Xrm until the form is no longer dirty — MDA clears isDirty only after the
+    // PATCH response confirms the write. networkidle never fires in MDA (persistent WS).
+    await page.waitForFunction(
+      () => {
+        const entity = (window as any).Xrm?.Page?.data?.entity;
+        return entity && entity.getIsDirty() === false;
+      },
+      undefined,
+      { timeout: 30000 }
+    );
     console.log('✅ Record updated successfully!\n');
 
     // Update our test variable for deletion step
