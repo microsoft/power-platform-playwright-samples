@@ -239,7 +239,7 @@ export class GridComponent {
    */
   async waitForGridLoad(): Promise<void> {
     const grid = this.page.locator(this.gridLocators.Container);
-    await grid.waitFor({ state: 'visible', timeout: 30000 });
+    await grid.waitFor({ state: 'visible', timeout: 60000 });
 
     // Wait for loading indicator to disappear
     const loadingIndicator = this.page.locator(this.gridLocators.LoadingIndicator);

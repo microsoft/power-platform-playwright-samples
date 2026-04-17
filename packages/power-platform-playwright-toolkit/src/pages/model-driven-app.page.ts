@@ -261,8 +261,9 @@ export class ModelDrivenAppPage {
     console.log(`[ModelDrivenAppPage] Grid URL: ${gridUrl}`);
     await this.page.goto(gridUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
 
-    // Wait for page to stabilize after navigation
-    await this.page.waitForTimeout(3000);
+    // Wait for the entity list URL to be confirmed before waiting for grid elements.
+    // A fixed sleep is not reliable in CI — MDA shell initialisation varies.
+    await this.page.waitForURL(/pagetype=entitylist/, { timeout: 30000 });
 
     // Wait for grid to load (with extended timeout for slow-loading grids)
     await this.grid.waitForGridLoad();

@@ -141,13 +141,19 @@ test.describe.serial('Model-Driven App - CRUD Operations', () => {
     // Navigate directly to the saved record URL (avoids grid keyword-filter dependency)
     await page.goto(recordUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
     await page.waitForURL(/pagetype=entityrecord/, { timeout: 30000 });
-    await page.waitForTimeout(3000);
 
-    const readOrderNumberInput = page.locator(
-      'input[data-id="nwind_ordernumber.fieldControl-text-box-text"]'
+    // MDA renders the form in view mode — the input DOM element exists but its value
+    // is empty until the Xrm layer has loaded. Poll until entity context is ready, then
+    // read via Xrm API (same approach as STEP 4).
+    await page.waitForFunction(
+      () => {
+        const entity = (window as any).Xrm?.Page?.data?.entity;
+        return entity && entity.getEntityName() !== '';
+      },
+      undefined,
+      { timeout: 30000 }
     );
-    await readOrderNumberInput.waitFor({ state: 'visible', timeout: 30000 });
-    const cellValue = await readOrderNumberInput.inputValue();
+    const cellValue = await getEntityAttribute(page, 'nwind_ordernumber');
     console.log(`✅ Found record: "${cellValue}"\n`);
 
     // Verify it matches what we're looking for
