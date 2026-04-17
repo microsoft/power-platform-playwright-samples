@@ -84,7 +84,8 @@ async function selectGalleryItem(page: Page, accountName: string): Promise<void>
   const item = getGalleryItem(page, accountName);
   await item.waitFor({ state: 'visible', timeout: 15000 });
   await item.locator(SEL.galleryItemButton).click({ force: true });
-  await page.waitForTimeout(1000);
+  // Wait for the Edit button to appear — confirms the record was selected and form populated
+  await page.locator(SEL.btnEdit).waitFor({ state: 'visible', timeout: 15000 });
 }
 
 /** Creates a new account record via the custom page form */
@@ -101,7 +102,7 @@ async function createAccount(
     .catch(() => false);
   if (cancelVisible) {
     await page.locator(SEL.btnCancel).click();
-    await page.waitForTimeout(1000);
+    await page.locator(SEL.btnCancel).waitFor({ state: 'hidden', timeout: 10000 });
   }
 
   // If "New record" is still not visible (can happen after edit+save transitions),
@@ -119,7 +120,8 @@ async function createAccount(
       .first();
     await sidebarItem.waitFor({ state: 'visible', timeout: 15000 });
     await sidebarItem.click();
-    await page.waitForTimeout(3000);
+    // Wait for canvas page to finish loading rather than sleeping
+    await page.locator(SEL.newRecordButton).waitFor({ state: 'visible', timeout: 15000 });
   }
 
   await page.locator(SEL.newRecordButton).waitFor({ state: 'visible', timeout: 15000 });
@@ -134,8 +136,9 @@ async function createAccount(
 
   await page.locator(SEL.btnSave).waitFor({ state: 'visible', timeout: 10000 });
   await page.locator(SEL.btnSave).click();
-  // Wait for Dataverse write to commit before reloading the canvas app
-  await page.waitForTimeout(8000);
+  // Wait for the Dataverse write to commit before navigating away — networkidle captures
+  // the Patch() API call completing so the record exists when the gallery reloads.
+  await page.waitForLoadState('networkidle', { timeout: 30000 });
 
   // Full URL navigation to the app root forces the canvas page to reinitialize and
   // reload its gallery data. A sidebar re-click when already on AccountsCustomPage
@@ -163,7 +166,8 @@ async function confirmDelete(page: Page): Promise<void> {
   await page.locator(SEL.deleteDialogText).waitFor({ state: 'visible', timeout: 10000 });
   await page.locator(SEL.deleteConfirmButton).waitFor({ state: 'visible', timeout: 5000 });
   await page.locator(SEL.deleteConfirmButton).click();
-  await page.waitForTimeout(2000);
+  // Wait for the dialog to close — confirms the delete was processed
+  await page.locator(SEL.deleteDialogText).waitFor({ state: 'hidden', timeout: 15000 });
 }
 
 // ─── Test suite ───────────────────────────────────────────────────────────────
@@ -208,7 +212,7 @@ test.describe('Custom Page CRUD - Account Entity', () => {
 
     await sidebarItem.waitFor({ state: 'visible', timeout: 30000 });
     await sidebarItem.click();
-    await sharedPage.waitForTimeout(3000);
+    await sharedPage.locator(SEL.newRecordButton).waitFor({ state: 'visible', timeout: 30000 });
     console.log(`Navigated to: ${CUSTOM_PAGE_NAME}\n`);
   });
 
@@ -289,7 +293,8 @@ test.describe('Custom Page CRUD - Account Entity', () => {
 
     await sharedPage.locator(SEL.btnSave).waitFor({ state: 'visible', timeout: 10000 });
     await sharedPage.locator(SEL.btnSave).click();
-    await sharedPage.waitForTimeout(2000);
+    // Wait for the form to exit edit mode — save button hides when canvas app returns to view mode
+    await sharedPage.locator(SEL.btnSave).waitFor({ state: 'hidden', timeout: 15000 });
 
     await expect(getGalleryItem(sharedPage, updatedName)).toBeVisible({ timeout: 15000 });
     console.log(`Verified updated record in gallery: "${updatedName}"`);

@@ -14,7 +14,6 @@ A **monorepo** containing:
 | --------------------------------------------- | --------------------------------------------------------------------- |
 | `packages/power-platform-playwright-toolkit/` | Core npm library — published as `power-platform-playwright-toolkit`   |
 | `packages/e2e-tests/`                         | Sample Playwright tests that target a real Power Platform environment |
-| `packages/docs/`                              | Nextra/Next.js documentation site                                     |
 
 The sample tests demonstrate Canvas App, Model-Driven App (MDA), and Gen UX testing
 patterns against a **Northwind Traders** Power Apps solution.
@@ -230,7 +229,6 @@ power-platform-playwright-samples/
 │   │   ├── globals/global-setup.ts
 │   │   ├── playwright.config.ts
 │   │   └── .env.example             # Template — copy to .env and fill in
-│   └── docs/                        # Nextra documentation site
 ├── .azure-pipelines/
 │   ├── e2e-tests.yml                # Scheduled E2E pipeline (weekdays 06:00 UTC)
 │   └── steps/e2e-setup.yml          # Reusable auth + install setup steps

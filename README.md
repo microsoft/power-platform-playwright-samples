@@ -15,13 +15,12 @@
 
 ## Packages
 
-This monorepo contains three packages:
+This monorepo contains two packages:
 
 | Package                                                                                      | Description                                             |
 | -------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
 | [`packages/power-platform-playwright-toolkit/`](packages/power-platform-playwright-toolkit/) | Core library — clone the repo to use it in your project |
 | [`packages/e2e-tests/`](packages/e2e-tests/)                                                 | Sample tests demonstrating real-world usage patterns    |
-| [`packages/docs/`](packages/docs/)                                                           | Documentation site (Nextra/Next.js)                     |
 
 ---
 
@@ -300,8 +299,7 @@ power-platform-playwright-samples/
 │   │   ├── pages/              # Custom Page Object Models
 │   │   ├── utils/              # Test utilities and shared steps
 │   │   └── playwright.config.ts
-│   └── docs/                   # Documentation site (Nextra)
-├── common/                     # Rush configuration
+│├── common/                     # Rush configuration
 ├── rush.json
 └── .github/workflows/          # CI/CD pipelines
 ```
@@ -310,15 +308,7 @@ power-platform-playwright-samples/
 
 ## Documentation
 
-> Documentation site coming soon. In the meantime, generate and browse the API docs locally:
->
-> ```bash
-> cd packages/power-platform-playwright-toolkit
-> npm run docs        # generates docs/
-> npm run docs:serve  # watches and serves
-> ```
->
-> The sample tests in [`packages/e2e-tests/`](packages/e2e-tests/) are the best reference for real-world usage patterns.
+The sample tests in [`packages/e2e-tests/`](packages/e2e-tests/) are the best reference for real-world usage patterns. The `CLAUDE.md` file at the repo root contains a full project guide covering setup, environment configuration, authentication, and known flakiness patterns.
 
 ---
 

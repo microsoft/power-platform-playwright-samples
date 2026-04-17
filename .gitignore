@@ -85,9 +85,6 @@ __pycache__/
 
 *.zip
 
-# Generated documentation
-packages/docs/pages/reference/api/
-
 # Authentication and test artifacts
 packages/e2e-tests/.playwright-ms-auth/
 packages/e2e-tests/cert/
@@ -107,5 +104,3 @@ cert/
 
 # Local dev / scratch files
 bugs.json
-ms-learn/
-*.pdf

@@ -129,7 +129,6 @@ export class CustomPage {
 
     console.log('[CustomPage] Waiting for spinner to disappear after data source selection');
     await waitForSelectorToDisable(this.studioFrame, canvasAppSelector.spinnerProgressbar);
-    await waitForSelectorToDisable(this.studioFrame, canvasAppSelector.spinnerProgressbar);
 
     console.log('[CustomPage] Waiting for success message');
     await waitForSelectorToEnable(this.studioFrame, canvasAppSelector.successMessageText);
