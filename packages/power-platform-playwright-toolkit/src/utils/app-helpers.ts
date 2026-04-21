@@ -74,6 +74,12 @@ export function generateUniqueOrderNumber(digits: number = 5): string {
   return generateRandomNumber(min, max).toString();
 }
 
+// Generates a unique account name for Canvas app tests — e.g. "TestAcct39803007".
+// Uses the last 8 digits of Date.now() to keep names short and gallery-sortable.
+export function generateUniqueAccountName(prefix: string = 'TestAcct'): string {
+  return `${prefix}${Date.now().toString().slice(-8)}`;
+}
+
 /**
  * Generate unique test ID with timestamp and random component
  * Useful for generating unique identifiers in tests

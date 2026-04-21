@@ -24,6 +24,7 @@ import {
   AppType,
   AppLaunchMode,
   getStorageStatePath,
+  generateUniqueAccountName,
 } from 'power-platform-playwright-toolkit';
 import { CustomPage } from '../../../pages/northwind/CustomPage.page';
 
@@ -78,7 +79,7 @@ test.describe('Custom Page - Northwind App', () => {
       await customPageHelper.navigateToPreviewScreen();
     });
 
-    const accountName = `Test Account ${Date.now()}`;
+    const accountName = generateUniqueAccountName();
     await test.step('Add New Record in Preview Mode', async () => {
       await customPageHelper.addNewRecordInPreviewMode(accountName);
     });

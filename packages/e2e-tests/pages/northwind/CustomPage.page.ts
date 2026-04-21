@@ -26,7 +26,10 @@ export const canvasAppSelector = {
     `[data-item-id*="datasourceItem"] [aria-label="${option}"], ` +
     `[role="option"][aria-label="${option}"], ` +
     `[aria-label="${option}"][tabindex], ` +
-    `button[title="${option}"]`,
+    `button[title="${option}"], ` +
+    `[role="option"]:has-text("${option}"), ` +
+    `[role="treeitem"]:has-text("${option}"), ` +
+    `[role="listitem"] :text-is("${option}")`,
   successMessageText: '[class*="success ms-MessageBar"]',
   spinnerProgressbar: '[role="progressbar"]',
   previewButton: '#commandBar_preview',
@@ -115,8 +118,8 @@ export class CustomPage {
 
     console.log(`[CustomPage] Searching for data source: "${dataSource}"`);
     await searchInput.fill(dataSource);
-    // Brief pause for the search results to filter
-    await this.page.waitForTimeout(1000);
+    // Wait for search results to populate (Studio filter is async)
+    await this.page.waitForTimeout(3000);
 
     console.log(`[CustomPage] Waiting for data source option: "${dataSource}"`);
     await waitForSelectorToEnable(

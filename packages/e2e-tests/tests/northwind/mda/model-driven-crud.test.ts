@@ -22,6 +22,7 @@ import {
   ModelDrivenAppPage,
   generateUniqueOrderNumber,
   getEntityAttribute,
+  setEntityAttribute,
 } from 'power-platform-playwright-toolkit';
 
 const MODEL_DRIVEN_APP_URL = process.env.MODEL_DRIVEN_APP_URL || process.env.BASE_APP_URL;
@@ -93,6 +94,10 @@ test.describe.serial('Model-Driven App - CRUD Operations', () => {
     await orderNumberInput.fill(''); // Clear any default value
     await page.waitForTimeout(100); // Wait for clear to complete
     await orderNumberInput.pressSequentially(testOrderNumber, { delay: 50 }); // Type with delay
+    // Commit value to Xrm model — D365 only saves what the Xrm layer knows about,
+    // not what's typed in the DOM. pressSequentially alone doesn't fire the field's
+    // onchange handler, so attribute.getValue() would return null after save.
+    await setEntityAttribute(page, 'nwind_ordernumber', testOrderNumber);
 
     // Fill in Order Status (Option Set) - using button click since it's a Fluent UI dropdown
     console.log('✍️  Setting Order Status to "New"');
@@ -179,6 +184,7 @@ test.describe.serial('Model-Driven App - CRUD Operations', () => {
     await editOrderNumberInput.fill(''); // Clear existing value
     await page.waitForTimeout(100); // Wait for clear to complete
     await editOrderNumberInput.pressSequentially(updatedOrderNumber, { delay: 50 });
+    await setEntityAttribute(page, 'nwind_ordernumber', updatedOrderNumber);
 
     // Update Order Status if available
     console.log('✍️  Updating Order Status to "Processing"');
@@ -324,6 +330,7 @@ test.describe.serial('Model-Driven App - CRUD Operations', () => {
     await orderNumberInput.fill(''); // Clear any default value
     await page.waitForTimeout(100); // Wait for clear to complete
     await orderNumberInput.pressSequentially(testOrderNumber, { delay: 50 });
+    await setEntityAttribute(page, 'nwind_ordernumber', testOrderNumber);
 
     const saveButton = page.locator('button[aria-label*="Save"]').first();
     await saveButton.click();

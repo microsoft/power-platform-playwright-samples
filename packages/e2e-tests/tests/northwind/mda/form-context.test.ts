@@ -196,8 +196,6 @@ test.describe.serial('FormContext API - Northwind Orders', () => {
       currentOrderNumber = 'N/A';
     }
 
-    // Update order number with test suffix
-    const timestamp = Date.now();
     const newOrderNumber = generateUniqueOrderNumber();
 
     console.log(`Updating Order Number to: ${newOrderNumber}`);
