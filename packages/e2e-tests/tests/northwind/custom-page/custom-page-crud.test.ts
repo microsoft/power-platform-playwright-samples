@@ -81,6 +81,13 @@ async function navigateToCustomPage(page: Page): Promise<void> {
     )
     .first();
   await sidebar.waitFor({ state: 'visible', timeout: 30000 });
+  // Proactively dismiss any blocking modal (e.g. a "What's New" popup) before clicking.
+  // modalDialogRoot_1_1 is a Fluent UI portal that intercepts pointer events when visible.
+  const blocker = page.locator('#modalDialogRoot_1_1');
+  if (await blocker.isVisible({ timeout: 2000 }).catch(() => false)) {
+    await page.keyboard.press('Escape');
+    await blocker.waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {});
+  }
   await sidebar.click();
   await waitForCanvasReady(page, SEL.newRecordButton);
 }
@@ -120,23 +127,24 @@ async function selectGalleryItem(page: Page, accountName: string): Promise<void>
  *   the SubmitForm validation always fails.
  */
 async function createAccount(page: Page, accountName: string): Promise<void> {
+  // Use Xrm.WebApi (available in the MDA shell global scope) rather than raw fetch.
+  // Xrm.WebApi handles auth tokens and CSRF internally; raw fetch to /api/data/v9.2
+  // can fail with HTTP 400 due to missing CSRF or auth context in some D365 tenants.
   const result = await page.evaluate(async (name: string) => {
-    const resp = await fetch(`${window.location.origin}/api/data/v9.2/accounts`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'OData-MaxVersion': '4.0',
-        'OData-Version': '4.0',
-      },
-      body: JSON.stringify({ name }),
-    });
-    return { ok: resp.ok, status: resp.status };
+    try {
+      const Xrm = (window as any).Xrm;
+      if (!Xrm?.WebApi) throw new Error('Xrm.WebApi not available');
+      const record = await Xrm.WebApi.createRecord('account', { name });
+      return { ok: true as const, id: record.id as string };
+    } catch (e: any) {
+      return { ok: false as const, error: e?.message || String(e) };
+    }
   }, accountName);
 
   if (!result.ok) {
-    throw new Error(`Dataverse create failed for "${accountName}": HTTP ${result.status}`);
+    throw new Error(`Dataverse create failed for "${accountName}": ${result.error}`);
   }
-  console.log(`[createAccount] "${accountName}" created via Dataverse API`);
+  console.log(`[createAccount] "${accountName}" created via Xrm.WebApi (id: ${result.id})`);
 
   await navigateToCustomPage(page);
   await scrollGalleryToItem(page, SEL.galleryItem, getGalleryItem(page, accountName));
@@ -149,43 +157,30 @@ async function createAccount(page: Page, accountName: string): Promise<void> {
 async function updateAccount(page: Page, currentName: string, newName: string): Promise<void> {
   const result = await page.evaluate(
     async (args: { currentName: string; newName: string }) => {
-      const base = window.location.origin;
-      // Find the account by its current name
-      const findResp = await fetch(
-        `${base}/api/data/v9.2/accounts?$filter=name eq '${args.currentName.replace(/'/g, "''")}'&$select=accountid&$top=1`,
-        {
-          headers: {
-            Accept: 'application/json',
-            'OData-MaxVersion': '4.0',
-            'OData-Version': '4.0',
-          },
-        }
-      );
-      if (!findResp.ok) return { ok: false, error: `find: ${findResp.status}` };
-      const findData = await findResp.json();
-      const accountId: string | undefined = findData.value?.[0]?.accountid;
-      if (!accountId) return { ok: false, error: 'account not found' };
-
-      const patchResp = await fetch(`${base}/api/data/v9.2/accounts(${accountId})`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'OData-MaxVersion': '4.0',
-          'OData-Version': '4.0',
-        },
-        body: JSON.stringify({ name: args.newName }),
-      });
-      return { ok: patchResp.ok, status: patchResp.status };
+      try {
+        const Xrm = (window as any).Xrm;
+        if (!Xrm?.WebApi) throw new Error('Xrm.WebApi not available');
+        const safeCurrentName = args.currentName.replace(/'/g, "''");
+        const accounts = await Xrm.WebApi.retrieveMultipleRecords(
+          'account',
+          `?$filter=name eq '${safeCurrentName}'&$select=accountid&$top=1`
+        );
+        const accountId: string | undefined = accounts.entities?.[0]?.accountid;
+        if (!accountId)
+          return { ok: false as const, error: `account not found: "${args.currentName}"` };
+        await Xrm.WebApi.updateRecord('account', accountId, { name: args.newName });
+        return { ok: true as const };
+      } catch (e: any) {
+        return { ok: false as const, error: e?.message || String(e) };
+      }
     },
     { currentName, newName }
   );
 
   if (!result.ok) {
-    throw new Error(
-      `Dataverse update failed "${currentName}" → "${newName}": ${JSON.stringify(result)}`
-    );
+    throw new Error(`Dataverse update failed "${currentName}" → "${newName}": ${result.error}`);
   }
-  console.log(`[updateAccount] "${currentName}" → "${newName}" via Dataverse API`);
+  console.log(`[updateAccount] "${currentName}" → "${newName}" via Xrm.WebApi`);
 
   await navigateToCustomPage(page);
   await scrollGalleryToItem(page, SEL.galleryItem, getGalleryItem(page, newName));
@@ -240,6 +235,11 @@ test.describe('Custom Page CRUD - Account Entity', () => {
       .first();
 
     await sidebarItem.waitFor({ state: 'visible', timeout: 30000 });
+    const blocker = sharedPage.locator('#modalDialogRoot_1_1');
+    if (await blocker.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await sharedPage.keyboard.press('Escape');
+      await blocker.waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {});
+    }
     await sidebarItem.click();
     await waitForCanvasReady(sharedPage, SEL.newRecordButton);
     console.log(`Navigated to: ${CUSTOM_PAGE_NAME}\n`);

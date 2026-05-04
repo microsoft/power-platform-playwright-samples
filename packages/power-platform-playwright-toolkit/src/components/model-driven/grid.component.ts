@@ -20,7 +20,7 @@
  * ```
  */
 
-import { Page, Locator } from '@playwright/test';
+import { Page, Locator, expect } from '@playwright/test';
 import { GridRecordOptions } from './types';
 
 export class GridComponent {
@@ -62,12 +62,12 @@ export class GridComponent {
    * Uses multiple fallback strategies: link click, double-click, context menu
    */
   private async openRecordByRowNumber(rowNumber: number): Promise<void> {
-    const row = this.page.locator(this.gridLocators.RowByIndex(rowNumber));
+    const row = this.gridLocators.RowByIndex(this.page, rowNumber);
     await row.waitFor({ state: 'visible', timeout: 30000 });
 
     // Strategy 1: Try clicking link in first cell
     try {
-      const link = row.locator(this.gridLocators.LinkCell).first();
+      const link = this.gridLocators.LinkCell(row).first();
       await link.click({ timeout: 5000 });
       console.log(`[GridComponent] Opened record via link click`);
       return;
@@ -109,11 +109,11 @@ export class GridComponent {
    * @param rowNumber - Row index (0-based)
    */
   async selectRow(rowNumber: number): Promise<void> {
-    const row = this.page.locator(this.gridLocators.RowByIndex(rowNumber));
+    const row = this.gridLocators.RowByIndex(this.page, rowNumber);
     await row.waitFor({ state: 'visible', timeout: 30000 });
 
     // Try checkbox selection first
-    const checkbox = row.locator(this.gridLocators.CheckboxCell);
+    const checkbox = this.gridLocators.CheckboxCell(row);
     const hasCheckbox = await checkbox.isVisible().catch(() => false);
 
     if (hasCheckbox) {
@@ -210,7 +210,7 @@ export class GridComponent {
    * @param direction - Sort direction ('asc' or 'desc')
    */
   async sortByColumn(columnName: string, direction: 'asc' | 'desc' = 'asc'): Promise<void> {
-    const header = this.page.locator(this.gridLocators.ColumnHeader(columnName));
+    const header = this.gridLocators.ColumnHeader(this.page, columnName);
     await header.waitFor({ state: 'visible', timeout: 10000 });
 
     // Check current sort state
@@ -228,8 +228,9 @@ export class GridComponent {
       }
     }
 
-    // Wait for grid to re-render
-    await this.page.waitForTimeout(1000);
+    // Wait for grid to re-render after sort — the loading indicator appears
+    // briefly while ag-Grid re-orders rows; wait for it to clear.
+    await this.waitForGridLoad();
     console.log(`[GridComponent] Sorted by ${columnName} ${direction}`);
   }
 
@@ -238,11 +239,11 @@ export class GridComponent {
    * Waits for grid container to be visible and loading indicator to disappear
    */
   async waitForGridLoad(): Promise<void> {
-    const grid = this.page.locator(this.gridLocators.Container);
+    const grid = this.gridLocators.Container(this.page);
     await grid.waitFor({ state: 'visible', timeout: 60000 });
 
     // Wait for loading indicator to disappear
-    const loadingIndicator = this.page.locator(this.gridLocators.LoadingIndicator);
+    const loadingIndicator = this.gridLocators.LoadingIndicator(this.page);
     await loadingIndicator.waitFor({ state: 'hidden', timeout: 30000 }).catch(() => {
       console.log('[GridComponent] Loading indicator not found or already hidden');
     });
@@ -293,8 +294,10 @@ export class GridComponent {
     await beginsWithInput.fill(value);
     await beginsWithInput.press('Enter');
 
-    // Wait for grid to re-render with filtered results
-    await this.page.waitForTimeout(2000);
+    // Wait for the grid to finish re-rendering after the filter is applied.
+    // waitForGridLoad() waits for the loading indicator to disappear, which works
+    // for both non-empty results and empty (zero-row) results.
+    await this.waitForGridLoad();
     console.log(`[GridComponent] Filtered column "${columnLabel}" begins with: "${value}"`);
   }
 
@@ -322,8 +325,9 @@ export class GridComponent {
     // Press Enter to trigger the search
     await searchBox.press('Enter');
 
-    // Wait a moment for the grid to filter
-    await this.page.waitForTimeout(2000);
+    // Wait for the grid to finish re-rendering. waitForGridLoad() waits for the
+    // loading indicator to disappear, which covers both non-empty and empty results.
+    await this.waitForGridLoad();
 
     console.log(`[GridComponent] Filtered by keyword: "${keyword}"`);
   }
@@ -335,6 +339,6 @@ export class GridComponent {
    * @returns Grid container locator
    */
   getGrid(): Locator {
-    return this.page.locator(this.gridLocators.Container);
+    return this.gridLocators.Container(this.page);
   }
 }

@@ -17,27 +17,20 @@
  *   npx playwright test --project=custom-page --headed
  */
 
-import * as path from 'path';
 import { test } from '@playwright/test';
 import {
   AppProvider,
   AppType,
   AppLaunchMode,
-  getStorageStatePath,
   generateUniqueAccountName,
 } from 'power-platform-playwright-toolkit';
 import { CustomPage } from '../../../pages/northwind/CustomPage.page';
 
-// This test opens the app in Edit mode (maker portal), so it needs the standard
-// MSAL-token storage state rather than the MDA cert-auth state
-test.use({
-  storageState: process.env.MS_AUTH_EMAIL
-    ? getStorageStatePath(process.env.MS_AUTH_EMAIL)
-    : undefined,
-});
+// storageState is declared in playwright.config.ts for the `studio-authoring` project.
+// This test opens the app in Edit mode (Maker Portal) and requires the standard Canvas/
+// MSAL-token state — NOT the MDA cert-auth state used by the `custom-page` project.
 
 const POWER_APPS_URL = process.env.POWER_APPS_BASE_URL;
-const ENTITY_NAME = 'nwind_orders'; // Northwind Orders entity
 
 // Validate required environment variable
 if (!POWER_APPS_URL) {

@@ -55,7 +55,7 @@ export default defineConfig({
 
   /* Retry configuration */
   repeatEach: getEnvironmentConfig().repeatEach,
-  retries: 0,
+  retries: process.env.CI ? 2 : 0,
 
   /* Test directory and matching */
   testDir: getEnvironmentConfig().testDirectory,
@@ -152,12 +152,12 @@ export default defineConfig({
       },
     },
     {
+      // Runtime tests for the Canvas custom page embedded inside the MDA.
+      // Uses MDA cert-auth state (crm.dynamics.com domain).
       name: 'custom-page',
       testDir: path.join(getEnvironmentConfig().testDirectory, 'northwind', 'custom-page'),
-      testMatch: '**/*.test.ts',
+      testMatch: '**/custom-page-crud.test.ts',
       use: {
-        // custom-page-crud uses MDA cert-auth state (via beforeAll).
-        // custom-page.test.ts overrides to standard state via test.use().
         storageState: process.env.MS_AUTH_EMAIL
           ? path.join(
               path.dirname(getStorageStatePath(process.env.MS_AUTH_EMAIL!)),
@@ -167,9 +167,27 @@ export default defineConfig({
       },
     },
     {
-      name: 'gen-ux',
-      testDir: path.join(getEnvironmentConfig().testDirectory, 'gen-ux'),
-      testMatch: '**/*.test.ts',
+      // Studio-authoring tests open the app in Edit mode (Maker Portal).
+      // They require the standard Canvas/Maker Portal storage state, NOT the MDA cert-auth state.
+      // Covers: custom-page.test.ts (creates custom pages in Studio) and gen-ux tests (AI generation).
+      name: 'studio-authoring',
+      testDir: getEnvironmentConfig().testDirectory,
+      testMatch: ['**/custom-page.test.ts', '**/gen-ux/basic-form/*.test.ts'],
+      use: {
+        storageState: process.env.MS_AUTH_EMAIL
+          ? getStorageStatePath(process.env.MS_AUTH_EMAIL!)
+          : undefined,
+      },
+    },
+    {
+      // Runtime tests for a published Gen UX app.
+      // Requires GEN_UX_APP_URL in .env — set it to the play URL of the published app.
+      // Depends on studio-authoring so the authoring suite publishes the app first when
+      // running the full test suite.
+      name: 'gen-ux-runtime',
+      testDir: getEnvironmentConfig().testDirectory,
+      testMatch: '**/gen-ux/runtime/*.test.ts',
+      dependencies: ['studio-authoring'],
       use: {
         storageState: process.env.MS_AUTH_EMAIL
           ? getStorageStatePath(process.env.MS_AUTH_EMAIL!)

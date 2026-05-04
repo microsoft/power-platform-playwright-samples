@@ -2,265 +2,305 @@
 // Licensed under the MIT license.
 
 /**
- * Canvas App Locators
- * Centralized selectors for Canvas App creation, editing, and testing
- * Based on Microsoft Power Apps Canvas App documentation
+ * Canvas App Locators — factory-function style.
+ *
+ * Every entry is a function `(ctx, ...params?) => Locator`. Pass the Page,
+ * FrameLocator, or Locator that provides the search scope as the first argument.
+ *
+ * Built-in Playwright locators (`getByRole`, `getByLabel`, etc.) are used wherever
+ * a stable ARIA contract exists. Raw `ctx.locator(css)` is used only for internal
+ * Canvas attributes (`data-control-name`, `data-automation-id`) where no ARIA
+ * equivalent is available — these are marked with a comment.
  */
 
+import { Page, Locator, FrameLocator } from '@playwright/test';
+
+/** Any context that supports the Playwright `getBy*` + `locator()` API. */
+type Ctx = Page | FrameLocator | Locator;
+
 export const CanvasAppLocators = {
-  // Home Page - App Creation
+  // ── Home Page — App Creation ──────────────────────────────────────────────
+
   Home: {
-    CreateButton: 'button[name="Create"]',
-    CreateMenu: '[role="menu"][aria-label="Create menu"]',
-    BlankAppOption: '[data-testid="create-blank-canvas-app"]',
-    TemplateAppOption: '[data-testid="create-from-template"]',
-    DataAppOption: '[data-testid="create-from-data"]',
-    AppsGrid: '[role="grid"][aria-label="Apps"]',
-    AppCard: (appName: string) => `[role="gridcell"]:has-text("${appName}")`,
-    SearchBox: 'input[placeholder="Search"]',
-    FilterButton: 'button[aria-label="Filter"]',
+    CreateButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'Create' }),
+    CreateMenu: (ctx: Ctx) => ctx.getByRole('menu', { name: 'Create menu' }),
+    BlankAppOption: (ctx: Ctx) => ctx.getByTestId('create-blank-canvas-app'),
+    TemplateOption: (ctx: Ctx) => ctx.getByTestId('create-from-template'),
+    DataOption: (ctx: Ctx) => ctx.getByTestId('create-from-data'),
+    AppsGrid: (ctx: Ctx) => ctx.getByRole('grid', { name: 'Apps' }),
+    AppCard: (ctx: Ctx, appName: string) => ctx.getByRole('gridcell', { name: appName }),
+    SearchBox: (ctx: Ctx) => ctx.getByPlaceholder('Search'),
+    FilterButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'Filter' }),
   },
 
-  // Canvas Studio - Main Interface (runs in iframe)
+  // ── Canvas Studio — Main Interface (runs inside an iframe) ────────────────
+  // 🎨 Studio authoring only. All sub-entries require the Studio FrameLocator
+  // as context, obtained via Studio.StudioFrame(page).
+
   Studio: {
-    // Studio frame selector
-    StudioFrame: 'iframe[name="canvas-app-studio"]',
+    /** Returns the FrameLocator for the Canvas Studio iframe. Accepts Page only. */
+    StudioFrame: (page: Page) => page.frameLocator('iframe[name="canvas-app-studio"]'),
 
     // Top Command Bar
     CommandBar: {
-      AppName: 'input[aria-label="App name"]',
-      SaveButton: 'button[aria-label="Save"]',
-      SaveAsButton: 'button[aria-label="Save as"]',
-      PublishButton: 'button[aria-label="Publish"]',
-      PlayButton: 'button[aria-label="Play"]',
-      SettingsButton: 'button[aria-label="Settings"]',
-      UndoButton: 'button[aria-label="Undo"]',
-      RedoButton: 'button[aria-label="Redo"]',
-      ShareButton: 'button[aria-label="Share"]',
+      AppName: (ctx: Ctx) => ctx.getByLabel('App name'),
+      SaveButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'Save' }),
+      SaveAsButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'Save as' }),
+      PublishButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'Publish' }),
+      PlayButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'Play' }),
+      SettingsButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'Settings' }),
+      UndoButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'Undo' }),
+      RedoButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'Redo' }),
+      ShareButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'Share' }),
     },
 
-    // Left Navigation Panel
+    // Left Navigation
     LeftNav: {
-      TreeViewTab: 'button[aria-label="Tree view"]',
-      InsertTab: 'button[aria-label="Insert"]',
-      DataTab: 'button[aria-label="Data"]',
-      MediaTab: 'button[aria-label="Media"]',
-      AdvancedTab: 'button[aria-label="Advanced tools"]',
-      SearchButton: 'button[aria-label="Search"]',
+      TreeViewTab: (ctx: Ctx) => ctx.getByRole('button', { name: 'Tree view' }),
+      InsertTab: (ctx: Ctx) => ctx.getByRole('button', { name: 'Insert' }),
+      DataTab: (ctx: Ctx) => ctx.getByRole('button', { name: 'Data' }),
+      MediaTab: (ctx: Ctx) => ctx.getByRole('button', { name: 'Media' }),
+      AdvancedTab: (ctx: Ctx) => ctx.getByRole('button', { name: 'Advanced tools' }),
+      SearchButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'Search' }),
     },
 
-    // Insert Panel - Controls
+    // Insert Panel — data-control-type is an internal Studio attribute (no ARIA equivalent)
     Insert: {
-      SearchControl: 'input[placeholder="Search controls"]',
-      LayoutSection: 'button[aria-label="Layout"]',
-      InputSection: 'button[aria-label="Input"]',
-      DisplaySection: 'button[aria-label="Display"]',
-      IconsSection: 'button[aria-label="Icons"]',
-      MediaSection: 'button[aria-label="Media"]',
-      ChartsSection: 'button[aria-label="Charts"]',
-      AISection: 'button[aria-label="AI"]',
-
-      // Common Controls
-      ButtonControl: 'div[data-control-type="Button"]',
-      TextLabelControl: 'div[data-control-type="Label"]',
-      TextInputControl: 'div[data-control-type="TextInput"]',
-      DropdownControl: 'div[data-control-type="Dropdown"]',
-      ComboboxControl: 'div[data-control-type="ComboBox"]',
-      DatePickerControl: 'div[data-control-type="DatePicker"]',
-      GalleryControl: 'div[data-control-type="Gallery"]',
-      FormControl: 'div[data-control-type="Form"]',
-      DataTableControl: 'div[data-control-type="DataTable"]',
-      IconControl: 'div[data-control-type="Icon"]',
-      ImageControl: 'div[data-control-type="Image"]',
-      ShapeControl: 'div[data-control-type="Shape"]',
-      ChartControl: 'div[data-control-type="Chart"]',
+      SearchControl: (ctx: Ctx) => ctx.getByPlaceholder('Search controls'),
+      LayoutSection: (ctx: Ctx) => ctx.getByRole('button', { name: 'Layout' }),
+      InputSection: (ctx: Ctx) => ctx.getByRole('button', { name: 'Input' }),
+      DisplaySection: (ctx: Ctx) => ctx.getByRole('button', { name: 'Display' }),
+      IconsSection: (ctx: Ctx) => ctx.getByRole('button', { name: 'Icons' }),
+      MediaSection: (ctx: Ctx) => ctx.getByRole('button', { name: 'Media' }),
+      ChartsSection: (ctx: Ctx) => ctx.getByRole('button', { name: 'Charts' }),
+      AISection: (ctx: Ctx) => ctx.getByRole('button', { name: 'AI' }),
+      // data-control-type is internal Studio — no ARIA equivalent
+      ButtonControl: (ctx: Ctx) => ctx.locator('div[data-control-type="Button"]'),
+      TextLabelControl: (ctx: Ctx) => ctx.locator('div[data-control-type="Label"]'),
+      TextInputControl: (ctx: Ctx) => ctx.locator('div[data-control-type="TextInput"]'),
+      DropdownControl: (ctx: Ctx) => ctx.locator('div[data-control-type="Dropdown"]'),
+      GalleryControl: (ctx: Ctx) => ctx.locator('div[data-control-type="Gallery"]'),
+      FormControl: (ctx: Ctx) => ctx.locator('div[data-control-type="Form"]'),
+      DataTableControl: (ctx: Ctx) => ctx.locator('div[data-control-type="DataTable"]'),
     },
 
     // Data Panel
     Data: {
-      AddDataButton: 'button[aria-label="Add data"]',
-      SearchDataSource: 'input[placeholder="Search data sources"]',
-      DataSourcesList: '[role="list"][aria-label="Data sources"]',
-      DataSourceItem: (sourceName: string) => `[role="listitem"]:has-text("${sourceName}")`,
-      ConnectButton: 'button[aria-label="Connect"]',
-      RefreshButton: 'button[aria-label="Refresh"]',
+      AddDataButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'Add data' }),
+      SearchDataSource: (ctx: Ctx) => ctx.getByPlaceholder('Search data sources'),
+      DataSourcesList: (ctx: Ctx) => ctx.getByRole('list', { name: 'Data sources' }),
+      DataSourceItem: (ctx: Ctx, name: string) => ctx.getByRole('listitem', { name }),
+      ConnectButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'Connect' }),
+      RefreshButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'Refresh' }),
     },
 
-    // Canvas - Drawing Surface
+    // Canvas area — data-automation-id and data-control-name are internal Studio attributes
     Canvas: {
-      CanvasArea: '[data-automation-id="canvas-area"]',
-      Screen: (screenName: string) => `[data-control-name="${screenName}"]`,
-      Control: (controlName: string) => `[data-control-name="${controlName}"]`,
-      SelectedControl: '[data-is-selected="true"]',
+      CanvasArea: (ctx: Ctx) => ctx.locator('[data-automation-id="canvas-area"]'),
+      Screen: (ctx: Ctx, name: string) => ctx.locator(`[data-control-name="${name}"]`),
+      Control: (ctx: Ctx, name: string) => ctx.locator(`[data-control-name="${name}"]`),
+      SelectedControl: (ctx: Ctx) => ctx.locator('[data-is-selected="true"]'),
     },
 
-    // Right Properties Panel
+    // Properties Panel
     Properties: {
-      PropertiesPanel: '[data-automation-id="properties-panel"]',
-      PropertySearch: 'input[placeholder="Search properties"]',
-      PropertyItem: (propertyName: string) => `[data-property-name="${propertyName}"]`,
-
-      // Common Properties
-      Text: 'input[aria-label="Text"]',
-      Color: 'input[aria-label="Color"]',
-      Fill: 'input[aria-label="Fill"]',
-      X: 'input[aria-label="X"]',
-      Y: 'input[aria-label="Y"]',
-      Width: 'input[aria-label="Width"]',
-      Height: 'input[aria-label="Height"]',
-      Visible: 'input[aria-label="Visible"]',
-      OnSelect: 'input[aria-label="OnSelect"]',
+      PropertiesPanel: (ctx: Ctx) => ctx.locator('[data-automation-id="properties-panel"]'),
+      PropertySearch: (ctx: Ctx) => ctx.getByPlaceholder('Search properties'),
+      PropertyItem: (ctx: Ctx, name: string) => ctx.locator(`[data-property-name="${name}"]`),
+      Text: (ctx: Ctx) => ctx.getByLabel('Text'),
+      Color: (ctx: Ctx) => ctx.getByLabel('Color'),
+      Fill: (ctx: Ctx) => ctx.getByLabel('Fill'),
+      X: (ctx: Ctx) => ctx.getByLabel('X'),
+      Y: (ctx: Ctx) => ctx.getByLabel('Y'),
+      Width: (ctx: Ctx) => ctx.getByLabel('Width'),
+      Height: (ctx: Ctx) => ctx.getByLabel('Height'),
     },
 
     // Formula Bar
     FormulaBar: {
-      FormulaInput: 'textarea[aria-label="Formula bar"]',
-      PropertyDropdown: '[aria-label="Property selector"]',
-      ErrorIndicator: '[aria-label="Formula error"]',
-      IntelliSenseList: '[role="listbox"][aria-label="IntelliSense"]',
+      FormulaInput: (ctx: Ctx) => ctx.getByLabel('Formula bar'),
+      PropertyDropdown: (ctx: Ctx) => ctx.locator('[aria-label="Property selector"]'),
+      ErrorIndicator: (ctx: Ctx) => ctx.getByLabel('Formula error'),
+      IntelliSenseList: (ctx: Ctx) => ctx.getByRole('listbox', { name: 'IntelliSense' }),
     },
 
     // Screens Panel
     Screens: {
-      ScreensList: '[role="tree"][aria-label="Screens"]',
-      AddScreenButton: 'button[aria-label="New screen"]',
-      ScreenItem: (screenName: string) => `[role="treeitem"]:has-text("${screenName}")`,
-      ScreenMenu: 'button[aria-label="Screen options"]',
-      DuplicateScreen: 'button[aria-label="Duplicate screen"]',
-      DeleteScreen: 'button[aria-label="Delete screen"]',
+      ScreensList: (ctx: Ctx) => ctx.getByRole('tree', { name: 'Screens' }),
+      AddScreenButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'New screen' }),
+      ScreenItem: (ctx: Ctx, name: string) => ctx.getByRole('treeitem', { name }),
+      ScreenMenu: (ctx: Ctx) => ctx.getByRole('button', { name: 'Screen options' }),
+      DuplicateScreen: (ctx: Ctx) => ctx.getByRole('button', { name: 'Duplicate screen' }),
+      DeleteScreen: (ctx: Ctx) => ctx.getByRole('button', { name: 'Delete screen' }),
     },
   },
 
-  // App Settings Dialog
+  // ── App Settings Dialog ───────────────────────────────────────────────────
+
   Settings: {
-    SettingsDialog: '[role="dialog"][aria-label="Settings"]',
-    GeneralTab: 'button[aria-label="General"]',
-    DisplayTab: 'button[aria-label="Display"]',
-    UpdatesTab: 'button[aria-label="Updates"]',
-    SupportTab: 'button[aria-label="Support"]',
-
-    // General Settings
-    AppNameInput: 'input[aria-label="App name"]',
-    AppDescriptionInput: 'textarea[aria-label="Description"]',
-    AppIconUpload: 'input[type="file"][aria-label="Upload icon"]',
-
-    // Display Settings
-    OrientationDropdown: 'select[aria-label="Orientation"]',
-    ScreenSizeDropdown: 'select[aria-label="Screen size"]',
-    ScaleFitRadio: 'input[type="radio"][aria-label="Scale to fit"]',
-    LockAspectRatio: 'input[type="checkbox"][aria-label="Lock aspect ratio"]',
-
-    CloseButton: 'button[aria-label="Close"]',
-    SaveButton: 'button[aria-label="Save"]',
+    Dialog: (ctx: Ctx) => ctx.getByRole('dialog', { name: 'Settings' }),
+    GeneralTab: (ctx: Ctx) => ctx.getByRole('button', { name: 'General' }),
+    DisplayTab: (ctx: Ctx) => ctx.getByRole('button', { name: 'Display' }),
+    UpdatesTab: (ctx: Ctx) => ctx.getByRole('button', { name: 'Updates' }),
+    AppNameInput: (ctx: Ctx) => ctx.getByLabel('App name'),
+    CloseButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'Close' }),
+    SaveButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'Save' }),
   },
 
-  // Save Dialog
+  // ── Save Dialog ───────────────────────────────────────────────────────────
+
   SaveDialog: {
-    Dialog: '[role="dialog"][aria-label="Save"]',
-    AppNameInput: 'input[aria-label="Name"]',
-    SaveButton: 'button[aria-label="Save"]',
-    CancelButton: 'button[aria-label="Cancel"]',
-    SaveProgressIndicator: '[role="progressbar"]',
-    SuccessMessage: '[role="status"]:has-text("Saved")',
+    Dialog: (ctx: Ctx) => ctx.getByRole('dialog', { name: 'Save' }),
+    AppNameInput: (ctx: Ctx) => ctx.getByLabel('Name'),
+    SaveButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'Save' }),
+    CancelButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'Cancel' }),
+    SuccessMessage: (ctx: Ctx) => ctx.getByRole('status').filter({ hasText: 'Saved' }),
   },
 
-  // Publish Dialog
+  // ── Publish Dialog ────────────────────────────────────────────────────────
+
   PublishDialog: {
-    Dialog: '[role="dialog"][aria-label="Publish"]',
-    PublishButton: 'button[aria-label="Publish this version"]',
-    CancelButton: 'button[aria-label="Cancel"]',
-    VersionComments: 'textarea[aria-label="Comments"]',
-    PublishProgressIndicator: '[role="progressbar"]',
-    SuccessMessage: '[role="status"]:has-text("Published")',
+    Dialog: (ctx: Ctx) => ctx.getByRole('dialog', { name: 'Publish' }),
+    PublishButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'Publish this version' }),
+    CancelButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'Cancel' }),
+    VersionComments: (ctx: Ctx) => ctx.getByLabel('Comments'),
+    SuccessMessage: (ctx: Ctx) => ctx.getByRole('status').filter({ hasText: 'Published' }),
   },
 
-  // Share Dialog
+  // ── Share Dialog ──────────────────────────────────────────────────────────
+
   ShareDialog: {
-    Dialog: '[role="dialog"][aria-label="Share"]',
-    SearchUsers: 'input[placeholder="Enter a name, email address, or Everyone"]',
-    UsersList: '[role="list"][aria-label="People with access"]',
-    PermissionDropdown: 'select[aria-label="Permission"]',
-    CanEditOption: 'option[value="CanEdit"]',
-    CanViewOption: 'option[value="CanView"]',
-    ShareButton: 'button[aria-label="Share"]',
-    CopyLinkButton: 'button[aria-label="Copy link"]',
-    CloseButton: 'button[aria-label="Close"]',
+    Dialog: (ctx: Ctx) => ctx.getByRole('dialog', { name: 'Share' }),
+    SearchUsers: (ctx: Ctx) => ctx.getByPlaceholder('Enter a name, email address, or Everyone'),
+    UsersList: (ctx: Ctx) => ctx.getByRole('list', { name: 'People with access' }),
+    PermissionDropdown: (ctx: Ctx) => ctx.getByRole('combobox', { name: 'Permission' }),
+    ShareButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'Share' }),
+    CopyLinkButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'Copy link' }),
+    CloseButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'Close' }),
   },
 
-  // Play Mode (App Preview)
+  // ── Play Mode (Studio Preview) ────────────────────────────────────────────
+
   PlayMode: {
-    PlayWindow: '[data-automation-id="play-window"]',
-    StopButton: 'button[aria-label="Close preview"]',
-    RestartButton: 'button[aria-label="Restart"]',
-    ErrorMessage: '[role="alert"][aria-label="Error"]',
+    StopButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'Close preview' }),
+    RestartButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'Restart' }),
+    ErrorMessage: (ctx: Ctx) => ctx.getByRole('alert', { name: 'Error' }),
   },
 
-  // App Details Page
+  // ── Runtime / Play-mode ───────────────────────────────────────────────────
+  // Used when interacting with a *published* Canvas app in Play mode.
+  // Resolve inside the Canvas player iframe:
+  //   const frame = CanvasAppLocators.Runtime.CanvasFrame(page);
+  //   CanvasAppLocators.Runtime.GalleryItem(frame)
+
+  Runtime: {
+    /**
+     * FrameLocator for the Canvas player iframe.
+     * ⚠️ VERIFY: confirm the iframe src in your environment:
+     *   page.locator('iframe').evaluateAll(els => els.map(e => e.src))
+     * Standalone Canvas apps use a different URL pattern than apps embedded in MDA.
+     */
+    CanvasFrame: (page: Page) => page.frameLocator('iframe[src*="apps.powerapps.com"]'),
+
+    /**
+     * Gallery list items. VERIFIED: role="listitem" + data-control-part="gallery-item"
+     * is used and passing in existing tests (custom-page-crud.test.ts).
+     */
+    GalleryItem: (ctx: Ctx) =>
+      ctx.getByRole('listitem').filter({ has: ctx.locator('[data-control-part="gallery-item"]') }),
+
+    /**
+     * Gallery root container by control name.
+     * data-control-name is internal Canvas runtime — changes when maker renames the control.
+     * Centralise here so renames require only one update.
+     * ⚠️ VERIFY: inspect with frame.locator('[data-control-name]').evaluateAll(...)
+     */
+    GalleryRoot: (ctx: Ctx, controlName: string) =>
+      ctx.locator(`[data-control-name="${controlName}"]`),
+
+    /**
+     * Clickable button inside a gallery item.
+     * Prefer GalleryItemButton (ARIA role child) over GalleryRoot for interactions.
+     * ⚠️ VERIFY: control name must match Power Apps Studio assignment.
+     */
+    GalleryItemButton: (ctx: Ctx, controlName: string) =>
+      ctx.locator(`[data-control-name="${controlName}"]`).getByRole('button'),
+
+    /**
+     * Button by AccessibilityLabel (set via the AccessibilityLabel property in Canvas Studio).
+     * Most stable runtime selector when the app maker has set AccessibilityLabel.
+     * ⚠️ VERIFY: confirm aria-label value in the live DOM.
+     */
+    ButtonByLabel: (ctx: Ctx, label: string) => ctx.getByLabel(label).getByRole('button'),
+
+    /**
+     * Button by title attribute (set via Tooltip property in Canvas Studio).
+     * ⚠️ VERIFY: confirm title value in the live DOM.
+     */
+    ButtonByTitle: (ctx: Ctx, title: string) => ctx.getByTitle(title),
+
+    /**
+     * Button by control name — fallback when AccessibilityLabel is not set.
+     * ⚠️ VERIFY: control name must match Power Apps Studio assignment.
+     */
+    ButtonByControlName: (ctx: Ctx, controlName: string) =>
+      ctx.locator(`[data-control-name="${controlName}"]`).getByRole('button'),
+
+    /**
+     * Text input by AccessibilityLabel.
+     * ⚠️ VERIFY: confirm the aria-label value matches what Canvas renders at runtime.
+     */
+    InputByLabel: (ctx: Ctx, label: string) => ctx.getByLabel(label),
+  },
+
+  // ── App Details Page ──────────────────────────────────────────────────────
+
   Details: {
-    AppDetailsPage: '[data-automation-id="app-details-page"]',
-    EditButton: 'button[aria-label="Edit"]',
-    PlayButton: 'button[aria-label="Play"]',
-    ShareButton: 'button[aria-label="Share"]',
-    DetailsTab: 'button[aria-label="Details"]',
-    VersionsTab: 'button[aria-label="Versions"]',
-    AnalyticsTab: 'button[aria-label="Analytics"]',
-
-    // Details Tab
-    AppName: '[data-automation-id="app-name"]',
-    AppOwner: '[data-automation-id="app-owner"]',
-    AppCreated: '[data-automation-id="app-created"]',
-    AppModified: '[data-automation-id="app-modified"]',
-
-    // Versions Tab
-    VersionsList: '[role="list"][aria-label="Versions"]',
-    VersionItem: (version: string) => `[role="listitem"]:has-text("Version ${version}")`,
-    RestoreButton: 'button[aria-label="Restore"]',
-
-    // More Actions
-    MoreButton: 'button[aria-label="More actions"]',
-    DeleteButton: 'button[aria-label="Delete"]',
-    ExportButton: 'button[aria-label="Export package"]',
-    AddToSolutionButton: 'button[aria-label="Add to solution"]',
+    EditButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'Edit' }),
+    PlayButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'Play' }),
+    ShareButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'Share' }),
+    MoreButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'More actions' }),
+    DeleteButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'Delete' }),
   },
 
-  // Delete Confirmation Dialog
+  // ── Delete Confirmation Dialog ────────────────────────────────────────────
+
   DeleteDialog: {
-    Dialog: '[role="dialog"][aria-label="Delete app"]',
-    ConfirmMessage: 'text="Are you sure you want to delete this app?"',
-    DeleteButton: 'button[aria-label="Delete"]',
-    CancelButton: 'button[aria-label="Cancel"]',
+    Dialog: (ctx: Ctx) => ctx.getByRole('dialog', { name: 'Delete app' }),
+    DeleteButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'Delete' }),
+    CancelButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'Cancel' }),
   },
 
-  // Common UI Elements
+  // ── Common UI Elements ────────────────────────────────────────────────────
+
   Common: {
-    LoadingSpinner: '[role="progressbar"][aria-label="Loading"]',
-    ErrorBanner: '[role="alert"][aria-live="assertive"]',
-    SuccessBanner: '[role="status"][aria-live="polite"]',
-    ToastNotification: '[role="status"][aria-label="Notification"]',
-    ConfirmDialog: '[role="dialog"][aria-label="Confirm"]',
-    CancelButton: 'button[aria-label="Cancel"]',
-    OKButton: 'button[aria-label="OK"]',
-    CloseButton: 'button[aria-label="Close"]',
+    LoadingSpinner: (ctx: Ctx) => ctx.getByRole('progressbar', { name: 'Loading' }),
+    ErrorBanner: (ctx: Ctx) => ctx.getByRole('alert'),
+    SuccessBanner: (ctx: Ctx) => ctx.getByRole('status'),
+    CancelButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'Cancel' }),
+    OKButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'OK' }),
+    CloseButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'Close' }),
   },
 };
 
 /**
- * Helper function to get data test id selector
+ * @deprecated Use `CanvasAppLocators.Runtime.GalleryRoot(ctx, controlName)` or
+ * `CanvasAppLocators.Runtime.ButtonByLabel(ctx, label)` instead.
+ * `data-control-name` is an internal Canvas runtime attribute that changes whenever
+ * the app maker renames a control.
  */
-export const getCanvasDataTestId = (testId: string): string => {
-  return `[data-testid="${testId}"]`;
-};
+export const getCanvasControlByName = (controlName: string): string =>
+  `[data-control-name="${controlName}"]`;
 
 /**
- * Helper function to get control by name
+ * @deprecated `data-screen-name` is an internal Canvas runtime attribute.
+ * Use a unique control on the target screen as the readiness signal instead.
  */
-export const getCanvasControlByName = (controlName: string): string => {
-  return `[data-control-name="${controlName}"]`;
-};
+export const getCanvasScreenByName = (screenName: string): string =>
+  `[data-screen-name="${screenName}"]`;
 
 /**
- * Helper function to get screen by name
+ * Returns a `[data-testid]` selector string.
+ * Prefer `page.getByTestId(id)` at the call site instead.
  */
-export const getCanvasScreenByName = (screenName: string): string => {
-  return `[data-screen-name="${screenName}"]`;
-};
+export const getCanvasDataTestId = (testId: string): string => `[data-testid="${testId}"]`;

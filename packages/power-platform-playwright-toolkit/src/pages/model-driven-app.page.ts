@@ -3,11 +3,24 @@
 
 /**
  * Model Driven App Page Object Model
- * Provides methods for creating, editing, and testing Model Driven Apps
+ *
+ * @remarks
+ * This class covers two distinct scenarios:
+ *
+ * **Studio / App Designer** — methods for creating and authoring MDA apps in the Maker Portal
+ * designer (pages, navigation, tables, settings). These target the App Designer UI.
+ *
+ * **Runtime / Play mode** — methods for interacting with a published MDA at runtime
+ * (navigation pane, grid, form, command bar). These target the UCI shell.
+ *
+ * Methods in each group are separated by region banners in the source. Prefer
+ * component-level APIs (`this.grid`, `this.form`, `this.commanding`) over the
+ * convenience wrappers for advanced runtime scenarios.
  */
 
 import { Page, expect } from '@playwright/test';
 import { ModelDrivenAppLocators } from '../locators/model-driven-app.locators';
+import { findLocator } from '../utils/locator-helpers';
 import { GridComponent } from '../components/model-driven/grid.component';
 import { FormComponent } from '../components/model-driven/form.component';
 import { CommandingComponent } from '../components/model-driven/commanding.component';
@@ -184,6 +197,11 @@ export class ModelDrivenAppPage {
     return this._commanding;
   }
 
+  // ─── Studio / App Designer ────────────────────────────────────────────────
+  // Methods below target the Maker Portal App Designer (authoring scenarios).
+  // They require the designer canvas and left-nav to be loaded.
+  // ──────────────────────────────────────────────────────────────────────────
+
   // ========================================
   // Navigation Methods
   // ========================================
@@ -340,13 +358,36 @@ export class ModelDrivenAppPage {
     console.log(`[ModelDrivenAppPage] Form URL: ${formUrl}`);
     await this.page.goto(formUrl, { waitUntil: 'domcontentloaded' });
 
-    // Wait for form to load
-    await this.page.waitForTimeout(3000);
-    await this.page
-      .locator(ModelDrivenAppLocators.Runtime.Content.Form)
+    // Wait for URL to confirm MDA has navigated to the form, then wait for the
+    // form element to appear. Using waitForURL avoids arbitrary fixed delays.
+    await this.page.waitForURL(/pagetype=entityrecord/, { timeout: 30000 });
+    await ModelDrivenAppLocators.Runtime.Content.Form(this.page)
       .waitFor({ state: 'visible', timeout: 30000 })
       .catch(() => {
         console.log('[ModelDrivenAppPage] Form locator timeout, continuing...');
+      });
+
+    // Wait for Xrm entity context to be ready. UCI initializes asynchronously after
+    // DOM load — the form element may be visible before Xrm.Page.data.entity is
+    // functional. Without this check, callers that immediately call setEntityAttribute
+    // or getEntityAttribute can hit the 30s waitForEntityContext timeout.
+    await this.page
+      .waitForFunction(
+        () => {
+          const entity = (window as any).Xrm?.Page?.data?.entity;
+          if (!entity) return false;
+          try {
+            const name = entity.getEntityName?.();
+            return typeof name === 'string' && name.length > 0;
+          } catch {
+            return false;
+          }
+        },
+        undefined,
+        { timeout: 30000 }
+      )
+      .catch(() => {
+        console.log('[ModelDrivenAppPage] Xrm entity context not ready within 30s, continuing...');
       });
 
     console.log(`[ModelDrivenAppPage] Form view loaded for ${entityName}`);
@@ -356,7 +397,7 @@ export class ModelDrivenAppPage {
    * Wait for home page to load
    */
   async waitForHomePageLoad(): Promise<void> {
-    await this.page.locator(ModelDrivenAppLocators.Home.AppsGrid).waitFor({
+    await ModelDrivenAppLocators.Home.AppsGrid(this.page).waitFor({
       state: 'visible',
       timeout: 60000,
     });
@@ -366,7 +407,7 @@ export class ModelDrivenAppPage {
    * Wait for App Designer to load
    */
   async waitForDesignerLoad(): Promise<void> {
-    await this.page.locator(ModelDrivenAppLocators.Designer.Pages.PagesList).waitFor({
+    await ModelDrivenAppLocators.Designer.Pages.PagesList(this.page).waitFor({
       state: 'visible',
       timeout: 90000,
     });
@@ -376,7 +417,7 @@ export class ModelDrivenAppPage {
    * Wait for loading spinner to disappear
    */
   async waitForLoadingComplete(): Promise<void> {
-    await this.page.locator(ModelDrivenAppLocators.Common.LoadingSpinner).waitFor({
+    await ModelDrivenAppLocators.Common.LoadingSpinner(this.page).waitFor({
       state: 'hidden',
       timeout: 60000,
     });
@@ -384,12 +425,23 @@ export class ModelDrivenAppPage {
 
   /**
    * Wait for app runtime to load
+   *
+   * Uses built-in ARIA role first, then CSS fallbacks, because the navigation-pane
+   * selector varies across MDA shell versions (data-automation-id is internal).
    */
   async waitForRuntimeLoad(): Promise<void> {
-    await this.page.locator(ModelDrivenAppLocators.Runtime.SiteMap.NavigationPane).waitFor({
-      state: 'visible',
-      timeout: 60000,
-    });
+    await findLocator(
+      this.page,
+      [
+        // Prefer ARIA navigation landmark — stable across MDA versions
+        { by: 'role', role: 'navigation', name: /site map|navigation/i },
+        // CSS fallbacks in decreasing reliability order
+        { by: 'css', selector: '[data-automation-id="navigation-pane"]' },
+        { by: 'css', selector: '[data-id="sitemap-area"]' },
+        { by: 'css', selector: 'nav[aria-label]' },
+      ],
+      { timeout: 60_000 }
+    );
   }
 
   // ========================================
@@ -448,8 +500,8 @@ export class ModelDrivenAppPage {
    * @param appName - Name for the app
    */
   async createBlankModelDrivenApp(appName: string): Promise<void> {
-    await this.page.locator(ModelDrivenAppLocators.Home.CreateButton).click();
-    await this.page.locator(ModelDrivenAppLocators.Home.BlankAppOption).click();
+    await ModelDrivenAppLocators.Home.CreateButton(this.page).click();
+    await ModelDrivenAppLocators.Home.BlankAppOption(this.page).click();
     await this.waitForDesignerLoad();
     await this.setAppName(appName);
   }
@@ -460,8 +512,8 @@ export class ModelDrivenAppPage {
    * @param appName - Name for the app
    */
   async createFromSolution(solutionName: string, appName: string): Promise<void> {
-    await this.page.locator(ModelDrivenAppLocators.Home.CreateButton).click();
-    await this.page.locator(ModelDrivenAppLocators.Home.FromSolutionOption).click();
+    await ModelDrivenAppLocators.Home.CreateButton(this.page).click();
+    await ModelDrivenAppLocators.Home.FromSolutionOption(this.page).click();
     // Solution selection logic
     await this.waitForDesignerLoad();
     await this.setAppName(appName);
@@ -471,7 +523,7 @@ export class ModelDrivenAppPage {
    * Filter apps by Model Driven type
    */
   async filterByModelDrivenApps(): Promise<void> {
-    await this.page.locator(ModelDrivenAppLocators.Home.AppTypeFilter).selectOption('ModelDriven');
+    await ModelDrivenAppLocators.Home.AppTypeFilter(this.page).selectOption('ModelDriven');
     await this.waitForLoadingComplete();
   }
 
@@ -484,7 +536,7 @@ export class ModelDrivenAppPage {
    * @param appName - Name for the app
    */
   async setAppName(appName: string): Promise<void> {
-    const nameInput = this.page.locator(ModelDrivenAppLocators.Designer.CommandBar.AppNameInput);
+    const nameInput = ModelDrivenAppLocators.Designer.CommandBar.AppNameInput(this.page);
     await nameInput.click();
     await nameInput.fill(appName);
     await nameInput.press('Enter');
@@ -494,7 +546,7 @@ export class ModelDrivenAppPage {
    * Save the Model Driven app
    */
   async saveApp(): Promise<void> {
-    await this.page.locator(ModelDrivenAppLocators.Designer.CommandBar.SaveButton).click();
+    await ModelDrivenAppLocators.Designer.CommandBar.SaveButton(this.page).click();
     await this.waitForLoadingComplete();
   }
 
@@ -502,11 +554,9 @@ export class ModelDrivenAppPage {
    * Publish the Model Driven app
    */
   async publishApp(): Promise<void> {
-    await this.page.locator(ModelDrivenAppLocators.Designer.CommandBar.PublishButton).click();
-    await this.page
-      .locator(ModelDrivenAppLocators.PublishDialog.Dialog)
-      .waitFor({ state: 'visible' });
-    await this.page.locator(ModelDrivenAppLocators.PublishDialog.PublishButton).click();
+    await ModelDrivenAppLocators.Designer.CommandBar.PublishButton(this.page).click();
+    await ModelDrivenAppLocators.PublishDialog.Dialog(this.page).waitFor({ state: 'visible' });
+    await ModelDrivenAppLocators.PublishDialog.PublishButton(this.page).click();
     await this.waitForPublishComplete();
   }
 
@@ -514,7 +564,7 @@ export class ModelDrivenAppPage {
    * Wait for publish operation to complete
    */
   async waitForPublishComplete(): Promise<void> {
-    await this.page.locator(ModelDrivenAppLocators.PublishDialog.SuccessMessage).waitFor({
+    await ModelDrivenAppLocators.PublishDialog.SuccessMessage(this.page).waitFor({
       state: 'visible',
       timeout: 90000,
     });
@@ -524,11 +574,11 @@ export class ModelDrivenAppPage {
    * Play/Open the app in runtime
    */
   async playApp(): Promise<void> {
-    await this.page.locator(ModelDrivenAppLocators.Designer.CommandBar.PlayButton).click();
+    await ModelDrivenAppLocators.Designer.CommandBar.PlayButton(this.page).click();
     // Wait for new tab/window to open with the app
     const [newPage] = await Promise.all([
       this.page.context().waitForEvent('page'),
-      this.page.locator(ModelDrivenAppLocators.Designer.CommandBar.PlayButton).click(),
+      ModelDrivenAppLocators.Designer.CommandBar.PlayButton(this.page).click(),
     ]);
     await newPage.waitForLoadState();
     return newPage as any;
@@ -538,8 +588,8 @@ export class ModelDrivenAppPage {
    * Validate the app
    */
   async validateApp(): Promise<void> {
-    await this.page.locator(ModelDrivenAppLocators.Designer.CommandBar.ValidateButton).click();
-    await this.page.locator(ModelDrivenAppLocators.Validation.ValidationPanel).waitFor({
+    await ModelDrivenAppLocators.Designer.CommandBar.ValidateButton(this.page).click();
+    await ModelDrivenAppLocators.Validation.ValidationPanel(this.page).waitFor({
       state: 'visible',
     });
   }
@@ -560,36 +610,34 @@ export class ModelDrivenAppPage {
     views: string[] = []
   ): Promise<void> {
     // Open Pages panel
-    await this.page.locator(ModelDrivenAppLocators.Designer.LeftNav.PagesTab).click();
+    await ModelDrivenAppLocators.Designer.LeftNav.PagesTab(this.page).click();
 
     // Click Add page
-    await this.page.locator(ModelDrivenAppLocators.Designer.Pages.AddPageButton).click();
+    await ModelDrivenAppLocators.Designer.Pages.AddPageButton(this.page).click();
 
     // Select table-based page
-    await this.page.locator(ModelDrivenAppLocators.Designer.Pages.TableBasedPage).click();
+    await ModelDrivenAppLocators.Designer.Pages.TableBasedPage(this.page).click();
 
     // Wait for dialog
-    await this.page
-      .locator(ModelDrivenAppLocators.AddPageDialog.Dialog)
-      .waitFor({ state: 'visible' });
+    await ModelDrivenAppLocators.AddPageDialog.Dialog(this.page).waitFor({ state: 'visible' });
 
     // Select table
-    await this.page
-      .locator(ModelDrivenAppLocators.AddPageDialog.SelectTableDropdown)
-      .selectOption(tableName);
+    await ModelDrivenAppLocators.AddPageDialog.SelectTableDropdown(this.page).selectOption(
+      tableName
+    );
 
     // Select forms
     for (const formName of forms) {
-      await this.page.locator(ModelDrivenAppLocators.AddPageDialog.FormItem(formName)).click();
+      await ModelDrivenAppLocators.AddPageDialog.FormItem(this.page, formName).click();
     }
 
     // Select views
     for (const viewName of views) {
-      await this.page.locator(ModelDrivenAppLocators.AddPageDialog.ViewItem(viewName)).click();
+      await ModelDrivenAppLocators.AddPageDialog.ViewItem(this.page, viewName).click();
     }
 
     // Add
-    await this.page.locator(ModelDrivenAppLocators.AddPageDialog.AddButton).click();
+    await ModelDrivenAppLocators.AddPageDialog.AddButton(this.page).click();
     await this.waitForLoadingComplete();
   }
 
@@ -597,9 +645,9 @@ export class ModelDrivenAppPage {
    * Add a dashboard page
    */
   async addDashboardPage(): Promise<void> {
-    await this.page.locator(ModelDrivenAppLocators.Designer.LeftNav.PagesTab).click();
-    await this.page.locator(ModelDrivenAppLocators.Designer.Pages.AddPageButton).click();
-    await this.page.locator(ModelDrivenAppLocators.Designer.Pages.DashboardPage).click();
+    await ModelDrivenAppLocators.Designer.LeftNav.PagesTab(this.page).click();
+    await ModelDrivenAppLocators.Designer.Pages.AddPageButton(this.page).click();
+    await ModelDrivenAppLocators.Designer.Pages.DashboardPage(this.page).click();
     await this.waitForLoadingComplete();
   }
 
@@ -607,9 +655,9 @@ export class ModelDrivenAppPage {
    * Add a custom page
    */
   async addCustomPage(): Promise<void> {
-    await this.page.locator(ModelDrivenAppLocators.Designer.LeftNav.PagesTab).click();
-    await this.page.locator(ModelDrivenAppLocators.Designer.Pages.AddPageButton).click();
-    await this.page.locator(ModelDrivenAppLocators.Designer.Pages.CustomPage).click();
+    await ModelDrivenAppLocators.Designer.LeftNav.PagesTab(this.page).click();
+    await ModelDrivenAppLocators.Designer.Pages.AddPageButton(this.page).click();
+    await ModelDrivenAppLocators.Designer.Pages.CustomPage(this.page).click();
     await this.waitForLoadingComplete();
   }
 
@@ -618,10 +666,10 @@ export class ModelDrivenAppPage {
    * @param pageName - Name of the page to delete
    */
   async deletePage(pageName: string): Promise<void> {
-    const pageItem = this.page.locator(ModelDrivenAppLocators.Designer.Pages.PageItem(pageName));
+    const pageItem = ModelDrivenAppLocators.Designer.Pages.PageItem(this.page, pageName);
     await pageItem.hover();
-    await pageItem.locator(ModelDrivenAppLocators.Designer.Pages.PageMenu).click();
-    await this.page.locator(ModelDrivenAppLocators.Designer.Pages.DeletePage).click();
+    await ModelDrivenAppLocators.Designer.Pages.PageMenu(pageItem).click();
+    await ModelDrivenAppLocators.Designer.Pages.DeletePage(this.page).click();
   }
 
   // ========================================
@@ -633,10 +681,10 @@ export class ModelDrivenAppPage {
    * @param groupName - Name for the group
    */
   async addNavigationGroup(groupName: string): Promise<void> {
-    await this.page.locator(ModelDrivenAppLocators.Designer.LeftNav.NavigationTab).click();
-    await this.page.locator(ModelDrivenAppLocators.Designer.Navigation.AddGroupButton).click();
-    await this.page.locator(ModelDrivenAppLocators.Designer.Navigation.TitleInput).fill(groupName);
-    await this.page.locator(ModelDrivenAppLocators.Designer.Navigation.TitleInput).press('Enter');
+    await ModelDrivenAppLocators.Designer.LeftNav.NavigationTab(this.page).click();
+    await ModelDrivenAppLocators.Designer.Navigation.AddGroupButton(this.page).click();
+    await ModelDrivenAppLocators.Designer.Navigation.TitleInput(this.page).fill(groupName);
+    await ModelDrivenAppLocators.Designer.Navigation.TitleInput(this.page).press('Enter');
   }
 
   /**
@@ -650,24 +698,20 @@ export class ModelDrivenAppPage {
     subAreaTitle: string,
     tableName?: string
   ): Promise<void> {
-    await this.page.locator(ModelDrivenAppLocators.Designer.LeftNav.NavigationTab).click();
+    await ModelDrivenAppLocators.Designer.LeftNav.NavigationTab(this.page).click();
 
     // Select group
-    await this.page
-      .locator(ModelDrivenAppLocators.Designer.Navigation.GroupItem(groupName))
-      .click();
+    await ModelDrivenAppLocators.Designer.Navigation.GroupItem(this.page, groupName).click();
 
     // Add subarea
-    await this.page.locator(ModelDrivenAppLocators.Designer.Navigation.AddSubAreaButton).click();
+    await ModelDrivenAppLocators.Designer.Navigation.AddSubAreaButton(this.page).click();
 
     // Set title
-    await this.page
-      .locator(ModelDrivenAppLocators.Designer.Navigation.TitleInput)
-      .fill(subAreaTitle);
+    await ModelDrivenAppLocators.Designer.Navigation.TitleInput(this.page).fill(subAreaTitle);
 
     // Link to table if provided
     if (tableName) {
-      await this.page.locator(ModelDrivenAppLocators.Designer.Navigation.TablePicker).click();
+      await ModelDrivenAppLocators.Designer.Navigation.TablePicker(this.page).click();
       await this.page.locator(`option:has-text("${tableName}")`).click();
     }
   }
@@ -681,10 +725,10 @@ export class ModelDrivenAppPage {
    * @param tableName - Name of the table
    */
   async addTable(tableName: string): Promise<void> {
-    await this.page.locator(ModelDrivenAppLocators.Designer.LeftNav.DataTab).click();
-    await this.page.locator(ModelDrivenAppLocators.Designer.Data.AddTableButton).click();
-    await this.page.locator(ModelDrivenAppLocators.Designer.Data.SearchTable).fill(tableName);
-    await this.page.locator(ModelDrivenAppLocators.Designer.Data.TableItem(tableName)).click();
+    await ModelDrivenAppLocators.Designer.LeftNav.DataTab(this.page).click();
+    await ModelDrivenAppLocators.Designer.Data.AddTableButton(this.page).click();
+    await ModelDrivenAppLocators.Designer.Data.SearchTable(this.page).fill(tableName);
+    await ModelDrivenAppLocators.Designer.Data.TableItem(this.page, tableName).click();
     await this.waitForLoadingComplete();
   }
 
@@ -694,20 +738,16 @@ export class ModelDrivenAppPage {
    * @param pluralName - Plural name for the table
    */
   async createNewTable(displayName: string, pluralName: string): Promise<void> {
-    await this.page.locator(ModelDrivenAppLocators.Designer.LeftNav.DataTab).click();
-    await this.page.locator(ModelDrivenAppLocators.Designer.Data.AddTableButton).click();
+    await ModelDrivenAppLocators.Designer.LeftNav.DataTab(this.page).click();
+    await ModelDrivenAppLocators.Designer.Data.AddTableButton(this.page).click();
 
     // Assume there's a "Create new table" option
-    await this.page
-      .locator(ModelDrivenAppLocators.CreateTableDialog.Dialog)
-      .waitFor({ state: 'visible' });
-    await this.page
-      .locator(ModelDrivenAppLocators.CreateTableDialog.DisplayNameInput)
-      .fill(displayName);
-    await this.page
-      .locator(ModelDrivenAppLocators.CreateTableDialog.PluralNameInput)
-      .fill(pluralName);
-    await this.page.locator(ModelDrivenAppLocators.CreateTableDialog.CreateButton).click();
+    await ModelDrivenAppLocators.CreateTableDialog.Dialog(this.page).waitFor({
+      state: 'visible',
+    });
+    await ModelDrivenAppLocators.CreateTableDialog.DisplayNameInput(this.page).fill(displayName);
+    await ModelDrivenAppLocators.CreateTableDialog.PluralNameInput(this.page).fill(pluralName);
+    await ModelDrivenAppLocators.CreateTableDialog.CreateButton(this.page).click();
     await this.waitForLoadingComplete();
   }
 
@@ -719,8 +759,8 @@ export class ModelDrivenAppPage {
    * Open app settings
    */
   async openSettings(): Promise<void> {
-    await this.page.locator(ModelDrivenAppLocators.Designer.CommandBar.SettingsButton).click();
-    await this.page.locator(ModelDrivenAppLocators.Settings.Dialog).waitFor({ state: 'visible' });
+    await ModelDrivenAppLocators.Designer.CommandBar.SettingsButton(this.page).click();
+    await ModelDrivenAppLocators.Settings.Dialog(this.page).waitFor({ state: 'visible' });
   }
 
   /**
@@ -729,8 +769,8 @@ export class ModelDrivenAppPage {
    */
   async setAppDescription(description: string): Promise<void> {
     await this.openSettings();
-    await this.page.locator(ModelDrivenAppLocators.Settings.DescriptionInput).fill(description);
-    await this.page.locator(ModelDrivenAppLocators.Settings.SaveButton).click();
+    await ModelDrivenAppLocators.Settings.DescriptionInput(this.page).fill(description);
+    await ModelDrivenAppLocators.Settings.SaveButton(this.page).click();
   }
 
   /**
@@ -738,9 +778,9 @@ export class ModelDrivenAppPage {
    */
   async enableMobile(): Promise<void> {
     await this.openSettings();
-    await this.page.locator(ModelDrivenAppLocators.Settings.FeaturesTab).click();
-    await this.page.locator(ModelDrivenAppLocators.Settings.EnableMobileToggle).check();
-    await this.page.locator(ModelDrivenAppLocators.Settings.SaveButton).click();
+    await ModelDrivenAppLocators.Settings.FeaturesTab(this.page).click();
+    await ModelDrivenAppLocators.Settings.EnableMobileToggle(this.page).check();
+    await ModelDrivenAppLocators.Settings.SaveButton(this.page).click();
   }
 
   /**
@@ -748,10 +788,16 @@ export class ModelDrivenAppPage {
    */
   async enableOfflineMode(): Promise<void> {
     await this.openSettings();
-    await this.page.locator(ModelDrivenAppLocators.Settings.FeaturesTab).click();
-    await this.page.locator(ModelDrivenAppLocators.Settings.EnableOfflineToggle).check();
-    await this.page.locator(ModelDrivenAppLocators.Settings.SaveButton).click();
+    await ModelDrivenAppLocators.Settings.FeaturesTab(this.page).click();
+    await ModelDrivenAppLocators.Settings.EnableOfflineToggle(this.page).check();
+    await ModelDrivenAppLocators.Settings.SaveButton(this.page).click();
   }
+
+  // ─── Runtime / Play Mode ──────────────────────────────────────────────────
+  // Methods below target a published MDA running in the UCI shell.
+  // Prefer the component APIs (this.grid, this.form, this.commanding) for
+  // advanced scenarios — these convenience methods cover common one-liners.
+  // ──────────────────────────────────────────────────────────────────────────
 
   // ========================================
   // Runtime/Play Mode Methods
@@ -762,7 +808,7 @@ export class ModelDrivenAppPage {
    * @param itemName - Name of the navigation item
    */
   async navigateToRuntimeItem(itemName: string): Promise<void> {
-    await this.page.locator(ModelDrivenAppLocators.Runtime.SiteMap.SubArea(itemName)).click();
+    await ModelDrivenAppLocators.Runtime.SiteMap.SubArea(this.page, itemName).click();
     await this.waitForLoadingComplete();
   }
 
@@ -771,24 +817,22 @@ export class ModelDrivenAppPage {
    * @param groupName - Name of the group
    */
   async expandNavigationGroup(groupName: string): Promise<void> {
-    await this.page.locator(ModelDrivenAppLocators.Runtime.SiteMap.GroupHeader(groupName)).click();
+    await ModelDrivenAppLocators.Runtime.SiteMap.GroupHeader(this.page, groupName).click();
   }
 
   /**
    * Create new record in runtime
    */
   async createNewRecord(): Promise<void> {
-    await this.page.locator(ModelDrivenAppLocators.Runtime.Commands.NewButton).click();
-    await this.page
-      .locator(ModelDrivenAppLocators.Runtime.Content.Form)
-      .waitFor({ state: 'visible' });
+    await ModelDrivenAppLocators.Runtime.Commands.NewButton(this.page).click();
+    await ModelDrivenAppLocators.Runtime.Content.Form(this.page).waitFor({ state: 'visible' });
   }
 
   /**
    * Save record in runtime
    */
   async saveRecord(): Promise<void> {
-    await this.page.locator(ModelDrivenAppLocators.Runtime.Commands.SaveButton).click();
+    await ModelDrivenAppLocators.Runtime.Commands.SaveButton(this.page).click();
     await this.waitForLoadingComplete();
   }
 
@@ -798,9 +842,7 @@ export class ModelDrivenAppPage {
    * @param value - Value to fill
    */
   async fillFormField(fieldName: string, value: string): Promise<void> {
-    const fieldLocator = this.page.locator(
-      ModelDrivenAppLocators.Runtime.Content.FormField(fieldName)
-    );
+    const fieldLocator = ModelDrivenAppLocators.Runtime.Content.FormField(this.page, fieldName);
     await fieldLocator.fill(value);
   }
 
@@ -809,7 +851,14 @@ export class ModelDrivenAppPage {
    * @param buttonLabel - Label of the button
    */
   async clickCommandButton(buttonLabel: string): Promise<void> {
-    await this.page.locator(`button[aria-label="${buttonLabel}"]`).click();
+    // Prefer getByRole — semantically stable and handles aria-label + text matching.
+    // Fall back to CSS aria-label in case the button role is not 'button' (e.g. menuitem).
+    const btn = await findLocator(this.page, [
+      { by: 'role', role: 'button', name: buttonLabel },
+      { by: 'role', role: 'menuitem', name: buttonLabel },
+      { by: 'css', selector: `button[aria-label="${buttonLabel}"]` },
+    ]);
+    await btn.click();
   }
 
   /**
@@ -817,7 +866,7 @@ export class ModelDrivenAppPage {
    * @param tabName - Name of the tab
    */
   async switchFormTab(tabName: string): Promise<void> {
-    await this.page.locator(ModelDrivenAppLocators.Runtime.Content.FormTab(tabName)).click();
+    await ModelDrivenAppLocators.Runtime.Content.FormTab(this.page, tabName).click();
   }
 
   // ========================================
@@ -830,22 +879,20 @@ export class ModelDrivenAppPage {
    * @param securityRole - Security role to assign
    */
   async shareApp(userEmail: string, securityRole: string): Promise<void> {
-    await this.page.locator(ModelDrivenAppLocators.Designer.CommandBar.ShareButton).click();
-    await this.page
-      .locator(ModelDrivenAppLocators.ShareDialog.Dialog)
-      .waitFor({ state: 'visible' });
+    await ModelDrivenAppLocators.Designer.CommandBar.ShareButton(this.page).click();
+    await ModelDrivenAppLocators.ShareDialog.Dialog(this.page).waitFor({ state: 'visible' });
 
     // Search for user
-    await this.page.locator(ModelDrivenAppLocators.ShareDialog.SearchUsers).fill(userEmail);
+    await ModelDrivenAppLocators.ShareDialog.SearchUsers(this.page).fill(userEmail);
     await this.page.keyboard.press('Enter');
 
     // Select security role
-    await this.page
-      .locator(ModelDrivenAppLocators.ShareDialog.SecurityRoleDropdown)
-      .selectOption(securityRole);
+    await ModelDrivenAppLocators.ShareDialog.SecurityRoleDropdown(this.page).selectOption(
+      securityRole
+    );
 
     // Share
-    await this.page.locator(ModelDrivenAppLocators.ShareDialog.ShareButton).click();
+    await ModelDrivenAppLocators.ShareDialog.ShareButton(this.page).click();
   }
 
   // ========================================
@@ -857,7 +904,7 @@ export class ModelDrivenAppPage {
    * @param appName - Name of the app
    */
   async searchApp(appName: string): Promise<void> {
-    await this.page.locator(ModelDrivenAppLocators.Home.SearchBox).fill(appName);
+    await ModelDrivenAppLocators.Home.SearchBox(this.page).fill(appName);
     await this.page.keyboard.press('Enter');
     await this.waitForLoadingComplete();
   }
@@ -869,9 +916,9 @@ export class ModelDrivenAppPage {
   async openAppForEdit(appName: string): Promise<void> {
     await this.filterByModelDrivenApps();
     await this.searchApp(appName);
-    const appCard = this.page.locator(ModelDrivenAppLocators.Home.AppCard(appName));
+    const appCard = ModelDrivenAppLocators.Home.AppCard(this.page, appName);
     await appCard.hover();
-    await appCard.locator(ModelDrivenAppLocators.Details.EditButton).click();
+    await ModelDrivenAppLocators.Details.EditButton(appCard).click();
     await this.waitForDesignerLoad();
   }
 
@@ -882,7 +929,7 @@ export class ModelDrivenAppPage {
   async openAppForPlay(appName: string): Promise<void> {
     await this.filterByModelDrivenApps();
     await this.searchApp(appName);
-    await this.page.locator(ModelDrivenAppLocators.Home.AppCard(appName)).click();
+    await ModelDrivenAppLocators.Home.AppCard(this.page, appName).click();
     await this.waitForRuntimeLoad();
   }
 
@@ -892,14 +939,12 @@ export class ModelDrivenAppPage {
    */
   async deleteApp(appName: string): Promise<void> {
     await this.searchApp(appName);
-    const appCard = this.page.locator(ModelDrivenAppLocators.Home.AppCard(appName));
+    const appCard = ModelDrivenAppLocators.Home.AppCard(this.page, appName);
     await appCard.hover();
-    await appCard.locator(ModelDrivenAppLocators.Details.MoreButton).click();
-    await this.page.locator(ModelDrivenAppLocators.Details.DeleteButton).click();
-    await this.page
-      .locator(ModelDrivenAppLocators.DeleteDialog.Dialog)
-      .waitFor({ state: 'visible' });
-    await this.page.locator(ModelDrivenAppLocators.DeleteDialog.DeleteButton).click();
+    await ModelDrivenAppLocators.Details.MoreButton(appCard).click();
+    await ModelDrivenAppLocators.Details.DeleteButton(this.page).click();
+    await ModelDrivenAppLocators.DeleteDialog.Dialog(this.page).waitFor({ state: 'visible' });
+    await ModelDrivenAppLocators.DeleteDialog.DeleteButton(this.page).click();
   }
 
   // ========================================
@@ -912,16 +957,14 @@ export class ModelDrivenAppPage {
    */
   async verifyAppExists(appName: string): Promise<void> {
     await this.searchApp(appName);
-    await expect(this.page.locator(ModelDrivenAppLocators.Home.AppCard(appName))).toBeVisible();
+    await expect(ModelDrivenAppLocators.Home.AppCard(this.page, appName)).toBeVisible();
   }
 
   /**
    * Verify app is published
    */
   async verifyAppPublished(): Promise<void> {
-    await expect(
-      this.page.locator(ModelDrivenAppLocators.PublishDialog.SuccessMessage)
-    ).toBeVisible();
+    await expect(ModelDrivenAppLocators.PublishDialog.SuccessMessage(this.page)).toBeVisible();
   }
 
   /**
@@ -929,9 +972,7 @@ export class ModelDrivenAppPage {
    * @param pageName - Name of the page
    */
   async verifyPageExists(pageName: string): Promise<void> {
-    await expect(
-      this.page.locator(ModelDrivenAppLocators.Designer.Pages.PageItem(pageName))
-    ).toBeVisible();
+    await expect(ModelDrivenAppLocators.Designer.Pages.PageItem(this.page, pageName)).toBeVisible();
   }
 
   /**
@@ -940,7 +981,7 @@ export class ModelDrivenAppPage {
    */
   async verifyNavigationItemExists(itemName: string): Promise<void> {
     await expect(
-      this.page.locator(ModelDrivenAppLocators.Designer.Navigation.SubAreaItem(itemName))
+      ModelDrivenAppLocators.Designer.Navigation.SubAreaItem(this.page, itemName)
     ).toBeVisible();
   }
 
@@ -949,9 +990,9 @@ export class ModelDrivenAppPage {
    * @param tableName - Name of the table
    */
   async verifyTableAdded(tableName: string): Promise<void> {
-    await this.page.locator(ModelDrivenAppLocators.Designer.LeftNav.DataTab).click();
+    await ModelDrivenAppLocators.Designer.LeftNav.DataTab(this.page).click();
     await expect(
-      this.page.locator(ModelDrivenAppLocators.Designer.Data.TableItem(tableName))
+      ModelDrivenAppLocators.Designer.Data.TableItem(this.page, tableName)
     ).toBeVisible();
   }
 
@@ -960,28 +1001,22 @@ export class ModelDrivenAppPage {
    */
   async verifyNoValidationErrors(): Promise<void> {
     await this.validateApp();
-    await expect(this.page.locator(ModelDrivenAppLocators.Validation.ErrorItem)).toHaveCount(0);
+    await expect(ModelDrivenAppLocators.Validation.ErrorItem(this.page)).toHaveCount(0);
   }
 
   /**
    * Verify runtime loaded successfully
    */
   async verifyRuntimeLoaded(): Promise<void> {
-    await expect(
-      this.page.locator(ModelDrivenAppLocators.Runtime.SiteMap.NavigationPane)
-    ).toBeVisible();
-    await expect(
-      this.page.locator(ModelDrivenAppLocators.Runtime.Content.MainContent)
-    ).toBeVisible();
+    await expect(ModelDrivenAppLocators.Runtime.SiteMap.NavigationPane(this.page)).toBeVisible();
+    await expect(ModelDrivenAppLocators.Runtime.Content.MainContent(this.page)).toBeVisible();
   }
 
   /**
    * Verify record saved in runtime
    */
   async verifyRecordSaved(): Promise<void> {
-    await expect(
-      this.page.locator(ModelDrivenAppLocators.Common.SuccessNotification)
-    ).toBeVisible();
+    await expect(ModelDrivenAppLocators.Common.SuccessNotification(this.page)).toBeVisible();
   }
 
   // ========================================
@@ -1005,9 +1040,6 @@ export class ModelDrivenAppPage {
     this.ready = true;
   }
 
-  /**
-   * Launch app by name (IAppLauncher interface)
-   */
   /**
    * Launch app by name (IAppLauncher interface)
    * Note: Navigation is handled by AppProvider, this just marks the launcher as ready

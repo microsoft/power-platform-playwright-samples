@@ -119,6 +119,53 @@ export class AppRuntimeWaiter {
       }
     }
 
+    // If D365 restored a page from session state and that page no longer exists
+    // (e.g. a custom page removed from the app), it redirects to errorhandler.aspx.
+    // Recover by:
+    //   1. Clearing D365's sessionStorage (which holds the last-visited-page state)
+    //   2. Re-navigating to the base app URL so D365 loads the app home with no restore.
+    // We must clear storage BEFORE re-navigating — otherwise D365 restores the broken
+    // page again and we loop back to the error page.
+    const postLoadUrl = this.page.url();
+    if (postLoadUrl.includes('errorhandler.aspx')) {
+      console.log(
+        '[AppRuntimeWaiter] Error page detected — recovering from broken session state...'
+      );
+      try {
+        const backUri = new URL(postLoadUrl).searchParams.get('BackUri');
+        if (backUri) {
+          const backUrlDecoded = decodeURIComponent(backUri);
+          const backUrlObj = new URL(backUrlDecoded);
+          const appId = backUrlObj.searchParams.get('appid');
+          const origin = new URL(postLoadUrl).origin;
+          if (appId) {
+            // Clear D365 session storage so it won't restore the broken page on next load.
+            await this.page.evaluate(() => {
+              try {
+                sessionStorage.clear();
+              } catch {
+                /* cross-origin safety */
+              }
+            });
+            const safeUrl = `${origin}/main.aspx?appid=${appId}`;
+            console.log(
+              `[AppRuntimeWaiter] Navigating to app home after clearing session: ${safeUrl}`
+            );
+            await this.page.goto(safeUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
+            // Wait for the app to initialise (UCI shell + navigation)
+            await this.page.waitForURL(/main\.aspx/, { timeout: 30000 }).catch(() => {});
+            await this.page
+              .locator('[role="menuitem"]')
+              .first()
+              .waitFor({ state: 'visible', timeout: 30000 })
+              .catch(() => {});
+          }
+        }
+      } catch (err) {
+        console.log(`[AppRuntimeWaiter] Error page recovery failed: ${(err as Error).message}`);
+      }
+    }
+
     console.log('[AppRuntimeWaiter] Model-Driven app fully loaded');
   }
 
