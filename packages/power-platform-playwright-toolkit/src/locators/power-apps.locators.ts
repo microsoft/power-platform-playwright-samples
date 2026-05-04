@@ -151,7 +151,7 @@ export class PowerAppsPageLocators {
   }
 
   get mainNavigation(): Locator {
-    return this.loc(PowerAppsPageSelectors.MainNavigation);
+    return this.page.getByRole('navigation', { name: 'main' });
   }
 
   // ============ Home Page Locators ============
@@ -226,23 +226,23 @@ export class PowerAppsPageLocators {
   }
 
   get newAppButton(): Locator {
-    return this.loc(PowerAppsPageSelectors.AppsPage.NewApp);
+    return this.page.getByRole('menuitem', { name: 'New app' });
   }
 
   get allAppsButton(): Locator {
-    return this.loc(PowerAppsPageSelectors.AppsPage.AllApps);
+    return this.page.getByTestId('All');
   }
 
   get canvasAppButton(): Locator {
-    return this.loc(PowerAppsPageSelectors.AppsPage.CanvasApp);
+    return this.page.getByRole('button', { name: 'Canvas' });
   }
 
   get modelAppButton(): Locator {
-    return this.loc(PowerAppsPageSelectors.AppsPage.ModelApp);
+    return this.page.getByRole('menuitem', { name: 'Model-driven' });
   }
 
   get editAppButton(): Locator {
-    return this.loc(PowerAppsPageSelectors.AppsPage.EditApp);
+    return this.page.getByRole('menuitem', { name: 'Edit' });
   }
 
   get deleteAppButton(): Locator {
@@ -285,7 +285,7 @@ export class PowerAppsPageLocators {
   }
 
   get solutionsSearchBox(): Locator {
-    return this.loc(PowerAppsPageSelectors.SolutionsPage.SearchTextBox);
+    return this.page.getByRole('searchbox');
   }
 
   get solutionsListContainer(): Locator {
@@ -332,15 +332,15 @@ export class PowerAppsPageLocators {
   }
 
   get saveButton(): Locator {
-    return this.loc(PowerAppsPageSelectors.AppPreviewPage.SaveButton);
+    return this.page.getByRole('menuitem', { name: 'Save' });
   }
 
   get publishButton(): Locator {
-    return this.loc(PowerAppsPageSelectors.AppPreviewPage.PublishButton);
+    return this.page.getByRole('menuitem', { name: 'Publish' });
   }
 
   get playButton(): Locator {
-    return this.loc(PowerAppsPageSelectors.AppPreviewPage.PlayButton);
+    return this.page.getByRole('menuitem', { name: 'Play' });
   }
 
   get closeButton(): Locator {

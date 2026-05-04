@@ -2,192 +2,176 @@
 // Licensed under the MIT license.
 
 import { expect, FrameLocator, Page } from '@playwright/test';
-import { TimeOut } from 'power-platform-playwright-toolkit/dist/utils/config';
-import {
-  clickSelector,
-  clearAndFillTextInput,
-  fillTextInput,
-  navigateToNewTab,
-  waitForSelectorToDisable,
-  waitForSelectorToEnable,
-  delay,
-} from '../../utils/common';
+import { TimeOut } from 'power-platform-playwright-toolkit';
 
-export const canvasAppSelector = {
+// CSS selectors kept for internal Power Apps IDs/attributes that have no ARIA equivalent
+const SEL = {
   studioFrame: 'iframe[data-test-id="iframe-powerapps-studio"]',
   powerAppsLogo: '[id="spl-powerapps"] [class="spl-powerapps-logo"]',
   startFromData: '#start-from-data-button',
-  // Power Apps Studio v3 replaced the callout with a full "Select a data source" dialog/panel.
-  // Search box in that dialog:
-  dataSourceSearch: 'input[placeholder="Search"]',
-  // Data source item — tries the stable data-item-id attribute first (still present after search),
-  // then falls back to aria-label/role patterns used in newer Studio builds.
-  dataSourceItemList: (option: string) =>
+  dataSourceItem: (option: string) =>
     `[data-item-id*="datasourceItem"] [aria-label="${option}"], ` +
     `[role="option"][aria-label="${option}"], ` +
     `[aria-label="${option}"][tabindex], ` +
-    `button[title="${option}"]`,
-  successMessageText: '[class*="success ms-MessageBar"]',
+    `button[title="${option}"], ` +
+    `[role="option"]:has-text("${option}"), ` +
+    `[role="treeitem"]:has-text("${option}"), ` +
+    `[role="listitem"] :text-is("${option}")`,
+  successMessage: '[class*="success ms-MessageBar"]',
   spinnerProgressbar: '[role="progressbar"]',
   previewButton: '#commandBar_preview',
   previewScreen: '[class*="animatedCanvasContainerPreview"]',
-  newRecordButton: '[title="New record"]',
-  accountNameInput: 'input[aria-label="Account Name"]',
-  saveRecord: '[title="Save record"]',
   addedRecord: '[id*="component"][id*="Title"]',
-  deleteRecord: '[title="Delete"]',
-  deleteRecordConfirmButton: '[data-control-name*="DeleteConfirmBtn"]',
-};
-
-export const modernAppSelector = {
+  deleteConfirmButton: '[data-control-name*="DeleteConfirmBtn"]',
   addPage: '#add-new-page-in-command-bar',
-  customPage: '[aria-label="Custom page"]',
   customPageName: '#custom-page-name',
-  createButton: '[data-test-id="Wizard_PrimaryButton"]',
   appSpinner: '[class*="spinner"]',
-  button: (label: string) => `button:has-text("${label}")`,
 };
-
-export enum Buttons {
-  CreateCustomPage = 'Create custom page',
-}
 
 export class CustomPage {
   readonly page: Page;
-  studioFrame!: FrameLocator;
+  private studioFrame!: FrameLocator;
 
   constructor(page: Page) {
     this.page = page;
-    this.studioFrame = this.page.frameLocator(canvasAppSelector.studioFrame);
+    this.studioFrame = page.frameLocator(SEL.studioFrame);
   }
 
-  /**
-   * Create New Custom Page
-   * @param title Title
-   */
-  public async createNewCustomPage(title?: string): Promise<Page> {
+  async createNewCustomPage(title?: string): Promise<Page> {
     console.log('[CustomPage] Clicking "Add page" in command bar');
-    await clickSelector(this.page, modernAppSelector.addPage);
+    await this.page.locator(SEL.addPage).click();
 
     console.log('[CustomPage] Selecting "Custom page" option');
-    await clickSelector(this.page, modernAppSelector.customPage);
+    await this.page.getByLabel('Custom page').click();
 
-    console.log(`[CustomPage] Clicking "${Buttons.CreateCustomPage}" button`);
-    await clickSelector(this.page, modernAppSelector.button(Buttons.CreateCustomPage));
+    console.log('[CustomPage] Clicking "Create custom page" button');
+    await this.page.getByRole('button', { name: 'Create custom page' }).click();
 
     if (title) {
       console.log(`[CustomPage] Setting custom page name: "${title}"`);
-      await clearAndFillTextInput(this.page, modernAppSelector.customPageName, title);
+      await this.page.locator(SEL.customPageName).clear();
+      await this.page.locator(SEL.customPageName).fill(title);
     }
 
     console.log('[CustomPage] Clicking Create — waiting for new tab to open');
-    const customPage = await navigateToNewTab(this.page, modernAppSelector.createButton);
+    const [newTab] = await Promise.all([
+      this.page.waitForEvent('popup'),
+      this.page.getByTestId('Wizard_PrimaryButton').click(),
+    ]);
+    await this.page.waitForLoadState();
+
     console.log('[CustomPage] New tab opened, waiting for spinner to disappear');
-    await waitForSelectorToDisable(customPage, modernAppSelector.appSpinner);
+    await newTab
+      .locator(SEL.appSpinner)
+      .waitFor({ state: 'hidden', timeout: TimeOut.DefaultMaxWaitTime });
 
     console.log('[CustomPage] Attaching to studio iframe');
-    this.studioFrame = customPage.frameLocator(canvasAppSelector.studioFrame);
+    this.studioFrame = newTab.frameLocator(SEL.studioFrame);
 
     console.log('[CustomPage] Waiting for Power Apps logo to hide (studio loading)');
-    await waitForSelectorToDisable(this.studioFrame, canvasAppSelector.powerAppsLogo);
+    await this.studioFrame
+      .locator(SEL.powerAppsLogo)
+      .waitFor({ state: 'hidden', timeout: TimeOut.DefaultMaxWaitTime });
 
     console.log('[CustomPage] Waiting for "Start from data" button to appear');
-    await waitForSelectorToEnable(this.studioFrame, canvasAppSelector.startFromData);
+    await this.studioFrame
+      .locator(SEL.startFromData)
+      .waitFor({ state: 'attached', timeout: TimeOut.DefaultMaxWaitTime });
 
     console.log('[CustomPage] Studio is ready');
-    return customPage;
+    return newTab;
   }
 
-  /**
-   * Verify to Add Data Source With Data
-   * @param dataSource Data Source Name
-   */
-  public async verifyToAddDataSourceWithData(dataSource: string) {
+  async verifyToAddDataSourceWithData(dataSource: string): Promise<void> {
     console.log('[CustomPage] Clicking "Start from data"');
-    await clickSelector(this.studioFrame, canvasAppSelector.startFromData);
+    await this.studioFrame
+      .locator(SEL.startFromData)
+      .waitFor({ timeout: TimeOut.OneMinuteTimeOut });
+    await this.studioFrame.locator(SEL.startFromData).click();
 
     // Power Apps Studio v3 replaced the Callout flyout with a "Select a data source"
     // dialog/panel that has a search box. Type the data source name to filter the list.
     console.log('[CustomPage] Waiting for data source search panel to appear');
-    // Use .first() — Studio may render multiple search inputs in the dialog (strict mode guard)
-    const searchInput = this.studioFrame.locator(canvasAppSelector.dataSourceSearch).first();
+    const searchInput = this.studioFrame.getByPlaceholder('Search').first();
     await searchInput.waitFor({ state: 'visible', timeout: 30000 });
 
     console.log(`[CustomPage] Searching for data source: "${dataSource}"`);
     await searchInput.fill(dataSource);
-    // Brief pause for the search results to filter
-    await this.page.waitForTimeout(1000);
+    // Wait for search results to populate (Studio filter is async)
+    await this.page.waitForTimeout(3000);
 
     console.log(`[CustomPage] Waiting for data source option: "${dataSource}"`);
-    await waitForSelectorToEnable(
-      this.studioFrame,
-      canvasAppSelector.dataSourceItemList(dataSource)
-    );
+    await this.studioFrame
+      .locator(SEL.dataSourceItem(dataSource))
+      .first()
+      .waitFor({ state: 'attached', timeout: TimeOut.DefaultMaxWaitTime });
 
     console.log(`[CustomPage] Selecting data source: "${dataSource}"`);
-    await clickSelector(this.studioFrame, canvasAppSelector.dataSourceItemList(dataSource));
+    await this.studioFrame.locator(SEL.dataSourceItem(dataSource)).first().click();
 
     console.log('[CustomPage] Waiting for spinner to disappear after data source selection');
-    await waitForSelectorToDisable(this.studioFrame, canvasAppSelector.spinnerProgressbar);
+    await this.studioFrame
+      .locator(SEL.spinnerProgressbar)
+      .waitFor({ state: 'hidden', timeout: TimeOut.DefaultMaxWaitTime });
 
     console.log('[CustomPage] Waiting for success message');
-    await waitForSelectorToEnable(this.studioFrame, canvasAppSelector.successMessageText);
+    await this.studioFrame
+      .locator(SEL.successMessage)
+      .waitFor({ state: 'attached', timeout: TimeOut.DefaultMaxWaitTime });
     console.log('[CustomPage] Data source added successfully');
 
-    await delay(TimeOut.DefaultLoopWaitTime);
+    await new Promise<void>((resolve) => setTimeout(resolve, TimeOut.DefaultLoopWaitTime));
   }
 
-  /**
-   * Navigate To Preview Screen
-   */
-  public async navigateToPreviewScreen() {
+  async navigateToPreviewScreen(): Promise<void> {
     console.log('[CustomPage] Clicking preview button');
-    await clickSelector(this.studioFrame, canvasAppSelector.previewButton);
+    await this.studioFrame
+      .locator(SEL.previewButton)
+      .waitFor({ timeout: TimeOut.OneMinuteTimeOut });
+    await this.studioFrame.locator(SEL.previewButton).click();
+
     console.log('[CustomPage] Waiting for preview screen to load');
-    await waitForSelectorToEnable(this.studioFrame, canvasAppSelector.previewScreen);
+    await this.studioFrame
+      .locator(SEL.previewScreen)
+      .waitFor({ state: 'attached', timeout: TimeOut.DefaultMaxWaitTime });
     console.log('[CustomPage] Preview screen is ready');
   }
 
-  /**
-   * Add New Record in Preview Mode
-   * @param accountName Account Name
-   */
-  public async addNewRecordInPreviewMode(accountName: string) {
+  async addNewRecordInPreviewMode(accountName: string): Promise<void> {
     console.log('[CustomPage] Clicking "New record"');
-    await clickSelector(this.studioFrame, canvasAppSelector.newRecordButton);
+    await this.studioFrame.getByTitle('New record').waitFor({ timeout: TimeOut.OneMinuteTimeOut });
+    await this.studioFrame.getByTitle('New record').click();
+
     console.log(`[CustomPage] Filling account name: "${accountName}"`);
-    await fillTextInput(this.studioFrame, canvasAppSelector.accountNameInput, accountName);
+    await this.studioFrame.getByLabel('Account Name').fill(accountName);
+
     console.log('[CustomPage] Saving record');
-    await clickSelector(this.studioFrame, canvasAppSelector.saveRecord);
+    await this.studioFrame.getByTitle('Save record').click();
+
     console.log('[CustomPage] Verifying record is visible');
     await expect(
-      this.studioFrame
-        .locator(canvasAppSelector.addedRecord)
-        .getByText(accountName, { exact: true })
+      this.studioFrame.locator(SEL.addedRecord).getByText(accountName, { exact: true })
     ).toBeVisible({ timeout: 30000 });
     console.log('[CustomPage] Record added successfully');
   }
 
-  /**
-   * Delete Record in Preview Mode
-   * @param accountName Account name to select and delete
-   */
-  public async deleteRecordInPreviewMode(accountName: string) {
+  async deleteRecordInPreviewMode(accountName: string): Promise<void> {
     console.log('[CustomPage] Selecting record to delete');
     await this.studioFrame
-      .locator(canvasAppSelector.addedRecord)
+      .locator(SEL.addedRecord)
       .getByText(accountName, { exact: true })
       .first()
       .click();
+
     console.log('[CustomPage] Clicking Delete');
-    await clickSelector(this.studioFrame, canvasAppSelector.deleteRecord);
+    await this.studioFrame.getByTitle('Delete').click();
+
     console.log('[CustomPage] Confirming deletion');
-    await clickSelector(this.studioFrame, canvasAppSelector.deleteRecordConfirmButton);
+    await this.studioFrame.locator(SEL.deleteConfirmButton).click();
+
     console.log('[CustomPage] Verifying record is gone');
     await expect(
-      this.studioFrame
-        .locator(canvasAppSelector.addedRecord)
-        .getByText(accountName, { exact: true })
+      this.studioFrame.locator(SEL.addedRecord).getByText(accountName, { exact: true })
     ).toHaveCount(0);
     console.log('[CustomPage] Record deleted successfully');
   }

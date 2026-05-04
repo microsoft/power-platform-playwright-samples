@@ -59,5 +59,12 @@ export * from './auth';
 // Export Model-Driven Components
 export * from './components/model-driven';
 
+// Export Canvas Runtime Components (Play-mode interactions)
+export * from './components/canvas';
+
 // Export GenUX Components
 export * from './components/gen-ux';
+
+// Export Fixture Factory (provider pattern)
+export { createPowerAppFixture } from './fixtures/app-fixture';
+export type { FixtureDefinition, PageObjectBuilder } from './fixtures/app-fixture';

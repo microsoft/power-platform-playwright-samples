@@ -582,6 +582,40 @@ the current IDs/labels — then add the new variant to the selector array above.
 
 ---
 
+### 10. DOM Input vs Xrm Model — Always Use `setEntityAttribute` to Commit
+
+**Anti-pattern (broken — value typed into DOM but not committed to Xrm model):**
+
+```typescript
+await orderNumberInput.fill('');
+await orderNumberInput.pressSequentially(testOrderNumber, { delay: 50 });
+// ↑ D365 saves what the Xrm attribute model knows — not what's in the DOM.
+// attribute.getValue() will return null after save/reload.
+```
+
+**Correct pattern:**
+
+```typescript
+await orderNumberInput.fill('');
+await orderNumberInput.pressSequentially(testOrderNumber, { delay: 50 });
+// Commit value to Xrm model so D365 actually saves it:
+await setEntityAttribute(page, 'nwind_ordernumber', testOrderNumber);
+```
+
+**Why this fails silently:** Playwright's `fill`, `pressSequentially`, and `type` all
+update the HTML `<input>` value but do NOT fire the D365 field `onchange` handler that
+updates `attribute.setValue()` in the Xrm data model. When the Save button is clicked,
+D365 serialises the Xrm model — not the DOM — so the field is saved as `null`. The save
+succeeds (the record GUID appears in the URL), but reading back via `getEntityAttribute`
+returns `null`.
+
+**Rule:** Any time you fill a text/number field on a D365 MDA form, follow `fill()` /
+`pressSequentially()` with `await setEntityAttribute(page, attributeName, value)`.
+
+> **Files affected:** `packages/e2e-tests/tests/northwind/mda/model-driven-crud.test.ts`
+
+---
+
 ### 9. Rebuild After Any Toolkit Change
 
 The `e2e-tests` package imports the **compiled** toolkit (`dist/`). Editing TypeScript source files

@@ -2,14 +2,31 @@
 // Licensed under the MIT license.
 
 /**
- * Canvas App Page Object Model
- * Provides methods for creating, editing, and testing Canvas Apps
+ * Canvas App Page Object Model — **Studio Authoring Only**
+ *
+ * @remarks
+ * **Studio Authoring Only.** This class targets Power Apps Studio (Edit mode).
+ * It is NOT for testing a published Canvas app running in Play mode.
+ *
+ * For runtime / Play-mode testing use {@link CanvasAppRuntimePage}, which handles
+ * the cross-origin iframe boundary, gallery virtualisation, and Canvas overlay
+ * intercept issues that arise in a published app.
+ *
+ * Quick reference:
+ * | Scenario                     | Class to use             |
+ * |------------------------------|--------------------------|
+ * | Authoring in Power Apps Studio | `CanvasAppPage` (this)   |
+ * | Testing a published Canvas app | `CanvasAppRuntimePage`   |
  */
 
 import { Page, FrameLocator, expect } from '@playwright/test';
 import { CanvasAppLocators } from '../locators/canvas-app.locators';
 
 export class CanvasAppPage {
+  // ─── Studio Authoring Only ────────────────────────────────────────────────
+  // All methods below interact with Power Apps Studio (Edit mode).
+  // They require the Studio iframe to be present and will not work against a
+  // published app URL. For Play-mode interactions use CanvasAppRuntimePage.
   readonly page: Page;
   private studioFrame: FrameLocator | null = null;
 
@@ -23,7 +40,7 @@ export class CanvasAppPage {
    */
   private async getStudioFrame(): Promise<FrameLocator> {
     if (!this.studioFrame) {
-      this.studioFrame = this.page.frameLocator(CanvasAppLocators.Studio.StudioFrame);
+      this.studioFrame = CanvasAppLocators.Studio.StudioFrame(this.page);
     }
     return this.studioFrame;
   }
@@ -44,7 +61,7 @@ export class CanvasAppPage {
    * Wait for home page to load
    */
   async waitForHomePageLoad(): Promise<void> {
-    await this.page.locator(CanvasAppLocators.Home.AppsGrid).waitFor({
+    await CanvasAppLocators.Home.AppsGrid(this.page).waitFor({
       state: 'visible',
       timeout: 60000,
     });
@@ -87,7 +104,7 @@ export class CanvasAppPage {
       console.log('[CanvasAppPage] No welcome dialog detected or already dismissed');
     }
 
-    await frame.locator(CanvasAppLocators.Studio.Canvas.CanvasArea).waitFor({
+    await CanvasAppLocators.Studio.Canvas.CanvasArea(frame).waitFor({
       state: 'visible',
       timeout: 90000,
     });
@@ -97,7 +114,7 @@ export class CanvasAppPage {
    * Wait for loading spinner to disappear
    */
   async waitForLoadingComplete(): Promise<void> {
-    await this.page.locator(CanvasAppLocators.Common.LoadingSpinner).waitFor({
+    await CanvasAppLocators.Common.LoadingSpinner(this.page).waitFor({
       state: 'hidden',
       timeout: 60000,
     });
@@ -112,8 +129,8 @@ export class CanvasAppPage {
    * @param appName - Optional name for the app
    */
   async createBlankCanvasApp(appName?: string): Promise<void> {
-    await this.page.locator(CanvasAppLocators.Home.CreateButton).click();
-    await this.page.locator(CanvasAppLocators.Home.BlankAppOption).click();
+    await CanvasAppLocators.Home.CreateButton(this.page).click();
+    await CanvasAppLocators.Home.BlankAppOption(this.page).click();
     await this.waitForStudioLoad();
 
     if (appName) {
@@ -126,8 +143,8 @@ export class CanvasAppPage {
    * @param _templateName - Name of the template
    */
   async createFromTemplate(_templateName: string): Promise<void> {
-    await this.page.locator(CanvasAppLocators.Home.CreateButton).click();
-    await this.page.locator(CanvasAppLocators.Home.TemplateAppOption).click();
+    await CanvasAppLocators.Home.CreateButton(this.page).click();
+    await CanvasAppLocators.Home.TemplateOption(this.page).click();
     // Template selection logic would go here
     await this.waitForStudioLoad();
   }
@@ -137,8 +154,8 @@ export class CanvasAppPage {
    * @param _dataSourceName - Name of the data source
    */
   async createFromData(_dataSourceName: string): Promise<void> {
-    await this.page.locator(CanvasAppLocators.Home.CreateButton).click();
-    await this.page.locator(CanvasAppLocators.Home.DataAppOption).click();
+    await CanvasAppLocators.Home.CreateButton(this.page).click();
+    await CanvasAppLocators.Home.DataOption(this.page).click();
     // Data source selection logic would go here
     await this.waitForStudioLoad();
   }
@@ -153,7 +170,7 @@ export class CanvasAppPage {
    */
   async setAppName(appName: string): Promise<void> {
     const frame = await this.getStudioFrame();
-    const nameInput = frame.locator(CanvasAppLocators.Studio.CommandBar.AppName);
+    const nameInput = CanvasAppLocators.Studio.CommandBar.AppName(frame);
     await nameInput.click();
     await nameInput.fill(appName);
     await nameInput.press('Enter');
@@ -164,9 +181,9 @@ export class CanvasAppPage {
    */
   async saveApp(): Promise<void> {
     const frame = await this.getStudioFrame();
-    await frame.locator(CanvasAppLocators.Studio.CommandBar.SaveButton).click();
-    await this.page.locator(CanvasAppLocators.SaveDialog.Dialog).waitFor({ state: 'visible' });
-    await this.page.locator(CanvasAppLocators.SaveDialog.SaveButton).click();
+    await CanvasAppLocators.Studio.CommandBar.SaveButton(frame).click();
+    await CanvasAppLocators.SaveDialog.Dialog(this.page).waitFor({ state: 'visible' });
+    await CanvasAppLocators.SaveDialog.SaveButton(this.page).click();
     await this.waitForSaveComplete();
   }
 
@@ -176,10 +193,10 @@ export class CanvasAppPage {
    */
   async saveAppWithName(appName: string): Promise<void> {
     const frame = await this.getStudioFrame();
-    await frame.locator(CanvasAppLocators.Studio.CommandBar.SaveButton).click();
-    await this.page.locator(CanvasAppLocators.SaveDialog.Dialog).waitFor({ state: 'visible' });
-    await this.page.locator(CanvasAppLocators.SaveDialog.AppNameInput).fill(appName);
-    await this.page.locator(CanvasAppLocators.SaveDialog.SaveButton).click();
+    await CanvasAppLocators.Studio.CommandBar.SaveButton(frame).click();
+    await CanvasAppLocators.SaveDialog.Dialog(this.page).waitFor({ state: 'visible' });
+    await CanvasAppLocators.SaveDialog.AppNameInput(this.page).fill(appName);
+    await CanvasAppLocators.SaveDialog.SaveButton(this.page).click();
     await this.waitForSaveComplete();
   }
 
@@ -187,7 +204,7 @@ export class CanvasAppPage {
    * Wait for save operation to complete
    */
   async waitForSaveComplete(): Promise<void> {
-    await this.page.locator(CanvasAppLocators.SaveDialog.SuccessMessage).waitFor({
+    await CanvasAppLocators.SaveDialog.SuccessMessage(this.page).waitFor({
       state: 'visible',
       timeout: 30000,
     });
@@ -199,14 +216,14 @@ export class CanvasAppPage {
    */
   async publishApp(comments?: string): Promise<void> {
     const frame = await this.getStudioFrame();
-    await frame.locator(CanvasAppLocators.Studio.CommandBar.PublishButton).click();
-    await this.page.locator(CanvasAppLocators.PublishDialog.Dialog).waitFor({ state: 'visible' });
+    await CanvasAppLocators.Studio.CommandBar.PublishButton(frame).click();
+    await CanvasAppLocators.PublishDialog.Dialog(this.page).waitFor({ state: 'visible' });
 
     if (comments) {
-      await this.page.locator(CanvasAppLocators.PublishDialog.VersionComments).fill(comments);
+      await CanvasAppLocators.PublishDialog.VersionComments(this.page).fill(comments);
     }
 
-    await this.page.locator(CanvasAppLocators.PublishDialog.PublishButton).click();
+    await CanvasAppLocators.PublishDialog.PublishButton(this.page).click();
     await this.waitForPublishComplete();
   }
 
@@ -214,7 +231,7 @@ export class CanvasAppPage {
    * Wait for publish operation to complete
    */
   async waitForPublishComplete(): Promise<void> {
-    await this.page.locator(CanvasAppLocators.PublishDialog.SuccessMessage).waitFor({
+    await CanvasAppLocators.PublishDialog.SuccessMessage(this.page).waitFor({
       state: 'visible',
       timeout: 60000,
     });
@@ -225,8 +242,9 @@ export class CanvasAppPage {
    */
   async playApp(): Promise<void> {
     const frame = await this.getStudioFrame();
-    await frame.locator(CanvasAppLocators.Studio.CommandBar.PlayButton).click();
-    await this.page.locator(CanvasAppLocators.PlayMode.PlayWindow).waitFor({
+    await CanvasAppLocators.Studio.CommandBar.PlayButton(frame).click();
+    // Wait for the Stop/Close preview button to appear — signals preview is active
+    await CanvasAppLocators.PlayMode.StopButton(this.page).waitFor({
       state: 'visible',
       timeout: 30000,
     });
@@ -236,7 +254,7 @@ export class CanvasAppPage {
    * Stop playing the app
    */
   async stopPlayingApp(): Promise<void> {
-    await this.page.locator(CanvasAppLocators.PlayMode.StopButton).click();
+    await CanvasAppLocators.PlayMode.StopButton(this.page).click();
   }
 
   // ========================================
@@ -245,18 +263,18 @@ export class CanvasAppPage {
 
   /**
    * Add a control to the canvas
-   * @param controlType - Type of control (e.g., 'Button', 'Label', 'TextInput')
+   * @param controlType - Type of control (e.g., 'ButtonControl', 'TextLabelControl')
    */
   async addControl(controlType: keyof typeof CanvasAppLocators.Studio.Insert): Promise<void> {
     const frame = await this.getStudioFrame();
 
     // Open Insert panel
-    await frame.locator(CanvasAppLocators.Studio.LeftNav.InsertTab).click();
+    await CanvasAppLocators.Studio.LeftNav.InsertTab(frame).click();
 
-    // Click the control
-    const controlSelector = CanvasAppLocators.Studio.Insert[controlType];
-    if (controlSelector) {
-      await frame.locator(controlSelector).click();
+    // Click the control using the factory function
+    const controlFn = CanvasAppLocators.Studio.Insert[controlType];
+    if (controlFn) {
+      await controlFn(frame).click();
     } else {
       throw new Error(`Unknown control type: ${controlType}`);
     }
@@ -296,7 +314,7 @@ export class CanvasAppPage {
    */
   async selectControl(controlName: string): Promise<void> {
     const frame = await this.getStudioFrame();
-    await frame.locator(CanvasAppLocators.Studio.Canvas.Control(controlName)).click();
+    await CanvasAppLocators.Studio.Canvas.Control(frame, controlName).click();
   }
 
   /**
@@ -317,9 +335,7 @@ export class CanvasAppPage {
    */
   async setControlProperty(propertyName: string, value: string): Promise<void> {
     const frame = await this.getStudioFrame();
-    const propertyInput = frame.locator(
-      CanvasAppLocators.Studio.Properties.PropertyItem(propertyName)
-    );
+    const propertyInput = CanvasAppLocators.Studio.Properties.PropertyItem(frame, propertyName);
     await propertyInput.fill(value);
     await propertyInput.press('Enter');
   }
@@ -330,8 +346,8 @@ export class CanvasAppPage {
    */
   async setControlText(text: string): Promise<void> {
     const frame = await this.getStudioFrame();
-    await frame.locator(CanvasAppLocators.Studio.Properties.Text).fill(text);
-    await frame.locator(CanvasAppLocators.Studio.Properties.Text).press('Enter');
+    await CanvasAppLocators.Studio.Properties.Text(frame).fill(text);
+    await CanvasAppLocators.Studio.Properties.Text(frame).press('Enter');
   }
 
   /**
@@ -343,12 +359,13 @@ export class CanvasAppPage {
     const frame = await this.getStudioFrame();
 
     // Select property from dropdown
-    await frame.locator(CanvasAppLocators.Studio.FormulaBar.PropertyDropdown).click();
+    await CanvasAppLocators.Studio.FormulaBar.PropertyDropdown(frame).click();
     await frame.locator(`option:has-text("${propertyName}")`).click();
 
     // Enter formula
-    await frame.locator(CanvasAppLocators.Studio.FormulaBar.FormulaInput).fill(formula);
-    await frame.locator(CanvasAppLocators.Studio.FormulaBar.FormulaInput).press('Enter');
+    const formulaInput = CanvasAppLocators.Studio.FormulaBar.FormulaInput(frame);
+    await formulaInput.fill(formula);
+    await formulaInput.press('Enter');
   }
 
   // ========================================
@@ -363,19 +380,19 @@ export class CanvasAppPage {
     const frame = await this.getStudioFrame();
 
     // Open Data panel
-    await frame.locator(CanvasAppLocators.Studio.LeftNav.DataTab).click();
+    await CanvasAppLocators.Studio.LeftNav.DataTab(frame).click();
 
     // Click Add data
-    await frame.locator(CanvasAppLocators.Studio.Data.AddDataButton).click();
+    await CanvasAppLocators.Studio.Data.AddDataButton(frame).click();
 
     // Search for data source
-    await frame.locator(CanvasAppLocators.Studio.Data.SearchDataSource).fill(dataSourceName);
+    await CanvasAppLocators.Studio.Data.SearchDataSource(frame).fill(dataSourceName);
 
     // Select data source
-    await frame.locator(CanvasAppLocators.Studio.Data.DataSourceItem(dataSourceName)).click();
+    await CanvasAppLocators.Studio.Data.DataSourceItem(frame, dataSourceName).click();
 
     // Connect
-    await frame.locator(CanvasAppLocators.Studio.Data.ConnectButton).click();
+    await CanvasAppLocators.Studio.Data.ConnectButton(frame).click();
   }
 
   // ========================================
@@ -387,7 +404,7 @@ export class CanvasAppPage {
    */
   async addScreen(): Promise<void> {
     const frame = await this.getStudioFrame();
-    await frame.locator(CanvasAppLocators.Studio.Screens.AddScreenButton).click();
+    await CanvasAppLocators.Studio.Screens.AddScreenButton(frame).click();
   }
 
   /**
@@ -396,7 +413,7 @@ export class CanvasAppPage {
    */
   async selectScreen(screenName: string): Promise<void> {
     const frame = await this.getStudioFrame();
-    await frame.locator(CanvasAppLocators.Studio.Screens.ScreenItem(screenName)).click();
+    await CanvasAppLocators.Studio.Screens.ScreenItem(frame, screenName).click();
   }
 
   /**
@@ -406,8 +423,8 @@ export class CanvasAppPage {
   async deleteScreen(screenName: string): Promise<void> {
     const frame = await this.getStudioFrame();
     await this.selectScreen(screenName);
-    await frame.locator(CanvasAppLocators.Studio.Screens.ScreenMenu).click();
-    await frame.locator(CanvasAppLocators.Studio.Screens.DeleteScreen).click();
+    await CanvasAppLocators.Studio.Screens.ScreenMenu(frame).click();
+    await CanvasAppLocators.Studio.Screens.DeleteScreen(frame).click();
   }
 
   // ========================================
@@ -419,7 +436,7 @@ export class CanvasAppPage {
    * @param appName - Name of the app to search for
    */
   async searchApp(appName: string): Promise<void> {
-    await this.page.locator(CanvasAppLocators.Home.SearchBox).fill(appName);
+    await CanvasAppLocators.Home.SearchBox(this.page).fill(appName);
     await this.page.keyboard.press('Enter');
     await this.waitForLoadingComplete();
   }
@@ -430,7 +447,7 @@ export class CanvasAppPage {
    */
   async openApp(appName: string): Promise<void> {
     await this.searchApp(appName);
-    await this.page.locator(CanvasAppLocators.Home.AppCard(appName)).click();
+    await CanvasAppLocators.Home.AppCard(this.page, appName).click();
     await this.waitForStudioLoad();
   }
 
@@ -440,12 +457,12 @@ export class CanvasAppPage {
    */
   async deleteApp(appName: string): Promise<void> {
     await this.searchApp(appName);
-    const appCard = this.page.locator(CanvasAppLocators.Home.AppCard(appName));
+    const appCard = CanvasAppLocators.Home.AppCard(this.page, appName);
     await appCard.hover();
-    await appCard.locator(CanvasAppLocators.Details.MoreButton).click();
-    await this.page.locator(CanvasAppLocators.Details.DeleteButton).click();
-    await this.page.locator(CanvasAppLocators.DeleteDialog.Dialog).waitFor({ state: 'visible' });
-    await this.page.locator(CanvasAppLocators.DeleteDialog.DeleteButton).click();
+    await CanvasAppLocators.Details.MoreButton(appCard).click();
+    await CanvasAppLocators.Details.DeleteButton(this.page).click();
+    await CanvasAppLocators.DeleteDialog.Dialog(this.page).waitFor({ state: 'visible' });
+    await CanvasAppLocators.DeleteDialog.DeleteButton(this.page).click();
   }
 
   // ========================================
@@ -459,20 +476,18 @@ export class CanvasAppPage {
    */
   async shareApp(userEmail: string, permission: 'CanEdit' | 'CanView' = 'CanView'): Promise<void> {
     const frame = await this.getStudioFrame();
-    await frame.locator(CanvasAppLocators.Studio.CommandBar.ShareButton).click();
-    await this.page.locator(CanvasAppLocators.ShareDialog.Dialog).waitFor({ state: 'visible' });
+    await CanvasAppLocators.Studio.CommandBar.ShareButton(frame).click();
+    await CanvasAppLocators.ShareDialog.Dialog(this.page).waitFor({ state: 'visible' });
 
     // Search for user
-    await this.page.locator(CanvasAppLocators.ShareDialog.SearchUsers).fill(userEmail);
+    await CanvasAppLocators.ShareDialog.SearchUsers(this.page).fill(userEmail);
     await this.page.keyboard.press('Enter');
 
     // Set permission
-    await this.page
-      .locator(CanvasAppLocators.ShareDialog.PermissionDropdown)
-      .selectOption(permission);
+    await CanvasAppLocators.ShareDialog.PermissionDropdown(this.page).selectOption(permission);
 
     // Share
-    await this.page.locator(CanvasAppLocators.ShareDialog.ShareButton).click();
+    await CanvasAppLocators.ShareDialog.ShareButton(this.page).click();
   }
 
   // ========================================
@@ -485,21 +500,21 @@ export class CanvasAppPage {
    */
   async verifyAppExists(appName: string): Promise<void> {
     await this.searchApp(appName);
-    await expect(this.page.locator(CanvasAppLocators.Home.AppCard(appName))).toBeVisible();
+    await expect(CanvasAppLocators.Home.AppCard(this.page, appName)).toBeVisible();
   }
 
   /**
    * Verify app is saved
    */
   async verifyAppSaved(): Promise<void> {
-    await expect(this.page.locator(CanvasAppLocators.SaveDialog.SuccessMessage)).toBeVisible();
+    await expect(CanvasAppLocators.SaveDialog.SuccessMessage(this.page)).toBeVisible();
   }
 
   /**
    * Verify app is published
    */
   async verifyAppPublished(): Promise<void> {
-    await expect(this.page.locator(CanvasAppLocators.PublishDialog.SuccessMessage)).toBeVisible();
+    await expect(CanvasAppLocators.PublishDialog.SuccessMessage(this.page)).toBeVisible();
   }
 
   /**
@@ -508,14 +523,14 @@ export class CanvasAppPage {
    */
   async verifyControlExists(controlName: string): Promise<void> {
     const frame = await this.getStudioFrame();
-    await expect(frame.locator(CanvasAppLocators.Studio.Canvas.Control(controlName))).toBeVisible();
+    await expect(CanvasAppLocators.Studio.Canvas.Control(frame, controlName)).toBeVisible();
   }
 
   /**
    * Verify error message is displayed
    */
   async verifyErrorDisplayed(): Promise<void> {
-    await expect(this.page.locator(CanvasAppLocators.Common.ErrorBanner)).toBeVisible();
+    await expect(CanvasAppLocators.Common.ErrorBanner(this.page)).toBeVisible();
   }
 
   // ========================================

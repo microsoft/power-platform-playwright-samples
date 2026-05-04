@@ -19,3 +19,6 @@ export * from './auth-helpers';
 
 // Locator helpers
 export * from './locator-helpers';
+
+// Canvas flakiness-handling helpers
+export * from './canvas-helpers';

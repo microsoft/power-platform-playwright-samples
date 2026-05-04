@@ -93,6 +93,7 @@ export class AppProvider {
   private currentAppType: AppType | null = null;
   private launchedApps: Map<string, AppMetadata> = new Map();
   private launchMode: 'same-page' | 'new-tab' | 'direct-url' = 'same-page';
+  private _launchDirectUrl: string | null = null;
   private navigator: PowerPlatformNavigator;
 
   // Page object instances
@@ -151,9 +152,11 @@ export class AppProvider {
     }
 
     if (!this.modelDrivenAppPage) {
-      // Initialize ModelDrivenAppPage on first access
+      // Pass the direct URL as baseAppUrl so navigateToGridView/navigateToFormView
+      // can include the appid in constructed URLs — required when D365 session restore
+      // redirects to an error page and the current URL loses the appid param.
       const appPage = this.getAppPage();
-      this.modelDrivenAppPage = new ModelDrivenAppPage(appPage);
+      this.modelDrivenAppPage = new ModelDrivenAppPage(appPage, this._launchDirectUrl || undefined);
     }
 
     return this.modelDrivenAppPage;
@@ -440,6 +443,8 @@ export class AppProvider {
     _options: AppPlayerOptions
   ): Promise<void> {
     console.log(`[AppProvider] launchByDirectUrl - ${directUrl}`);
+
+    this._launchDirectUrl = directUrl;
 
     // Navigate to direct URL
     await this.makerPortalPage.goto(directUrl, { waitUntil: 'domcontentloaded' });

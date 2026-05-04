@@ -2,396 +2,281 @@
 // Licensed under the MIT license.
 
 /**
- * Model Driven App Locators
- * Centralized selectors for Model Driven App creation, editing, and testing
- * Based on Microsoft Power Apps Model Driven App documentation
+ * Model Driven App Locators — factory-function style.
+ *
+ * Every entry is a function `(ctx, ...params?) => Locator`. Built-in Playwright
+ * locators (`getByRole`, `getByLabel`, etc.) are used wherever a stable ARIA
+ * contract exists. `ctx.locator(css)` is used only where no ARIA equivalent
+ * exists (ag-Grid row attributes, internal data-automation-id) — these are
+ * marked with comments.
  */
+
+import { Page, Locator, FrameLocator } from '@playwright/test';
+
+/** Any context that supports the Playwright `getBy*` + `locator()` API. */
+type Ctx = Page | FrameLocator | Locator;
 
 export const ModelDrivenAppLocators = {
-  // Home Page - App Creation
+  // ── Home Page — App Creation ──────────────────────────────────────────────
+
   Home: {
-    CreateButton: 'button[name="Create"]',
-    CreateMenu: '[role="menu"][aria-label="Create menu"]',
-    BlankAppOption: '[data-testid="create-blank-model-app"]',
-    FromSolutionOption: '[data-testid="create-from-solution"]',
-    AppsGrid: '[role="grid"][aria-label="Apps"]',
-    AppCard: (appName: string) => `[role="gridcell"]:has-text("${appName}")`,
-    AppTypeFilter: 'select[aria-label="App type"]',
-    ModelDrivenOption: 'option[value="ModelDriven"]',
-    SearchBox: 'input[placeholder="Search"]',
+    CreateButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'Create' }),
+    CreateMenu: (ctx: Ctx) => ctx.getByRole('menu', { name: 'Create menu' }),
+    BlankAppOption: (ctx: Ctx) => ctx.getByTestId('create-blank-model-app'),
+    FromSolutionOption: (ctx: Ctx) => ctx.getByTestId('create-from-solution'),
+    AppsGrid: (ctx: Ctx) => ctx.getByRole('grid', { name: 'Apps' }),
+    AppCard: (ctx: Ctx, name: string) => ctx.getByRole('gridcell', { name }),
+    SearchBox: (ctx: Ctx) => ctx.getByPlaceholder('Search'),
+    // FRAGILE: app-type filter UI varies across Maker Portal versions
+    AppTypeFilter: (ctx: Ctx) => ctx.locator('[data-id="app-type-filter"]'),
   },
 
-  // Modern App Designer (Main Interface)
+  // ── Modern App Designer ───────────────────────────────────────────────────
+  // 🎨 Studio authoring only.
+
   Designer: {
-    // Command Bar
     CommandBar: {
-      AppNameInput: 'input[aria-label="App name"]',
-      SaveButton: 'button[aria-label="Save"]',
-      PublishButton: 'button[aria-label="Publish"]',
-      PlayButton: 'button[aria-label="Play"]',
-      SettingsButton: 'button[aria-label="Settings"]',
-      ShareButton: 'button[aria-label="Share"]',
-      ValidateButton: 'button[aria-label="Validate"]',
-      SwitchToClassicButton: 'button[aria-label="Switch to classic"]',
+      AppNameInput: (ctx: Ctx) => ctx.getByLabel('App name'),
+      SaveButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'Save' }),
+      PublishButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'Publish' }),
+      PlayButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'Play' }),
+      SettingsButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'Settings' }),
+      ShareButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'Share' }),
+      ValidateButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'Validate' }),
     },
 
-    // Left Navigation Panel
     LeftNav: {
-      NavigationTab: 'button[aria-label="Navigation"]',
-      PagesTab: 'button[aria-label="Pages"]',
-      DataTab: 'button[aria-label="Data"]',
-      AutomationTab: 'button[aria-label="Automation"]',
+      NavigationTab: (ctx: Ctx) => ctx.getByRole('button', { name: 'Navigation' }),
+      PagesTab: (ctx: Ctx) => ctx.getByRole('button', { name: 'Pages' }),
+      DataTab: (ctx: Ctx) => ctx.getByRole('button', { name: 'Data' }),
+      AutomationTab: (ctx: Ctx) => ctx.getByRole('button', { name: 'Automation' }),
     },
 
-    // Pages Panel
     Pages: {
-      PagesList: '[role="tree"][aria-label="Pages"]',
-      AddPageButton: 'button[aria-label="Add page"]',
-      NewPageMenu: '[role="menu"][aria-label="New page"]',
-
-      // Page Types
-      TableBasedPage: 'button[aria-label="Table based view and form"]',
-      DashboardPage: 'button[aria-label="Dashboard"]',
-      CustomPage: 'button[aria-label="Custom page"]',
-
-      // Page Items
-      PageItem: (pageName: string) => `[role="treeitem"]:has-text("${pageName}")`,
-      PageMenu: 'button[aria-label="Page options"]',
-      EditPage: 'button[aria-label="Edit"]',
-      DeletePage: 'button[aria-label="Delete"]',
-      MovePage: 'button[aria-label="Move"]',
+      PagesList: (ctx: Ctx) => ctx.getByRole('tree', { name: 'Pages' }),
+      AddPageButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'Add page' }),
+      TableBasedPage: (ctx: Ctx) => ctx.getByRole('button', { name: 'Table based view and form' }),
+      DashboardPage: (ctx: Ctx) => ctx.getByRole('button', { name: 'Dashboard' }),
+      CustomPage: (ctx: Ctx) => ctx.getByRole('button', { name: 'Custom page' }),
+      PageItem: (ctx: Ctx, name: string) => ctx.getByRole('treeitem', { name }),
+      PageMenu: (ctx: Ctx) => ctx.getByRole('button', { name: 'Page options' }),
+      EditPage: (ctx: Ctx) => ctx.getByRole('button', { name: 'Edit' }),
+      DeletePage: (ctx: Ctx) => ctx.getByRole('button', { name: 'Delete' }),
     },
 
-    // Navigation Designer
     Navigation: {
-      NavigationTree: '[role="tree"][aria-label="Navigation"]',
-      AddGroupButton: 'button[aria-label="Add group"]',
-      AddSubAreaButton: 'button[aria-label="Add subarea"]',
-
-      // Navigation Items
-      GroupItem: (groupName: string) => `[role="treeitem"][aria-label="${groupName}"]`,
-      SubAreaItem: (subAreaName: string) => `[role="treeitem"]:has-text("${subAreaName}")`,
-
-      // Properties
-      TitleInput: 'input[aria-label="Title"]',
-      IconPicker: 'button[aria-label="Choose icon"]',
-      TablePicker: 'button[aria-label="Choose table"]',
-      UrlInput: 'input[aria-label="URL"]',
+      NavigationTree: (ctx: Ctx) => ctx.getByRole('tree', { name: 'Navigation' }),
+      AddGroupButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'Add group' }),
+      AddSubAreaButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'Add subarea' }),
+      GroupItem: (ctx: Ctx, name: string) => ctx.getByRole('treeitem', { name }),
+      SubAreaItem: (ctx: Ctx, name: string) => ctx.getByRole('treeitem', { name }),
+      TitleInput: (ctx: Ctx) => ctx.getByLabel('Title'),
+      TablePicker: (ctx: Ctx) => ctx.getByRole('button', { name: 'Choose table' }),
+      UrlInput: (ctx: Ctx) => ctx.getByLabel('URL'),
     },
 
-    // Data Panel
     Data: {
-      AddTableButton: 'button[aria-label="Add table"]',
-      SearchTable: 'input[placeholder="Search tables"]',
-      TablesList: '[role="list"][aria-label="Tables"]',
-      TableItem: (tableName: string) => `[role="listitem"]:has-text("${tableName}")`,
-      FormsSection: 'button[aria-label="Forms"]',
-      ViewsSection: 'button[aria-label="Views"]',
-      ChartsSection: 'button[aria-label="Charts"]',
-      DashboardsSection: 'button[aria-label="Dashboards"]',
+      AddTableButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'Add table' }),
+      SearchTable: (ctx: Ctx) => ctx.getByPlaceholder('Search tables'),
+      TablesList: (ctx: Ctx) => ctx.getByRole('list', { name: 'Tables' }),
+      TableItem: (ctx: Ctx, name: string) => ctx.getByRole('listitem', { name }),
     },
 
-    // Properties Panel (Right Side)
     Properties: {
-      PropertiesPanel: '[data-automation-id="properties-panel"]',
-      DisplayNameInput: 'input[aria-label="Display name"]',
-      DescriptionInput: 'textarea[aria-label="Description"]',
-      IconPicker: 'button[aria-label="Icon"]',
-      WelcomePageToggle: 'input[type="checkbox"][aria-label="Enable welcome page"]',
-      MobileToggle: 'input[type="checkbox"][aria-label="Enable for mobile"]',
+      // FRAGILE: data-automation-id is an internal Studio attribute — no ARIA equivalent
+      PropertiesPanel: (ctx: Ctx) => ctx.locator('[data-automation-id="properties-panel"]'),
+      DisplayNameInput: (ctx: Ctx) => ctx.getByLabel('Display name'),
+      DescriptionInput: (ctx: Ctx) => ctx.getByLabel('Description'),
     },
 
-    // Canvas/Preview Area
+    // FRAGILE: data-automation-id is internal Studio — no ARIA equivalent
     Canvas: {
-      PreviewArea: '[data-automation-id="preview-area"]',
-      AppModule: '[data-automation-id="app-module"]',
-      SiteMap: '[data-automation-id="sitemap"]',
+      PreviewArea: (ctx: Ctx) => ctx.locator('[data-automation-id="preview-area"]'),
+      AppModule: (ctx: Ctx) => ctx.locator('[data-automation-id="app-module"]'),
+      SiteMap: (ctx: Ctx) => ctx.locator('[data-automation-id="sitemap"]'),
     },
   },
 
-  // Create Table Dialog
+  // ── Dialogs ───────────────────────────────────────────────────────────────
+
   CreateTableDialog: {
-    Dialog: '[role="dialog"][aria-label="Create table"]',
-    DisplayNameInput: 'input[aria-label="Display name"]',
-    PluralNameInput: 'input[aria-label="Plural name"]',
-    DescriptionInput: 'textarea[aria-label="Description"]',
-    EnableAttachmentsToggle: 'input[type="checkbox"][aria-label="Enable attachments"]',
-    CreateButton: 'button[aria-label="Create"]',
-    CancelButton: 'button[aria-label="Cancel"]',
+    Dialog: (ctx: Ctx) => ctx.getByRole('dialog', { name: 'Create table' }),
+    DisplayNameInput: (ctx: Ctx) => ctx.getByLabel('Display name'),
+    PluralNameInput: (ctx: Ctx) => ctx.getByLabel('Plural name'),
+    CreateButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'Create' }),
+    CancelButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'Cancel' }),
   },
 
-  // Add Page Dialog
   AddPageDialog: {
-    Dialog: '[role="dialog"][aria-label="Add page"]',
-    PageTypeList: '[role="list"][aria-label="Page types"]',
-
-    // For Table-based pages
-    SelectTableDropdown: 'select[aria-label="Select table"]',
-    TableOption: (tableName: string) => `option:has-text("${tableName}")`,
-
-    // Forms
-    FormsList: '[role="list"][aria-label="Forms"]',
-    FormItem: (formName: string) => `[role="listitem"]:has-text("${formName}")`,
-    MainForm: 'input[type="checkbox"][aria-label="Main form"]',
-    QuickCreateForm: 'input[type="checkbox"][aria-label="Quick create form"]',
-    QuickViewForm: 'input[type="checkbox"][aria-label="Quick view form"]',
-
-    // Views
-    ViewsList: '[role="list"][aria-label="Views"]',
-    ViewItem: (viewName: string) => `[role="listitem"]:has-text("${viewName}")`,
-
-    AddButton: 'button[aria-label="Add"]',
-    CancelButton: 'button[aria-label="Cancel"]',
+    Dialog: (ctx: Ctx) => ctx.getByRole('dialog', { name: 'Add page' }),
+    FormItem: (ctx: Ctx, name: string) => ctx.getByRole('listitem', { name }),
+    ViewItem: (ctx: Ctx, name: string) => ctx.getByRole('listitem', { name }),
+    SelectTableDropdown: (ctx: Ctx) => ctx.getByRole('combobox', { name: 'Table' }),
+    AddButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'Add' }),
+    CancelButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'Cancel' }),
   },
 
-  // Settings Dialog
   Settings: {
-    Dialog: '[role="dialog"][aria-label="Settings"]',
-
-    // Tabs
-    GeneralTab: 'button[aria-label="General"]',
-    FeaturesTab: 'button[aria-label="Features"]',
-    UpcomingTab: 'button[aria-label="Upcoming"]',
-
-    // General Settings
-    AppNameInput: 'input[aria-label="Name"]',
-    DescriptionInput: 'textarea[aria-label="Description"]',
-    AppIconUpload: 'input[type="file"][aria-label="Upload icon"]',
-    WelcomePageUrl: 'input[aria-label="Welcome page URL"]',
-
-    // Features
-    EnableMobileToggle: 'input[type="checkbox"][aria-label="Enable for mobile"]',
-    EnableOfflineToggle: 'input[type="checkbox"][aria-label="Enable offline mode"]',
-    ReadOnlyToggle: 'input[type="checkbox"][aria-label="Read-only mode"]',
-
-    SaveButton: 'button[aria-label="Save"]',
-    CloseButton: 'button[aria-label="Close"]',
+    Dialog: (ctx: Ctx) => ctx.getByRole('dialog', { name: 'Settings' }),
+    GeneralTab: (ctx: Ctx) => ctx.getByRole('button', { name: 'General' }),
+    FeaturesTab: (ctx: Ctx) => ctx.getByRole('button', { name: 'Features' }),
+    AppNameInput: (ctx: Ctx) => ctx.getByLabel('Name'),
+    DescriptionInput: (ctx: Ctx) => ctx.getByLabel('Description'),
+    EnableMobileToggle: (ctx: Ctx) => ctx.getByLabel('Enable for mobile'),
+    EnableOfflineToggle: (ctx: Ctx) => ctx.getByLabel('Enable offline mode'),
+    SaveButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'Save' }),
+    CloseButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'Close' }),
   },
 
-  // Publish Dialog
   PublishDialog: {
-    Dialog: '[role="dialog"][aria-label="Publish"]',
-    PublishButton: 'button[aria-label="Publish"]',
-    CancelButton: 'button[aria-label="Cancel"]',
-    ProgressIndicator: '[role="progressbar"]',
-    SuccessMessage: '[role="status"]:has-text("Published successfully")',
+    Dialog: (ctx: Ctx) => ctx.getByRole('dialog', { name: 'Publish' }),
+    PublishButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'Publish' }),
+    CancelButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'Cancel' }),
+    SuccessMessage: (ctx: Ctx) =>
+      ctx.getByRole('status').filter({ hasText: 'Published successfully' }),
   },
 
-  // Validation Panel
   Validation: {
-    ValidationPanel: '[data-automation-id="validation-panel"]',
-    ErrorsList: '[role="list"][aria-label="Errors"]',
-    WarningsList: '[role="list"][aria-label="Warnings"]',
-    ErrorItem: '[role="listitem"][data-severity="error"]',
-    WarningItem: '[role="listitem"][data-severity="warning"]',
-    FixButton: 'button[aria-label="Fix"]',
-    IgnoreButton: 'button[aria-label="Ignore"]',
-    CloseButton: 'button[aria-label="Close"]',
+    // FRAGILE: data-automation-id is internal
+    ValidationPanel: (ctx: Ctx) => ctx.locator('[data-automation-id="validation-panel"]'),
+    ErrorItem: (ctx: Ctx) => ctx.locator('[role="listitem"][data-severity="error"]'),
+    FixButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'Fix' }),
+    CloseButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'Close' }),
   },
 
-  // Play Mode - App Runtime
+  // ── Runtime / Play Mode ───────────────────────────────────────────────────
+  // Methods targeting the published MDA running in the UCI shell.
+
   Runtime: {
-    // Top Navigation Bar
     AppBar: {
-      AppName: '[data-automation-id="app-name"]',
-      SearchBox: 'input[placeholder="Search"]',
-      SettingsButton: 'button[aria-label="Settings"]',
-      HelpButton: 'button[aria-label="Help"]',
-      UserMenu: 'button[aria-label="User menu"]',
+      // FRAGILE: data-automation-id is internal. Use getByRole('banner') if stable.
+      AppName: (ctx: Ctx) => ctx.locator('[data-automation-id="app-name"]'),
+      SearchBox: (ctx: Ctx) => ctx.getByPlaceholder('Search'),
+      SettingsButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'Settings' }),
+      HelpButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'Help' }),
     },
 
-    // Site Map (Left Navigation)
     SiteMap: {
-      NavigationPane: '[data-automation-id="navigation-pane"]',
-      ExpandButton: 'button[aria-label="Expand navigation"]',
-      CollapseButton: 'button[aria-label="Collapse navigation"]',
-      GroupHeader: (groupName: string) => `button[aria-label="${groupName}"]`,
-      SubArea: (subAreaName: string) => `a[aria-label="${subAreaName}"]`,
-      RecentItems: 'button[aria-label="Recent"]',
-      PinnedItems: 'button[aria-label="Pinned"]',
+      // FRAGILE: data-automation-id is internal — used as CSS fallback in waitForRuntimeLoad
+      NavigationPane: (ctx: Ctx) => ctx.locator('[data-automation-id="navigation-pane"]'),
+      ExpandButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'Expand navigation' }),
+      CollapseButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'Collapse navigation' }),
+      GroupHeader: (ctx: Ctx, name: string) => ctx.getByRole('button', { name }),
+      // MDA sidebar items render differently across versions — use multi-selector via findLocator
+      SubArea: (ctx: Ctx, name: string) =>
+        ctx
+          .locator(
+            `[role="presentation"][title="${name}"], a[title="${name}"], a[aria-label="${name}"]`
+          )
+          .first(),
+      RecentItems: (ctx: Ctx) => ctx.getByRole('button', { name: 'Recent' }),
+      PinnedItems: (ctx: Ctx) => ctx.getByRole('button', { name: 'Pinned' }),
     },
 
-    // Main Content Area
     Content: {
-      MainContent: '[data-automation-id="main-content"]',
-      PageTitle: '[data-automation-id="page-title"]',
-      CommandBar: '[data-automation-id="command-bar"]',
+      // FRAGILE: data-automation-id is internal
+      MainContent: (ctx: Ctx) => ctx.locator('[data-automation-id="main-content"]'),
+      // FRAGILE: data-automation-id is internal
+      Form: (ctx: Ctx) => ctx.locator('[data-automation-id="form"]'),
+      FormTabs: (ctx: Ctx) => ctx.getByRole('tablist'),
+      FormTab: (ctx: Ctx, name: string) => ctx.getByRole('tab', { name }),
+      FormField: (ctx: Ctx, name: string) => ctx.locator(`[data-field-name="${name}"]`),
 
-      // Grid View - Enhanced with comprehensive locators
+      // ag-Grid — row-index and col-id are ag-Grid attributes with no ARIA equivalent.
+      // getByRole('row') is used where possible; CSS attribute filters are required
+      // for positional and column targeting.
       Grid: {
-        // Container (supports both grid and treegrid roles)
-        Container: '[role="grid"], [role="treegrid"]',
-        Header: '[role="row"]:first-child',
-        Body: '[role="rowgroup"]',
+        Container: (ctx: Ctx) => ctx.locator('[role="grid"], [role="treegrid"]'),
+        // ag-Grid data rows carry row-index; header rows do not — this correctly
+        // excludes headers from counts and iteration.
+        // CSS attribute selector is used (not ARIA filter) to match exactly one element
+        // reliably, consistent with getCellValue's [role="row"][row-index="N"] approach.
+        RowByIndex: (ctx: Ctx, index: number) => ctx.locator(`[role="row"][row-index="${index}"]`),
+        // Checkbox inside a row — used for row selection
+        CheckboxCell: (ctx: Ctx) => ctx.locator('[role="gridcell"] input[type="checkbox"]'),
+        // Primary link in a row — used to open a record
+        LinkCell: (ctx: Ctx) => ctx.locator('[role="gridcell"] a'),
+        // Column header by display name — aria-label contains the name
+        ColumnHeader: (ctx: Ctx, name: string) =>
+          ctx.getByRole('columnheader', { name, exact: false }),
+        // FRAGILE: data-id is internal Dynamics attribute
+        EmptyMessage: (ctx: Ctx) => ctx.locator('[data-id="no-records"]'),
+        LoadingIndicator: (ctx: Ctx) => ctx.locator('[data-id="grid-loading"]'),
 
-        // Rows
-        Row: '[role="row"]',
-        RowByIndex: (index: number) => `[role="row"][row-index="${index}"]`,
-
-        // Cells
-        Cell: '[role="gridcell"]',
-        CellByRowAndColumn: (row: number, col: number) =>
-          `[role="row"][row-index="${row}"] [role="gridcell"]:nth-child(${col + 1})`,
-        LinkCell: '[role="gridcell"] a',
-        CheckboxCell: '[role="gridcell"] input[type="checkbox"]',
-
-        // Headers
-        ColumnHeader: (name: string) => `[role="columnheader"][aria-label*="${name}"]`,
-
-        // States
-        EmptyMessage: '[data-id="no-records"]',
-        LoadingIndicator: '[data-id="grid-loading"]',
-
-        // Pagination
         Pagination: {
-          Container: '[data-id="pagination"]',
-          NextPage: 'button[aria-label*="Next page"]',
-          PreviousPage: 'button[aria-label*="Previous page"]',
-          PageInput: 'input[aria-label*="Page number"]',
-          RecordCount: '[data-id="record-count"]',
-        },
-
-        // View Selector
-        ViewSelector: {
-          Dropdown: '[data-id="viewSelector"]',
-          Option: (viewName: string) => `[role="option"]:has-text("${viewName}")`,
+          NextPage: (ctx: Ctx) => ctx.getByRole('button', { name: /Next page/i }),
+          PreviousPage: (ctx: Ctx) => ctx.getByRole('button', { name: /Previous page/i }),
         },
       },
-
-      // Form View
-      Form: '[data-automation-id="form"]',
-      FormHeader: '[data-automation-id="form-header"]',
-      FormTabs: '[role="tablist"]',
-      FormTab: (tabName: string) => `[role="tab"][aria-label="${tabName}"]`,
-      FormSection: (sectionName: string) => `[data-section-name="${sectionName}"]`,
-      FormField: (fieldName: string) => `[data-field-name="${fieldName}"]`,
-
-      // Dashboard View
-      Dashboard: '[data-automation-id="dashboard"]',
-      DashboardChart: '[data-automation-id="chart"]',
-      DashboardGrid: '[data-automation-id="dashboard-grid"]',
     },
 
-    // Command Bar Buttons (Common)
     Commands: {
-      NewButton: 'button[aria-label="New"]',
-      SaveButton: 'button[aria-label="Save"]',
-      SaveAndCloseButton: 'button[aria-label="Save & Close"]',
-      DeleteButton: 'button[aria-label="Delete"]',
-      RefreshButton: 'button[aria-label="Refresh"]',
-      ExportButton: 'button[aria-label="Export to Excel"]',
-      EmailButton: 'button[aria-label="Email a Link"]',
-      FlowButton: 'button[aria-label="Flow"]',
-      MoreCommandsButton: 'button[aria-label="More commands"]',
+      NewButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'New' }),
+      SaveButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'Save' }),
+      SaveAndCloseButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'Save & Close' }),
+      DeleteButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'Delete' }),
+      RefreshButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'Refresh' }),
+      ExportButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'Export to Excel' }),
+      MoreCommandsButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'More commands' }),
     },
   },
 
-  // Share Dialog
+  // ── Share Dialog ──────────────────────────────────────────────────────────
+
   ShareDialog: {
-    Dialog: '[role="dialog"][aria-label="Share"]',
-    SearchUsers: 'input[placeholder="Enter a name or email address"]',
-    UsersList: '[role="list"][aria-label="Users"]',
-    SecurityRoleDropdown: 'select[aria-label="Security role"]',
-    ReadPrivilege: 'option[value="Read"]',
-    WritePrivilege: 'option[value="Write"]',
-    ShareButton: 'button[aria-label="Share"]',
-    ManageRolesButton: 'button[aria-label="Manage security roles"]',
-    CloseButton: 'button[aria-label="Close"]',
+    Dialog: (ctx: Ctx) => ctx.getByRole('dialog', { name: 'Share' }),
+    SearchUsers: (ctx: Ctx) => ctx.getByPlaceholder('Enter a name or email address'),
+    SecurityRoleDropdown: (ctx: Ctx) => ctx.getByRole('combobox', { name: 'Security role' }),
+    ShareButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'Share' }),
+    CloseButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'Close' }),
   },
 
-  // App Details Page
+  // ── App Details Page ──────────────────────────────────────────────────────
+
   Details: {
-    DetailsPage: '[data-automation-id="app-details-page"]',
-    EditButton: 'button[aria-label="Edit"]',
-    PlayButton: 'button[aria-label="Play"]',
-    ShareButton: 'button[aria-label="Share"]',
-
-    // Tabs
-    OverviewTab: 'button[aria-label="Overview"]',
-    ComponentsTab: 'button[aria-label="Components"]',
-    SettingsTab: 'button[aria-label="Settings"]',
-
-    // Overview
-    AppName: '[data-automation-id="app-name"]',
-    AppDescription: '[data-automation-id="app-description"]',
-    AppOwner: '[data-automation-id="app-owner"]',
-    AppCreated: '[data-automation-id="created-date"]',
-    AppModified: '[data-automation-id="modified-date"]',
-
-    // Components
-    ComponentsList: '[role="list"][aria-label="Components"]',
-    TablesCount: '[data-automation-id="tables-count"]',
-    FormsCount: '[data-automation-id="forms-count"]',
-    ViewsCount: '[data-automation-id="views-count"]',
-    ChartsCount: '[data-automation-id="charts-count"]',
-
-    // More Actions
-    MoreButton: 'button[aria-label="More actions"]',
-    DeleteButton: 'button[aria-label="Delete"]',
-    ExportButton: 'button[aria-label="Export"]',
-    ImportButton: 'button[aria-label="Import"]',
-    CopyButton: 'button[aria-label="Create a copy"]',
-    AddToSolutionButton: 'button[aria-label="Add to solution"]',
+    EditButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'Edit' }),
+    PlayButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'Play' }),
+    ShareButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'Share' }),
+    MoreButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'More actions' }),
+    DeleteButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'Delete' }),
   },
 
-  // Solutions Integration
-  Solutions: {
-    SolutionExplorer: '[data-automation-id="solution-explorer"]',
-    AddExistingButton: 'button[aria-label="Add existing"]',
-    AddNewButton: 'button[aria-label="Add new"]',
-    SolutionPicker: 'select[aria-label="Select solution"]',
-    SolutionOption: (solutionName: string) => `option:has-text("${solutionName}")`,
-    AddButton: 'button[aria-label="Add"]',
-  },
+  // ── Delete Confirmation ───────────────────────────────────────────────────
 
-  // Delete Confirmation
   DeleteDialog: {
-    Dialog: '[role="dialog"][aria-label="Confirm deletion"]',
-    ConfirmMessage: 'text="Are you sure you want to delete"',
-    ConfirmCheckbox: 'input[type="checkbox"][aria-label="I understand"]',
-    DeleteButton: 'button[aria-label="Delete"]',
-    CancelButton: 'button[aria-label="Cancel"]',
+    Dialog: (ctx: Ctx) => ctx.getByRole('dialog', { name: 'Confirm deletion' }),
+    DeleteButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'Delete' }),
+    CancelButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'Cancel' }),
   },
 
-  // Common UI Elements
+  // ── Common UI Elements ────────────────────────────────────────────────────
+
   Common: {
-    LoadingSpinner: '[role="progressbar"][aria-label="Loading"]',
-    ErrorNotification: '[role="alert"][aria-live="assertive"]',
-    SuccessNotification: '[role="status"][aria-live="polite"]',
-    ToastMessage: '[data-automation-id="toast-notification"]',
-    ConfirmDialog: '[role="dialog"][aria-label="Confirm"]',
-    BackButton: 'button[aria-label="Back"]',
-    CloseButton: 'button[aria-label="Close"]',
-    SaveButton: 'button[aria-label="Save"]',
-    CancelButton: 'button[aria-label="Cancel"]',
-    OKButton: 'button[aria-label="OK"]',
+    LoadingSpinner: (ctx: Ctx) => ctx.getByRole('progressbar', { name: 'Loading' }),
+    ErrorNotification: (ctx: Ctx) => ctx.getByRole('alert'),
+    SuccessNotification: (ctx: Ctx) => ctx.getByRole('status'),
+    BackButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'Back' }),
+    CloseButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'Close' }),
+    SaveButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'Save' }),
+    CancelButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'Cancel' }),
+    OKButton: (ctx: Ctx) => ctx.getByRole('button', { name: 'OK' }),
   },
 };
 
 /**
- * Helper function to get data automation id selector
+ * @deprecated Use Playwright built-in locators (`getByRole`, `getByLabel`) instead.
+ * `data-automation-id` is an internal Power Apps Studio attribute, not a public contract.
  */
-export const getModelDrivenDataAutomationId = (automationId: string): string => {
-  return `[data-automation-id="${automationId}"]`;
-};
+export const getModelDrivenDataAutomationId = (automationId: string): string =>
+  `[data-automation-id="${automationId}"]`;
 
-/**
- * Helper function to get table page selector
- */
-export const getModelDrivenTablePage = (tableName: string): string => {
-  return `[data-table-name="${tableName}"]`;
-};
+/** @deprecated Use `ctx.locator('[data-table-name="..."]')` directly if needed. */
+export const getModelDrivenTablePage = (tableName: string): string =>
+  `[data-table-name="${tableName}"]`;
 
-/**
- * Helper function to get form field selector
- */
-export const getModelDrivenFormField = (fieldName: string): string => {
-  return `[data-field-name="${fieldName}"]`;
-};
+/** @deprecated Use `ctx.getByLabel(fieldName)` or `ctx.locator('[data-field-name="..."]')`. */
+export const getModelDrivenFormField = (fieldName: string): string =>
+  `[data-field-name="${fieldName}"]`;
 
-/**
- * Helper function to get navigation item selector
- */
-export const getModelDrivenNavItem = (itemName: string): string => {
-  return `a[aria-label="${itemName}"]`;
-};
+/** @deprecated Use `ctx.getByRole('link', { name })` or `ctx.getByLabel(name)`. */
+export const getModelDrivenNavItem = (itemName: string): string => `a[aria-label="${itemName}"]`;
