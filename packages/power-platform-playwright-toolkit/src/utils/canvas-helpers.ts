@@ -13,7 +13,7 @@ export async function fillCanvasInput(
   page: Page,
   locator: Locator,
   value: string,
-  options: { delay?: number } = {}
+  _options: { delay?: number } = {}
 ): Promise<void> {
   await locator.click();
   await page.waitForTimeout(200);
