@@ -14,11 +14,7 @@
  * @requires MODEL_DRIVEN_APP_URL in .env
  */
 
-import {
-  generateUniqueOrderNumber,
-  getEntityAttribute,
-  setEntityAttribute,
-} from 'power-platform-playwright-toolkit';
+import { generateUniqueOrderNumber, getEntityAttribute } from 'power-platform-playwright-toolkit';
 import { test, expect } from '../../../fixtures/mda.fixtures';
 
 const ENTITY_NAME = 'nwind_orders';
@@ -41,14 +37,16 @@ test.describe.serial('Model-Driven App - CRUD Operations', () => {
     );
     await orderNumberInput.waitFor({ state: 'visible', timeout: 30000 });
 
-    // Clear then type. pressSequentially alone does NOT fire D365 field onchange,
-    // so follow with setEntityAttribute to commit the value into the Xrm model.
+    // Type into the field, then Tab away to trigger D365's native blur → onChange
+    // pipeline. Using setEntityAttribute + fireOnChange() on this field triggers
+    // a business rule that resets nwind_ordernumber to null before save.
     await orderNumberInput.click();
     await page.waitForTimeout(200);
     await orderNumberInput.fill('');
     await page.waitForTimeout(100);
     await orderNumberInput.pressSequentially(testOrderNumber, { delay: 50 });
-    await setEntityAttribute(page, 'nwind_ordernumber', testOrderNumber);
+    await page.keyboard.press('Tab');
+    await page.waitForTimeout(500);
 
     // Set Order Status if the field is present
     const orderStatusButton = page.locator(
@@ -72,30 +70,33 @@ test.describe.serial('Model-Driven App - CRUD Operations', () => {
     await page.waitForURL(/pagetype=entityrecord.*&id=/, { timeout: 30000 });
 
     const recordUrl = page.url();
+    const recordId = new URL(recordUrl).searchParams.get('id') ?? '';
     console.log(`Record created: ${recordUrl}\n`);
 
     // ── STEP 2: READ ───────────────────────────────────────────────────────────
-    console.log('STEP 2: READ — Verifying record...');
+    console.log('STEP 2: READ — Verifying record via Dataverse Web API...');
 
-    await page.goto(recordUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
-    await page.waitForURL(/pagetype=entityrecord/, { timeout: 30000 });
-    await page.waitForFunction(
-      () => {
-        const entity = (window as any).Xrm?.Page?.data?.entity;
-        return entity && entity.getEntityName() !== '';
+    // Read directly from Dataverse — bypasses Xrm form model timing issues and
+    // auto-number field behavior. The Web API is the source of truth for what was saved.
+    const savedRecord = await page.evaluate(
+      async ({ entityName, id }) => {
+        const result = await (window as any).Xrm.WebApi.retrieveRecord(
+          entityName,
+          id,
+          '?$select=nwind_ordernumber'
+        );
+        return result;
       },
-      undefined,
-      { timeout: 30000 }
+      { entityName: ENTITY_NAME, id: recordId }
     );
-
-    const cellValue = await getEntityAttribute(page, 'nwind_ordernumber');
-    console.log(`Found record: "${cellValue}"\n`);
+    const cellValue = savedRecord.nwind_ordernumber ?? null;
+    console.log(`Found record via API: "${cellValue}"\n`);
     expect(cellValue).toBe(testOrderNumber);
 
     // ── STEP 3: UPDATE ─────────────────────────────────────────────────────────
     console.log('STEP 3: UPDATE — Editing the record...');
 
-    const updatedOrderNumber = `${testOrderNumber}UP`;
+    const updatedOrderNumber = `${testOrderNumber}U`;
 
     const editInput = page.locator('input[data-id="nwind_ordernumber.fieldControl-text-box-text"]');
     await editInput.waitFor({ state: 'visible', timeout: 30000 });
@@ -104,7 +105,8 @@ test.describe.serial('Model-Driven App - CRUD Operations', () => {
     await editInput.fill('');
     await page.waitForTimeout(100);
     await editInput.pressSequentially(updatedOrderNumber, { delay: 50 });
-    await setEntityAttribute(page, 'nwind_ordernumber', updatedOrderNumber);
+    await page.keyboard.press('Tab');
+    await page.waitForTimeout(500);
 
     const editStatusButton = page.locator(
       'button[data-id="nwind_orderstatusid.fieldControl-option-set-select"]'
@@ -147,7 +149,7 @@ test.describe.serial('Model-Driven App - CRUD Operations', () => {
     );
 
     const updatedCellValue = await getEntityAttribute(page, 'nwind_ordernumber');
-    expect(updatedCellValue).toContain(updatedOrderNumber);
+    expect(updatedCellValue).toBe(updatedOrderNumber);
     console.log(`Verified updated value: "${updatedCellValue}"\n`);
 
     // ── STEP 5: DELETE via Xrm.WebApi ─────────────────────────────────────────
@@ -206,7 +208,8 @@ test.describe.serial('Model-Driven App - CRUD Operations', () => {
     await orderNumberInput.fill('');
     await page.waitForTimeout(100);
     await orderNumberInput.pressSequentially(testOrderNumber, { delay: 50 });
-    await setEntityAttribute(page, 'nwind_ordernumber', testOrderNumber);
+    await page.keyboard.press('Tab');
+    await page.waitForTimeout(500);
 
     await page.locator('button[aria-label*="Save"]').first().click();
     await page.waitForURL(/pagetype=entityrecord.*&id=/, { timeout: 30000 });
