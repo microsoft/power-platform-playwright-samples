@@ -313,7 +313,73 @@ test.describe('Custom Page CRUD - Account Entity', () => {
     console.log('Original name no longer in gallery');
   });
 
-  // ─── Test 5: Delete ────────────────────────────────────────────────────────
+  // ─── Test 5: Update via Canvas form UI ────────────────────────────────────
+  test('should update an account record name via the Canvas form Edit → Save flow', async () => {
+    const testAccountName = generateUniqueAccountName();
+    console.log(`TEST: Form Update Account — "${testAccountName}"`);
+
+    await createAccount(sharedPage, testAccountName);
+    await expect(getGalleryItem(sharedPage, testAccountName)).toBeVisible({ timeout: 15000 });
+
+    const updatedName = `${testAccountName} FORM`;
+
+    console.log('Selecting record from gallery...');
+    await selectGalleryItem(sharedPage, testAccountName);
+    await expect(sharedPage.locator(SEL.accountNameInput)).toHaveValue(testAccountName, {
+      timeout: 10000,
+    });
+    console.log(`Form shows: "${testAccountName}" — clicking Edit...`);
+
+    await sharedPage.locator(SEL.btnEdit).click();
+
+    // Wait for readonly to be removed — Canvas's EditForm() Power Fx removes it
+    await sharedPage.waitForFunction(
+      (sel) => {
+        const el = document.querySelector(sel) as HTMLInputElement | null;
+        return el != null && !el.hasAttribute('readonly');
+      },
+      SEL.accountNameInput,
+      { timeout: 10000 }
+    );
+    console.log('Input is editable');
+
+    const input = sharedPage.locator(SEL.accountNameInput);
+    await input.click(); // Focus
+    // Canvas's PCF layer intercepts keyboard shortcuts — use the DOM select() API directly
+    // so the browser marks all text as selected before we start typing.
+    await input.evaluate((el: HTMLInputElement) => el.select());
+    await input.pressSequentially(updatedName, { delay: 50 }); // Replaces selection
+
+    console.log(`Filled: "${updatedName}" — clicking Save...`);
+    await sharedPage.locator(SEL.btnSave).click();
+
+    // Wait for Canvas to return the form to read mode (readonly reappears after SubmitForm)
+    await sharedPage.waitForFunction(
+      (sel) => {
+        const el = document.querySelector(sel) as HTMLInputElement | null;
+        return el != null && el.hasAttribute('readonly');
+      },
+      SEL.accountNameInput,
+      { timeout: 15000 }
+    );
+    console.log('Form returned to read mode — save complete');
+
+    await expect(sharedPage.locator(SEL.accountNameInput)).toHaveValue(updatedName, {
+      timeout: 10000,
+    });
+    console.log(`Form shows updated value: "${updatedName}"`);
+
+    // Full navigation refresh so the gallery reflects the Dataverse change
+    await navigateToCustomPage(sharedPage);
+
+    await expect(getGalleryItem(sharedPage, updatedName)).toBeVisible({ timeout: 15000 });
+    console.log(`Verified updated name in gallery: "${updatedName}"`);
+
+    await expect(getGalleryItem(sharedPage, testAccountName)).toHaveCount(0);
+    console.log('Original name no longer in gallery');
+  });
+
+  // ─── Test 6: Delete ────────────────────────────────────────────────────────
   test('should select an account record from the gallery and delete it using the command bar Delete button', async () => {
     const testAccountName = generateUniqueAccountName();
     console.log(`TEST: Delete Account — "${testAccountName}"`);

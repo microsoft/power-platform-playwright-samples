@@ -624,6 +624,71 @@ returns `null`.
 
 ---
 
+### 11. Canvas PCF Form Inputs — Use `element.select()` to Clear Before Typing
+
+Canvas custom page form inputs (`EditForm`) remove the `readonly` attribute when the user clicks
+the Edit command bar button. Once editable, Playwright can type into them — but standard approaches
+to "select all then replace" do **not** work because Canvas's PCF layer intercepts keyboard events.
+
+**Anti-pattern (broken — Control+A is consumed by Canvas, text inserts instead of replacing):**
+
+```typescript
+await input.click();
+await page.keyboard.press('Control+a'); // ← Canvas PCF intercepts — no selection happens
+await input.pressSequentially(newValue, { delay: 50 }); // ← inserts at cursor, old text remains
+// Result: "new textold text"
+```
+
+**Anti-pattern (broken — triple-click does not select-all in Canvas PCF inputs):**
+
+```typescript
+await input.click({ clickCount: 3 }); // ← cursor placed at pos 0, selection not set
+await input.pressSequentially(newValue, { delay: 50 }); // ← inserts at pos 0
+```
+
+**Correct pattern:**
+
+```typescript
+// 1. Click to focus the input (readonly must already be removed by EditForm())
+await input.click();
+// 2. DOM select() API selects all text — bypasses Canvas event interception
+await input.evaluate((el: HTMLInputElement) => el.select());
+// 3. pressSequentially replaces the selection and fires key events Canvas picks up
+await input.pressSequentially(newValue, { delay: 50 });
+```
+
+**Why `pressSequentially` and not `fill()`:** Canvas Power Fx `OnChange` handlers listen to
+keyboard events (keydown/keypress/keyup), not the synthetic `input`/`change` DOM events that
+Playwright's `fill()` dispatches. Use `pressSequentially` with a small delay so Canvas's event
+loop processes each keystroke before the next arrives.
+
+**Full save-and-verify flow:**
+
+```typescript
+// Wait for Edit to make the field writable
+await page.locator(btnEdit).click();
+await page.waitForFunction(
+  (sel) => !(document.querySelector(sel) as HTMLInputElement)?.hasAttribute('readonly'),
+  inputSelector, // arg (2nd position — see section 1)
+  { timeout: 10000 }
+);
+const input = page.locator(inputSelector);
+await input.click();
+await input.evaluate((el: HTMLInputElement) => el.select());
+await input.pressSequentially(newValue, { delay: 50 });
+await page.locator(btnSave).click();
+// Wait for SubmitForm() to complete (readonly reappears)
+await page.waitForFunction(
+  (sel) => !!(document.querySelector(sel) as HTMLInputElement)?.hasAttribute('readonly'),
+  inputSelector,
+  { timeout: 15000 }
+);
+```
+
+> **File affected:** `packages/e2e-tests/tests/northwind/custom-page/custom-page-crud.test.ts`
+
+---
+
 ### 9. Rebuild After Any Toolkit Change
 
 The `e2e-tests` package imports the **compiled** toolkit (`dist/`). Editing TypeScript source files
