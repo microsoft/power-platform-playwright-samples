@@ -46,17 +46,17 @@ variables:
   - name: MAKER_PORTAL_URL
     value: 'https://make.preview.powerapps.com'
   - name: POWER_APPS_ENVIRONMENT_ID
-    value: 'default-91bee3d9-0c15-4f17-8624-c92bb8b36ead'
+    value: '0bf13ef1-3b54-ea80-a2f8-6977b98d2207'
   - name: CANVAS_DESIGNER_URL
     value: 'https://apps.preview.powerapps.com/'
   - name: MODEL_DRIVEN_APP_URL
-    value: 'https://orgfbb52bb7.crm.dynamics.com/main.aspx?appid=83c9479a-5a3c-4161-a04d-42d9a83750cd'
+    value: 'https://previewdevtest.crm.dynamics.com/main.aspx?appid=85f78e2a-b1a9-42d1-98c9-924c07ef386c'
   - name: ENVIRONMENT_NAME
-    value: 'NorthwindAppTest'
+    value: 'Preview_Dev_Test'
   - name: CUSTOM_PAGE_NAME
     value: 'AccountsCustomPage'
   - name: CANVAS_APP_ID
-    value: '2de395f4-90cc-476d-ba9b-3db3f85392a7'
+    value: 'e02b1eec-2f6f-4f79-a3e9-8c7a6eddea19'
   - name: CANVAS_APP_TENANT_ID
     value: '91bee3d9-0c15-4f17-8624-c92bb8b36ead'
 
@@ -65,23 +65,10 @@ stages:
     displayName: 'E2E Playwright Tests'
     jobs:
       # ───────────────────────────────────────────────────────────────────────
-      # Job 1: Gen UX tests
-      # Uses the 'gen-ux' Playwright project (testDir set in playwright.config.ts).
+      # Job 1: Canvas App tests
+      # Uses the 'canvas-app' Playwright project (tests/northwind/canvas/).
       # Uses canvas/maker-portal storage state (standard auth).
       # ───────────────────────────────────────────────────────────────────────
-      - job: GenUXTests
-        displayName: 'Gen UX Tests'
-        timeoutInMinutes: 60
-        pool: '1ES-UCI-Playwright-PME-V3'
-        steps:
-          - template: /.azure-pipelines/steps/e2e-setup.yml@self
-            parameters:
-              nodeVersion: $(nodeVersion)
-          - template: /.azure-pipelines/steps/run-playwright-tests.yml@self
-            parameters:
-              project: gen-ux
-              artifactName: TestArtifacts-GenUX
-
       - job: NorthwindCanvasTests
         displayName: 'Northwind Canvas Tests'
         timeoutInMinutes: 60
@@ -95,6 +82,11 @@ stages:
               project: canvas-app
               artifactName: TestArtifacts-NorthwindCanvas
 
+      # ───────────────────────────────────────────────────────────────────────
+      # Job 2: Model-Driven App tests
+      # Uses the 'model-driven-app' Playwright project (tests/northwind/mda/).
+      # Uses MDA cert-auth storage state (crm.dynamics.com domain).
+      # ───────────────────────────────────────────────────────────────────────
       - job: NorthwindMDATests
         displayName: 'Northwind Model-Driven App Tests'
         timeoutInMinutes: 60
@@ -108,3 +100,62 @@ stages:
             parameters:
               project: model-driven-app
               artifactName: TestArtifacts-NorthwindMDA
+
+      # ───────────────────────────────────────────────────────────────────────
+      # Job 3: Custom Page tests (runtime)
+      # Uses the 'custom-page' Playwright project (tests/northwind/custom-page/
+      # custom-page-crud.test.ts only — runtime Canvas custom page inside MDA).
+      # Uses MDA cert-auth storage state (crm.dynamics.com domain).
+      # ───────────────────────────────────────────────────────────────────────
+      - job: NorthwindCustomPageTests
+        displayName: 'Northwind Custom Page Tests'
+        timeoutInMinutes: 60
+        pool: '1ES-UCI-Playwright-PME-V3'
+        steps:
+          - template: /.azure-pipelines/steps/e2e-setup.yml@self
+            parameters:
+              nodeVersion: $(nodeVersion)
+              authenticateMDA: true
+          - template: /.azure-pipelines/steps/run-playwright-tests.yml@self
+            parameters:
+              project: custom-page
+              artifactName: TestArtifacts-NorthwindCustomPage
+
+      # ───────────────────────────────────────────────────────────────────────
+      # Job 4: Studio authoring tests
+      # Uses the 'studio-authoring' Playwright project (tests in Edit/Studio mode:
+      # custom-page.test.ts + gen-ux/basic-form/*.test.ts).
+      # Uses canvas/maker-portal storage state (standard auth).
+      # ───────────────────────────────────────────────────────────────────────
+      - job: StudioAuthoringTests
+        displayName: 'Studio Authoring Tests'
+        timeoutInMinutes: 60
+        pool: '1ES-UCI-Playwright-PME-V3'
+        steps:
+          - template: /.azure-pipelines/steps/e2e-setup.yml@self
+            parameters:
+              nodeVersion: $(nodeVersion)
+          - template: /.azure-pipelines/steps/run-playwright-tests.yml@self
+            parameters:
+              project: studio-authoring
+              artifactName: TestArtifacts-StudioAuthoring
+
+      # ───────────────────────────────────────────────────────────────────────
+      # Job 5: Gen UX runtime tests
+      # Uses the 'gen-ux-runtime' Playwright project (tests/gen-ux/runtime/).
+      # Depends on StudioAuthoringTests to publish the Gen UX app first.
+      # Uses canvas/maker-portal storage state (standard auth).
+      # ───────────────────────────────────────────────────────────────────────
+      - job: GenUXRuntimeTests
+        displayName: 'Gen UX Runtime Tests'
+        timeoutInMinutes: 60
+        pool: '1ES-UCI-Playwright-PME-V3'
+        dependsOn: StudioAuthoringTests
+        steps:
+          - template: /.azure-pipelines/steps/e2e-setup.yml@self
+            parameters:
+              nodeVersion: $(nodeVersion)
+          - template: /.azure-pipelines/steps/run-playwright-tests.yml@self
+            parameters:
+              project: gen-ux-runtime
+              artifactName: TestArtifacts-GenUXRuntime
