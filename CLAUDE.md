@@ -166,7 +166,9 @@ All commands run from `packages/e2e-tests/`.
 # Run a specific project (recommended)
 npx playwright test --project=canvas-app
 npx playwright test --project=model-driven-app
-npx playwright test --project=gen-ux
+npx playwright test --project=custom-page
+npx playwright test --project=studio-authoring
+npx playwright test --project=gen-ux-runtime
 
 # Run all projects
 npx playwright test
@@ -187,18 +189,25 @@ npx playwright test --ui
 
 Defined in `playwright.config.ts`:
 
-| Project            | Test directory            | Auth state               | What it tests                                                                      |
-| ------------------ | ------------------------- | ------------------------ | ---------------------------------------------------------------------------------- |
-| `canvas-app`       | `tests/northwind/canvas/` | `state-<email>.json`     | Northwind Canvas App CRUD (gallery, add, save, reload)                             |
-| `model-driven-app` | `tests/northwind/mda/`    | `state-mda-<email>.json` | Northwind MDA CRUD, FormContext API, Custom Pages                                  |
-| `gen-ux`           | `tests/gen-ux/`           | `state-<email>.json`     | AI-generated app via Maker Portal (requires Gen UX feature enabled in environment) |
-| `default`          | `tests/` (all)            | `state-<email>.json`     | Catch-all project running everything                                               |
+| Project            | Test directory / match                                      | Auth state               | What it tests                                                          |
+| ------------------ | ----------------------------------------------------------- | ------------------------ | ---------------------------------------------------------------------- |
+| `canvas-app`       | `tests/northwind/canvas/`                                   | `state-<email>.json`     | Northwind Canvas App CRUD (gallery, add, save, reload)                 |
+| `model-driven-app` | `tests/northwind/mda/`                                      | `state-mda-<email>.json` | Northwind MDA CRUD, FormContext API                                    |
+| `custom-page`      | `tests/northwind/custom-page/custom-page-crud.test.ts`      | `state-mda-<email>.json` | Canvas custom page embedded inside MDA (runtime play mode)             |
+| `studio-authoring` | `**/custom-page.test.ts` + `**/gen-ux/basic-form/*.test.ts` | `state-<email>.json`     | Studio Edit mode: create custom pages; Gen UX app generation + publish |
+| `gen-ux-runtime`   | `**/gen-ux/runtime/*.test.ts`                               | `state-<email>.json`     | Published Gen UX app runtime (requires `GEN_UX_APP_URL` in `.env`)     |
+| `default`          | `tests/` (all)                                              | `state-<email>.json`     | Catch-all project running everything                                   |
 
-> **Gen UX note**: The `gen-ux` project requires an environment where the
+> **Gen UX note**: The `studio-authoring` project requires an environment where the
 > **"Describe a page"** AI button is present in the Maker Portal app designer.
 > If that button is missing, the test will time out at `addNewPage()`. Use a different
 > `POWER_APPS_ENVIRONMENT_ID` that has Gen UX enabled — this may be different from the
 > environment used by your Canvas / MDA tests.
+>
+> **`gen-ux-runtime` note**: These tests auto-skip when `GEN_UX_APP_URL` is not set.
+> Set it to the play URL of a previously published Gen UX app. In CI, pipeline Job 5
+> (`GenUXRuntimeTests`) depends on Job 4 (`StudioAuthoringTests`) at the ADO level —
+> no Playwright `dependencies` entry is needed.
 
 ---
 
@@ -315,7 +324,9 @@ npm run auth:headful                  # Authenticate (Canvas + Gen UX)
 npm run auth:mda:headful              # Authenticate (MDA / CRM domain)
 npx playwright test --project=canvas-app
 npx playwright test --project=model-driven-app
-npx playwright test --project=gen-ux
+npx playwright test --project=custom-page
+npx playwright test --project=studio-authoring
+npx playwright test --project=gen-ux-runtime
 npx playwright test --ui              # Interactive UI mode
 npx playwright show-report            # Open last HTML report
 ```
@@ -590,7 +601,7 @@ the current IDs/labels — then add the new variant to the selector array above.
 
 ---
 
-### 10. DOM Input vs Xrm Model — Always Use `setEntityAttribute` to Commit
+### 10. DOM Input vs Xrm Model — Commit with `attribute.setValue()` (Not `setEntityAttribute`)
 
 **Anti-pattern (broken — value typed into DOM but not committed to Xrm model):**
 
@@ -601,24 +612,39 @@ await orderNumberInput.pressSequentially(testOrderNumber, { delay: 50 });
 // attribute.getValue() will return null after save/reload.
 ```
 
-**Correct pattern:**
+**Wrong fix — triggers business rules that may reset the value:**
 
 ```typescript
-await orderNumberInput.fill('');
+// setEntityAttribute calls setValue() AND fireOnChange().
+// fireOnChange() triggers onChange business rules. For nwind_ordernumber,
+// a business rule resets the field to null when onChange fires.
+await setEntityAttribute(page, 'nwind_ordernumber', testOrderNumber); // DO NOT USE
+```
+
+**Correct pattern — setValue() only, no fireOnChange():**
+
+```typescript
+await orderNumberInput.click();
+await orderNumberInput.press('Control+a');
 await orderNumberInput.pressSequentially(testOrderNumber, { delay: 50 });
-// Commit value to Xrm model so D365 actually saves it:
-await setEntityAttribute(page, 'nwind_ordernumber', testOrderNumber);
+await page.keyboard.press('Tab');
+// Commit to Xrm model without triggering onChange business rules.
+// setValue() marks the attribute dirty so D365's PATCH includes the field.
+await page.evaluate(
+  ({ attrName, val }) => {
+    const attr = (window as any).Xrm?.Page?.data?.entity?.attributes?.get(attrName);
+    if (attr) attr.setValue(val);
+  },
+  { attrName: 'nwind_ordernumber', val: testOrderNumber }
+);
 ```
 
 **Why this fails silently:** Playwright's `fill`, `pressSequentially`, and `type` all
-update the HTML `<input>` value but do NOT fire the D365 field `onchange` handler that
-updates `attribute.setValue()` in the Xrm data model. When the Save button is clicked,
-D365 serialises the Xrm model — not the DOM — so the field is saved as `null`. The save
-succeeds (the record GUID appears in the URL), but reading back via `getEntityAttribute`
-returns `null`.
-
-**Rule:** Any time you fill a text/number field on a D365 MDA form, follow `fill()` /
-`pressSequentially()` with `await setEntityAttribute(page, attributeName, value)`.
+update the HTML `<input>` value but do NOT update the Xrm attribute model. When Save is
+clicked, D365 serialises the Xrm model — not the DOM — so the field is saved as `null`.
+`setEntityAttribute` calls `fireOnChange()`, which can trigger business rules that reset
+the value. Use `attribute.setValue(val)` directly to mark the attribute dirty without
+firing onChange handlers.
 
 > **Files affected:** `packages/e2e-tests/tests/northwind/mda/model-driven-crud.test.ts`
 
