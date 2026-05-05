@@ -489,26 +489,34 @@ page
 
 ---
 
-### 6. Power Apps Studio Data Source Dialog — Search Before Select
+### 6. Power Apps Studio Data Source Pane — Use `type="search"` to Find the Right Input
 
-In Power Apps Studio v3+, the "Start from data" button opens a **"Select a data source"** dialog
-with a search box — not the old `.ms-Callout-main` callout flyout.
+After clicking "Start from data", Canvas Studio opens a data-source-pane **Callout flyout**. This
+pane contains a Fluent UI v9 `<Input>` search box (`type="search"`). The tree view on the left uses
+the older Fluent UI v8 `ms-SearchBox` (`type="text"`, `class="ms-SearchBox-field"`). Both have
+`placeholder="Search"`, so `getByPlaceholder('Search').first()` always resolves to the tree view —
+typing into it shows "No match found" and the data source items never appear.
 
-**Pattern:**
+**Anti-pattern (broken — fills the tree view search, not the pane search):**
 
 ```typescript
-// 1. Click "Start from data"
-// 2. Wait for search box in the dialog
-const searchInput = studioFrame.locator('input[placeholder="Search"]');
+const searchInput = studioFrame.getByPlaceholder('Search').first();
+```
+
+**Correct pattern:**
+
+```typescript
+// The pane opens as an ms-Callout flyout. The command bar ALSO has a type="search"
+// input (role="search", outside the Callout), so scope to the Callout container.
+const searchInput = studioFrame.locator(
+  '[class*="ms-Callout-main"] input[type="search"][placeholder="Search"]'
+);
 await searchInput.waitFor({ state: 'visible', timeout: 30000 });
-// 3. Type to filter
 await searchInput.fill(dataSourceName);
-await page.waitForTimeout(1000);
-// 4. Click the filtered result
+await page.waitForTimeout(3000);
+// Items use data-item-id="datasourceItem-N-N" with role="listitem"
 await studioFrame
-  .locator(
-    `[data-item-id*="datasourceItem"] [aria-label="${dataSourceName}"], [role="option"][aria-label="${dataSourceName}"]`
-  )
+  .locator(`[data-item-id*="datasourceItem"] [aria-label="${dataSourceName}"]`)
   .first()
   .click();
 ```
