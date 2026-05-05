@@ -64,6 +64,51 @@ block-beta
 
 ## Architecture
 
+### Current Architecture — Concerns Scattered Across Every Layer
+
+Before the provider pattern, auth setup, selector management, and app-launch logic all lived inside individual test files. The diagram shows the problem: `beforeEach`/`beforeAll` blocks duplicate `storageState`, helper functions defined per-test file call into the toolkit directly, and `CanvasAppPage` is exported as the primary Canvas API but never used by runtime tests.
+
+```mermaid
+graph TB
+    subgraph CFG["playwright.config.ts"]
+        SS["storageState<br/>(partial — overridden by tests)"]
+    end
+
+    subgraph TEST["test file  ← does too much"]
+        BEF["beforeEach / beforeAll<br/>• AppProvider.launch()<br/>• browser.newContext({ storageState })<br/>• path.join() auth path construction"]
+        SEL["const SEL = { ... }<br/>selector map defined in test"]
+        HLP["helper functions<br/>createAccount(), navigateTo(),<br/>selectGalleryItem(), confirmDelete()"]
+        BODY["test body<br/>calls helpers + uses raw selectors"]
+    end
+
+    subgraph POM["pages/northwind/  ← mixes modes"]
+        CP["NorthwindCanvasAppPage<br/>✅ runtime methods<br/>❌ studio methods mixed in"]
+        MP["NorthwindModelDrivenAppPage<br/>✅ runtime methods<br/>❌ addNewNavigationPage (studio)"]
+    end
+
+    subgraph TK["toolkit"]
+        AP["AppProvider"]
+        GH["canvas-helpers"]
+        FC["form.context"]
+        CAP["CanvasAppPage<br/>❌ 100% studio authoring<br/>— not used by runtime tests"]
+    end
+
+    BEF -->|"duplicates"| SS
+    BEF --> AP
+    BODY --> SEL
+    BODY --> HLP
+    HLP --> GH
+    HLP --> FC
+    TEST --> CP
+    TEST --> MP
+    CAP -.->|"exported as primary<br/>Canvas API but unused"| TEST
+
+    style SEL fill:#ffcccc,stroke:#cc0000
+    style HLP fill:#ffcccc,stroke:#cc0000
+    style BEF fill:#ffe0b2,stroke:#e65100
+    style CAP fill:#ffcccc,stroke:#cc0000
+```
+
 ### Layered Architecture — Target State
 
 Each layer has one responsibility. `storageState` is declared once in `playwright.config.ts`; no test or fixture touches it.
