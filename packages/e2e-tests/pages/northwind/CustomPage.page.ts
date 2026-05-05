@@ -45,7 +45,7 @@ export class CustomPage {
     await this.page.locator(SEL.addPage).click();
 
     console.log('[CustomPage] Selecting "Custom page" option');
-    await this.page.getByLabel('Custom page').click();
+    await this.page.getByLabel('Custom page', { exact: true }).click();
 
     console.log('[CustomPage] Clicking "Create custom page" button');
     await this.page.getByRole('button', { name: 'Create custom page' }).click();

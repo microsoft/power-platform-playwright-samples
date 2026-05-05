@@ -101,11 +101,21 @@ test.describe.serial('Model-Driven App - CRUD Operations', () => {
     const editInput = page.locator('input[data-id="nwind_ordernumber.fieldControl-text-box-text"]');
     await editInput.waitFor({ state: 'visible', timeout: 30000 });
     await editInput.click();
-    // Select all via keyboard so D365's React event pipeline receives the change.
-    // fill('') bypasses React synthetic events and leaves the Xrm model stale.
     await editInput.press('Control+a');
     await editInput.pressSequentially(updatedOrderNumber, { delay: 50 });
     await page.keyboard.press('Tab');
+    // Commit value to Xrm model without triggering business rules.
+    // pressSequentially updates the DOM but not the Xrm attribute model — D365 PATCHes what
+    // the Xrm model knows. setAttribute.fireOnChange() triggers a business rule that resets
+    // nwind_ordernumber to null, so we call setValue() only, which marks the attribute dirty
+    // and ensures the PATCH includes the new value.
+    await page.evaluate(
+      ({ attrName, val }) => {
+        const attr = (window as any).Xrm?.Page?.data?.entity?.attributes?.get(attrName);
+        if (attr) attr.setValue(val);
+      },
+      { attrName: 'nwind_ordernumber', val: updatedOrderNumber }
+    );
 
     const editStatusButton = page.locator(
       'button[data-id="nwind_orderstatusid.fieldControl-option-set-select"]'

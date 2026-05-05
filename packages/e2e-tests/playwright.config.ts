@@ -182,12 +182,11 @@ export default defineConfig({
     {
       // Runtime tests for a published Gen UX app.
       // Requires GEN_UX_APP_URL in .env — set it to the play URL of the published app.
-      // Depends on studio-authoring so the authoring suite publishes the app first when
-      // running the full test suite.
+      // In CI, ADO's dependsOn: StudioAuthoringTests handles sequencing — no Playwright
+      // dependency needed (adding it would re-run studio-authoring inside this job).
       name: 'gen-ux-runtime',
       testDir: getEnvironmentConfig().testDirectory,
       testMatch: '**/gen-ux/runtime/*.test.ts',
-      dependencies: ['studio-authoring'],
       use: {
         storageState: process.env.MS_AUTH_EMAIL
           ? getStorageStatePath(process.env.MS_AUTH_EMAIL!)
