@@ -14,7 +14,7 @@
  * @requires MODEL_DRIVEN_APP_URL in .env
  */
 
-import { generateUniqueOrderNumber, getEntityAttribute } from 'power-platform-playwright-toolkit';
+import { generateUniqueOrderNumber } from 'power-platform-playwright-toolkit';
 import { test, expect } from '../../../fixtures/mda.fixtures';
 
 const ENTITY_NAME = 'nwind_orders';
@@ -101,12 +101,11 @@ test.describe.serial('Model-Driven App - CRUD Operations', () => {
     const editInput = page.locator('input[data-id="nwind_ordernumber.fieldControl-text-box-text"]');
     await editInput.waitFor({ state: 'visible', timeout: 30000 });
     await editInput.click();
-    await page.waitForTimeout(200);
-    await editInput.fill('');
-    await page.waitForTimeout(100);
+    // Select all via keyboard so D365's React event pipeline receives the change.
+    // fill('') bypasses React synthetic events and leaves the Xrm model stale.
+    await editInput.press('Control+a');
     await editInput.pressSequentially(updatedOrderNumber, { delay: 50 });
     await page.keyboard.press('Tab');
-    await page.waitForTimeout(500);
 
     const editStatusButton = page.locator(
       'button[data-id="nwind_orderstatusid.fieldControl-option-set-select"]'
@@ -135,20 +134,23 @@ test.describe.serial('Model-Driven App - CRUD Operations', () => {
     console.log('Record updated\n');
 
     // ── STEP 4: VERIFY UPDATE ──────────────────────────────────────────────────
+    // Read from Dataverse directly — same pattern as STEP 2. More reliable than
+    // getEntityAttribute (Xrm form model) which can lag or miss the committed value.
+    // No page navigation needed; getIsDirty() === false already confirms the PATCH landed.
     console.log('STEP 4: VERIFY UPDATE...');
 
-    await page.goto(recordUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
-    await page.waitForURL(/pagetype=entityrecord/, { timeout: 30000 });
-    await page.waitForFunction(
-      () => {
-        const entity = (window as any).Xrm?.Page?.data?.entity;
-        return entity && entity.getEntityName() !== '';
+    const savedUpdatedRecord = await page.evaluate(
+      async ({ entityName, id }) => {
+        const result = await (window as any).Xrm.WebApi.retrieveRecord(
+          entityName,
+          id,
+          '?$select=nwind_ordernumber'
+        );
+        return result;
       },
-      undefined,
-      { timeout: 30000 }
+      { entityName: ENTITY_NAME, id: recordId }
     );
-
-    const updatedCellValue = await getEntityAttribute(page, 'nwind_ordernumber');
+    const updatedCellValue = savedUpdatedRecord.nwind_ordernumber ?? null;
     expect(updatedCellValue).toBe(updatedOrderNumber);
     console.log(`Verified updated value: "${updatedCellValue}"\n`);
 
