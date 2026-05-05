@@ -568,10 +568,15 @@ export class GenUxPage {
    */
   public async waitForSubmitSuccess(timeout = 30_000): Promise<void> {
     // Broad regex covers the most common AI-generated notification phrases.
-    // Power Fx Notify() banners render inside the UCI Preview iframe canvas.
+    // Power Fx Notify() banners usually render inside the UCI Preview iframe canvas,
+    // but some generated apps surface notifications on the outer Maker Portal page.
+    // Search both so either location resolves the wait.
     const successPattern = /submitted|saved|success|created|added|thank/i;
 
-    const successLocator = this.uciPreviewFrame.getByText(successPattern).first();
+    const successLocator = this.uciPreviewFrame
+      .getByText(successPattern)
+      .or(this.page.getByText(successPattern))
+      .first();
     await successLocator.waitFor({ state: 'visible', timeout });
 
     const actualText = (await successLocator.textContent()) ?? '(no text)';

@@ -9,6 +9,9 @@ const SEL = {
   studioFrame: 'iframe[data-test-id="iframe-powerapps-studio"]',
   powerAppsLogo: '[id="spl-powerapps"] [class="spl-powerapps-logo"]',
   startFromData: '#start-from-data-button',
+  // The data-source-pane opens as an ms-Callout flyout. Scoping to the Callout container
+  // avoids the command-bar search (also type="search" but outside the Callout).
+  datasourcePaneSearch: '[class*="ms-Callout-main"] input[type="search"][placeholder="Search"]',
   dataSourceItem: (option: string) =>
     `[data-item-id*="datasourceItem"] [aria-label="${option}"], ` +
     `[role="option"][aria-label="${option}"], ` +
@@ -53,20 +56,33 @@ export class CustomPage {
       await this.page.locator(SEL.customPageName).fill(title);
     }
 
-    console.log('[CustomPage] Clicking Create — waiting for new tab to open');
-    const [newTab] = await Promise.all([
-      this.page.waitForEvent('popup'),
-      this.page.getByTestId('Wizard_PrimaryButton').click(),
-    ]);
-    await this.page.waitForLoadState();
+    // Canvas Studio may open as a new popup tab OR navigate the current tab depending
+    // on the Studio version. Register the popup listener BEFORE clicking so we don't
+    // miss the event; fall back to the current page if no popup appears within 20 s.
+    // The "Create" button is identified by role — the Wizard_PrimaryButton data-testid
+    // is no longer present in current Studio versions.
+    console.log('[CustomPage] Clicking Create — Canvas Studio may open as popup or in same tab');
+    const popupPromise = this.page.waitForEvent('popup', { timeout: 20_000 }).catch(() => null);
+    await this.page.getByRole('button', { name: 'Create' }).click();
+    const popup = await popupPromise;
+    const studioPage = popup ?? this.page;
 
-    console.log('[CustomPage] New tab opened, waiting for spinner to disappear');
-    await newTab
+    if (popup) {
+      console.log('[CustomPage] Canvas Studio opened in new tab');
+    } else {
+      console.log('[CustomPage] Canvas Studio opened in current tab — waiting for navigation');
+      await this.page
+        .waitForLoadState('domcontentloaded', { timeout: TimeOut.DefaultMaxWaitTime })
+        .catch(() => {});
+    }
+
+    console.log('[CustomPage] Waiting for spinner to disappear');
+    await studioPage
       .locator(SEL.appSpinner)
       .waitFor({ state: 'hidden', timeout: TimeOut.DefaultMaxWaitTime });
 
     console.log('[CustomPage] Attaching to studio iframe');
-    this.studioFrame = newTab.frameLocator(SEL.studioFrame);
+    this.studioFrame = studioPage.frameLocator(SEL.studioFrame);
 
     console.log('[CustomPage] Waiting for Power Apps logo to hide (studio loading)');
     await this.studioFrame
@@ -79,7 +95,7 @@ export class CustomPage {
       .waitFor({ state: 'attached', timeout: TimeOut.DefaultMaxWaitTime });
 
     console.log('[CustomPage] Studio is ready');
-    return newTab;
+    return studioPage;
   }
 
   async verifyToAddDataSourceWithData(dataSource: string): Promise<void> {
@@ -89,10 +105,10 @@ export class CustomPage {
       .waitFor({ timeout: TimeOut.OneMinuteTimeOut });
     await this.studioFrame.locator(SEL.startFromData).click();
 
-    // Power Apps Studio v3 replaced the Callout flyout with a "Select a data source"
-    // dialog/panel that has a search box. Type the data source name to filter the list.
-    console.log('[CustomPage] Waiting for data source search panel to appear');
-    const searchInput = this.studioFrame.getByPlaceholder('Search').first();
+    // The "Start from data" button opens a Callout with a Fluent UI v9 search input.
+    // type="search" uniquely identifies it vs the tree view's ms-SearchBox (type="text").
+    console.log('[CustomPage] Waiting for data source pane search to appear');
+    const searchInput = this.studioFrame.locator(SEL.datasourcePaneSearch);
     await searchInput.waitFor({ state: 'visible', timeout: 30000 });
 
     console.log(`[CustomPage] Searching for data source: "${dataSource}"`);
