@@ -59,12 +59,14 @@ MS_AUTH_STORAGE_STATE_EXPIRATION — hours (default: 24)
 
 ### Playwright projects (playwright.config.ts)
 
-| Project name       | Test directory            | Storage state            |
-| ------------------ | ------------------------- | ------------------------ |
-| `canvas-app`       | `tests/northwind/canvas/` | `state-<email>.json`     |
-| `model-driven-app` | `tests/northwind/mda/`    | `state-mda-<email>.json` |
-| `gen-ux`           | `tests/gen-ux/`           | `state-<email>.json`     |
-| `default`          | `tests/` (all)            | `state-<email>.json`     |
+| Project name       | Test directory / match                                      | Storage state            |
+| ------------------ | ----------------------------------------------------------- | ------------------------ |
+| `canvas-app`       | `tests/northwind/canvas/`                                   | `state-<email>.json`     |
+| `model-driven-app` | `tests/northwind/mda/`                                      | `state-mda-<email>.json` |
+| `custom-page`      | `tests/northwind/custom-page/custom-page-crud.test.ts`      | `state-mda-<email>.json` |
+| `studio-authoring` | `**/custom-page.test.ts` + `**/gen-ux/basic-form/*.test.ts` | `state-<email>.json`     |
+| `gen-ux-runtime`   | `**/gen-ux/runtime/*.test.ts`                               | `state-<email>.json`     |
+| `default`          | `tests/` (all)                                              | `state-<email>.json`     |
 
 ---
 
@@ -118,9 +120,37 @@ npm run auth:headful                        # authenticate Canvas / Maker Portal
 npm run auth:mda:headful                    # authenticate MDA / CRM domain
 npx playwright test --project=canvas-app
 npx playwright test --project=model-driven-app
-npx playwright test --project=gen-ux
+npx playwright test --project=custom-page
+npx playwright test --project=studio-authoring
+npx playwright test --project=gen-ux-runtime
 npx playwright test --ui                    # interactive UI mode
 ```
+
+---
+
+## AI Tooling Available in This Repo
+
+The repo ships an `.mcp.json` at the root that registers the official **Playwright MCP
+server** (`@playwright/mcp`). Copilot Chat (with the Playwright MCP extension), Claude
+Code, and Cursor will pick this up automatically. Use it when generating new tests or
+diagnosing selectors that have drifted across Power Platform versions.
+
+### Suggested prompts
+
+When a developer asks for a new test, Copilot should:
+
+1. Read [CLAUDE.md](../CLAUDE.md) — especially the **AI Agent Reference: Anti-Patterns**
+   section — before writing any selector or wait.
+2. Use `AppProvider` and the toolkit's page-object methods, not raw `page.locator()`,
+   for anything that has a toolkit equivalent.
+3. Pull values from `process.env` — never hardcode env IDs, app IDs, or URLs.
+
+Example prompts that work well in this repo:
+
+- _"Generate a Playwright test under tests/northwind/canvas/ that creates an order, edits the customer field, and verifies the gallery row updates. Follow the patterns in canvas-app-crud.test.ts."_
+- _"Convert this raw `page.locator()`-based test to use `ModelDrivenAppPage` from the toolkit."_
+- _"The 'Save' selector for the Custom Page form just changed. Use the Playwright MCP server to drive the page and tell me the current selector."_
+- _"This MDA test fails with 'Attribute not found' when the record is closed. Read CLAUDE.md § 2 and fix the test to skip read-only records."_
 
 ---
 
