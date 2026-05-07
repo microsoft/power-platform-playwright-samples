@@ -103,16 +103,22 @@ test.describe.serial('Model-Driven App - CRUD Operations', () => {
     await editInput.click();
     await editInput.press('Control+a');
     await editInput.pressSequentially(updatedOrderNumber, { delay: 50 });
-    await page.keyboard.press('Tab');
-    // Commit value to Xrm model without triggering business rules.
-    // pressSequentially updates the DOM but not the Xrm attribute model — D365 PATCHes what
-    // the Xrm model knows. setAttribute.fireOnChange() triggers a business rule that resets
-    // nwind_ordernumber to null, so we call setValue() only, which marks the attribute dirty
-    // and ensures the PATCH includes the new value.
+    // Skip Tab in UPDATE — Tab fires blur → onChange → a business rule that can clear
+    // nwind_ordernumber. CREATE Tabs intentionally because the field starts empty and the
+    // rule does not fire on null→value, but UPDATE must commit via Xrm directly instead.
+    // Commit value to Xrm model AND force the PATCH to include this field.
+    // setValue() alone is unreliable on the Xrm.Page legacy shim — it does not always
+    // mark the form dirty (see toolkit form.context.ts comment, D365 v9.2+). fireOnChange()
+    // would mark dirty but triggers the business rule that resets the field. The escape is
+    // setSubmitMode('always'): D365 includes the field in PATCH regardless of dirty state,
+    // and no onChange handlers fire.
     await page.evaluate(
       ({ attrName, val }) => {
         const attr = (window as any).Xrm?.Page?.data?.entity?.attributes?.get(attrName);
-        if (attr) attr.setValue(val);
+        if (attr) {
+          attr.setValue(val);
+          attr.setSubmitMode('always');
+        }
       },
       { attrName: 'nwind_ordernumber', val: updatedOrderNumber }
     );
@@ -132,37 +138,32 @@ test.describe.serial('Model-Driven App - CRUD Operations', () => {
     }
 
     await page.locator('button[aria-label*="Save"]').first().click();
-    // Poll Xrm until isDirty clears — the PATCH is committed once isDirty returns false.
-    await page.waitForFunction(
-      () => {
-        const entity = (window as any).Xrm?.Page?.data?.entity;
-        return entity && entity.getIsDirty() === false;
-      },
-      undefined,
-      { timeout: 30000 }
-    );
-    console.log('Record updated\n');
 
     // ── STEP 4: VERIFY UPDATE ──────────────────────────────────────────────────
-    // Read from Dataverse directly — same pattern as STEP 2. More reliable than
-    // getEntityAttribute (Xrm form model) which can lag or miss the committed value.
-    // No page navigation needed; getIsDirty() === false already confirms the PATCH landed.
+    // Poll Dataverse directly until the PATCH lands. Avoids the getIsDirty() race:
+    // with setSubmitMode('always') the field is force-submitted regardless of the
+    // form's dirty flag, so getIsDirty() may flip false before the network round-trip
+    // completes. The Web API is the source of truth — poll it.
     console.log('STEP 4: VERIFY UPDATE...');
 
-    const savedUpdatedRecord = await page.evaluate(
-      async ({ entityName, id }) => {
-        const result = await (window as any).Xrm.WebApi.retrieveRecord(
-          entityName,
-          id,
-          '?$select=nwind_ordernumber'
-        );
-        return result;
-      },
-      { entityName: ENTITY_NAME, id: recordId }
-    );
-    const updatedCellValue = savedUpdatedRecord.nwind_ordernumber ?? null;
-    expect(updatedCellValue).toBe(updatedOrderNumber);
-    console.log(`Verified updated value: "${updatedCellValue}"\n`);
+    await expect
+      .poll(
+        async () =>
+          await page.evaluate(
+            async ({ entityName, id }) => {
+              const r = await (window as any).Xrm.WebApi.retrieveRecord(
+                entityName,
+                id,
+                '?$select=nwind_ordernumber'
+              );
+              return r.nwind_ordernumber;
+            },
+            { entityName: ENTITY_NAME, id: recordId }
+          ),
+        { timeout: 30000, intervals: [500, 1000, 2000] }
+      )
+      .toBe(updatedOrderNumber);
+    console.log(`Verified updated value: "${updatedOrderNumber}"\n`);
 
     // ── STEP 5: DELETE via Xrm.WebApi ─────────────────────────────────────────
     // More reliable than the command bar Delete button, which varies across MDA versions.
