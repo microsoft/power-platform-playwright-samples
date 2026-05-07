@@ -363,6 +363,22 @@ The sample tests in [`packages/e2e-tests/`](packages/e2e-tests/) are the best re
 
 ---
 
+## AI Assistance — Claude Code & GitHub Copilot
+
+This repo ships AI tooling that works in **both** [Claude Code](https://claude.com/claude-code) and [GitHub Copilot](https://github.com/features/copilot). Three workflows are available across both ecosystems:
+
+| Workflow     | What it does                                                                                                            | Claude Code    | GitHub Copilot               |
+| ------------ | ----------------------------------------------------------------------------------------------------------------------- | -------------- | ---------------------------- |
+| **validate** | Walks you through `.env`, auth, and a Playwright project, runs it, and explains failures using CLAUDE.md anti-patterns. | `/pp-validate` | `/pp-validate` (prompt file) |
+| **diagnose** | Investigates a failing test — maps the error to known anti-patterns, walks the trace zip, points at the root cause.     | `/pp-diagnose` | `/pp-diagnose` (prompt file) |
+| **author**   | Scaffolds a new test using the toolkit Page Objects + the Playwright MCP server for live selector capture.              | `/pp-author`   | `/pp-author` (prompt file)   |
+
+A Playwright MCP server (`@playwright/mcp`) is registered at [.mcp.json](.mcp.json) so both assistants can drive a real browser to capture selectors and verify flows.
+
+**See [AI-AGENTS.md](AI-AGENTS.md) for the full guide** — agent files, slash commands, prompt files, and how to extend them.
+
+---
+
 ## Contributing
 
 > [!NOTE]

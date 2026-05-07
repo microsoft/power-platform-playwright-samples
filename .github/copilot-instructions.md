@@ -135,6 +135,21 @@ server** (`@playwright/mcp`). Copilot Chat (with the Playwright MCP extension), 
 Code, and Cursor will pick this up automatically. Use it when generating new tests or
 diagnosing selectors that have drifted across Power Platform versions.
 
+### Reusable prompt files
+
+The `.github/prompts/` folder ships three Copilot prompt files mirroring the three
+customer workflows. Pick one with `/` in Copilot Chat:
+
+| Prompt                                                   | Use it for                                                                              |
+| -------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| [`pp-validate.prompt.md`](prompts/pp-validate.prompt.md) | Walk through prereqs, `.env`, auth, run a Playwright project, parse results.            |
+| [`pp-diagnose.prompt.md`](prompts/pp-diagnose.prompt.md) | Investigate a failing test, map error to CLAUDE.md anti-patterns, walk the trace.       |
+| [`pp-author.prompt.md`](prompts/pp-author.prompt.md)     | Scaffold a new test using the toolkit Page Objects + Playwright MCP for live selectors. |
+
+The same workflows are also exposed as Claude Code agents under `.claude/agents/` and
+slash commands under `.claude/skills/`. See [AI-AGENTS.md](../AI-AGENTS.md) for the
+full guide and how to extend them.
+
 ### Suggested prompts
 
 When a developer asks for a new test, Copilot should:
