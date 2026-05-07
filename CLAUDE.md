@@ -1,8 +1,13 @@
 # Power Platform Playwright Samples — Project Guide
 
-This file gives AI assistants (Claude Code) and new contributors a complete picture of
-the repository so that setup, test runs, and code changes go smoothly from the first
-conversation.
+This file is the entry point for **customers and AI assistants** working with this repo.
+It walks through install → run → debug → generate-new-tests, plus reference material
+that AI agents (Claude Code, GitHub Copilot, Cursor) read so they suggest patterns
+that actually work against Power Platform.
+
+> **AI agents:** an `.mcp.json` at the repo root registers the official Playwright MCP
+> server (`@playwright/mcp`). Open this repo in Claude Code or VS Code with Copilot Chat
+> and the server starts automatically — see [AI-Assisted Test Generation](#ai-assisted-test-generation).
 
 ---
 
@@ -15,8 +20,42 @@ A **monorepo** containing:
 | `packages/power-platform-playwright-toolkit/` | Core npm library — published as `power-platform-playwright-toolkit`   |
 | `packages/e2e-tests/`                         | Sample Playwright tests that target a real Power Platform environment |
 
-The sample tests demonstrate Canvas App, Model-Driven App (MDA), and Gen UX testing
-patterns against a **Northwind Traders** Power Apps solution.
+The sample tests demonstrate Canvas App, Model-Driven App (MDA), Custom Page, and
+Gen UX testing patterns against the **Northwind Traders** Power Apps solution.
+
+---
+
+## Quickstart (≈10 minutes)
+
+For customers who just want to clone, run a green test, and start writing their own:
+
+```bash
+# 1. Clone and install
+git clone https://github.com/microsoft/power-platform-playwright-samples.git
+cd power-platform-playwright-samples
+npm install -g @microsoft/rush
+rush install
+rush build
+
+# 2. Install the browser channel the tests use
+cd packages/e2e-tests
+npx playwright install msedge --with-deps
+
+# 3. Configure your environment
+cp .env.example .env
+#    Edit .env — fill in POWER_APPS_ENVIRONMENT_ID, CANVAS_APP_ID,
+#    CANVAS_APP_TENANT_ID, MODEL_DRIVEN_APP_URL, MS_AUTH_EMAIL, password.
+
+# 4. Sign in once (saves a 24-hour browser storage state)
+npm run auth:headful          # Canvas / Maker Portal
+npm run auth:mda:headful      # Model-Driven App (different domain)
+
+# 5. Run a project
+npx playwright test --project=canvas-app
+```
+
+If step 5 is green, your environment is wired up. If not, jump to [Debugging
+Tests](#debugging-tests) or the [Troubleshooting](#troubleshooting) table.
 
 ---
 
@@ -33,30 +72,9 @@ patterns against a **Northwind Traders** Power Apps solution.
 
 ---
 
-## First-Time Setup
+## Environment Configuration — Reference for `.env`
 
-```bash
-# 1. Clone
-git clone https://github.com/microsoft/power-platform-playwright-samples.git
-cd power-platform-playwright-samples
-
-# 2. Install Rush globally (if not already installed)
-npm install -g @microsoft/rush
-
-# 3. Install all package dependencies
-rush install
-
-# 4. Build all packages (toolkit must be built before e2e-tests can import it)
-rush build
-
-# 5. Install Playwright browser (msedge channel is required)
-cd packages/e2e-tests
-npx playwright install msedge --with-deps
-```
-
----
-
-## Environment Configuration — CHANGE THESE FOR YOUR ENVIRONMENT
+The Quickstart's step 3 copies `.env.example` to `.env`. This section explains every value.
 
 Copy the template and fill in your values:
 
@@ -211,6 +229,123 @@ Defined in `playwright.config.ts`:
 
 ---
 
+## Debugging Tests
+
+When a test fails, work through these in order — each is faster to act on than the next.
+
+### 1. Read the JUnit/HTML report
+
+```bash
+# After any test run, open the HTML report (auto-generated in test-results/)
+npx playwright show-report
+```
+
+The report shows the failure stack, the assertion that fired, and any captured
+screenshots. **`screenshot: 'only-on-failure'` and `video: 'on'` are already configured**
+in [playwright.config.ts](packages/e2e-tests/playwright.config.ts) — you do not need
+to enable them.
+
+### 2. Open the trace for the failing test
+
+Traces are kept on retry-failure (`trace: 'retain-on-failure'`). Open one with:
+
+```bash
+npx playwright show-trace test-results/<test-name>/trace.zip
+```
+
+The trace viewer is the single best tool for Power Platform tests — it shows the
+DOM at every step, network requests, console output, and source-mapped Playwright
+calls. Use it before writing any new selector.
+
+### 3. Re-run the failing test in headed or UI mode
+
+```bash
+# Headed: see the browser drive itself
+npx playwright test --project=canvas-app --headed
+
+# UI mode: interactive — pick a single test, step through, watch live
+npx playwright test --ui
+
+# Debugger: pauses at every Playwright call, opens DevTools
+npx playwright test --debug tests/northwind/canvas/canvas-app-crud.test.ts
+```
+
+### 4. If selectors are missing or changed
+
+Power Platform UIs (Canvas Studio, MDA command bar, Gen UX panel) are versioned —
+selectors that worked last quarter may not match today. Check
+[AI Agent Reference: Anti-Patterns](#ai-agent-reference-anti-patterns) below for known
+selector traps before adding a new locator.
+
+---
+
+## AI-Assisted Test Generation
+
+This repo ships an `.mcp.json` at the root that registers the **official Playwright
+MCP server** ([`@playwright/mcp`](https://github.com/microsoft/playwright-mcp)). MCP
+(Model Context Protocol) lets AI assistants like Claude Code, VS Code Copilot Chat,
+and Cursor drive a real browser to record selectors, generate test code, and verify
+flows against your environment.
+
+### Setup
+
+The `.mcp.json` config is auto-loaded by:
+
+- **Claude Code** — open the repo, the server starts on first MCP request.
+- **VS Code with Copilot Chat** — install the [Playwright MCP extension](https://marketplace.visualstudio.com/items?itemName=ms-playwright.playwright-mcp) or copy the config to `.vscode/mcp.json`.
+- **Cursor** — Settings → MCP → "Use project `.mcp.json`".
+
+No additional install is required — the config uses `npx @playwright/mcp@latest`.
+
+### Sample prompts
+
+Once the server is running, ask your AI assistant in plain English:
+
+```
+# Generate a new Canvas test
+"I want a Playwright test that opens the Northwind Canvas app, creates a new order
+with customer 'Alfreds Futterkiste', and verifies the order appears in the gallery.
+Follow the patterns in tests/northwind/canvas/canvas-app-crud.test.ts and use the
+toolkit's CanvasAppPage."
+
+# Generate an MDA test
+"Add a test under tests/northwind/mda/ that opens the Accounts grid, sorts by name,
+and asserts the first row matches a known account. Use ModelDrivenAppPage from the
+toolkit, not raw page.locator()."
+
+# Capture a selector that just changed
+"The 'Save' button selector in canvas-app-crud.test.ts no longer matches. Drive the
+Northwind Canvas app to the order form and tell me the current selector."
+
+# Diagnose a flake
+"Test 'should perform complete CRUD workflow' just failed in CI with
+'expect(received).toBe(expected) — Expected: \"81029U\", Received: \"81029\"'.
+Read the test, the toolkit, and CLAUDE.md anti-patterns and tell me what's wrong."
+```
+
+### What the AI agent has access to
+
+When the Playwright MCP server is connected, the assistant can:
+
+- Launch a real Edge/Chromium instance (uses the same `msedge` channel as the tests).
+- Navigate URLs, click elements, fill forms, screenshot.
+- Read the DOM tree and propose selectors.
+- Run a generated test file and report the result.
+
+It **cannot** see your `.env` credentials or storage state files unless you point it
+at them explicitly. The MCP server runs locally — nothing is sent to a third-party
+service beyond the AI provider you've already chosen.
+
+### When NOT to use AI generation
+
+- **Auth flows** — let `playwright-ms-auth` handle MSAL. Don't have AI write a custom
+  login. See [Authentication Setup](#authentication-setup).
+- **Anti-patterns** — point the AI at the [Anti-Patterns](#ai-agent-reference-anti-patterns)
+  section below before it writes new code, especially anything touching Xrm, Canvas
+  PCF inputs, or `page.waitForFunction`.
+
+---
+
 ## Project Structure
 
 ```
@@ -241,6 +376,9 @@ power-platform-playwright-samples/
 ├── .azure-pipelines/
 │   ├── e2e-tests.yml                # Scheduled E2E pipeline (weekdays 06:00 UTC)
 │   └── steps/e2e-setup.yml          # Reusable auth + install setup steps
+├── .github/
+│   └── copilot-instructions.md      # GitHub Copilot context for this repo
+├── .mcp.json                        # Playwright MCP server config (AI tools)
 ├── rush.json
 └── CLAUDE.md                        # This file
 ```
@@ -345,15 +483,17 @@ npx playwright show-report            # Open last HTML report
 | MDA tests fail with cert error                           | Cert path wrong or missing                           | Check `MS_AUTH_LOCAL_FILE_PATH` and `MS_AUTH_CERTIFICATE_PASSWORD`    |
 | Canvas app stuck loading                                 | App takes 10–30s to initialize                       | Already handled in `beforeEach`; increase `waitFor` timeout if needed |
 | Gen UX tests time out (120s+)                            | AI generation is slow by design                      | This is expected — do not reduce `timeout` below 120s                 |
-| form-context tests time out (`Timeout 60000ms exceeded`) | `page.waitForFunction` arg placement bug             | See **Known Flakiness Patterns** section below                        |
+| form-context tests time out (`Timeout 60000ms exceeded`) | `page.waitForFunction` arg placement bug             | See **AI Agent Reference: Anti-Patterns** § 1 below                   |
 | `AccountsCustomPage` not found in sidebar                | Custom page not deployed to environment              | Deploy the Northwind AccountsCustomPage via the MDA app designer      |
 
 ---
 
-## Known Flakiness Patterns and Anti-Patterns
+## AI Agent Reference: Anti-Patterns
 
-This section documents recurring test instability root causes found in this repo.
-**Read this before modifying any test or toolkit file.**
+This section documents recurring failure modes in Power Platform Playwright tests.
+**AI agents — read this section before generating any new test or toolkit code.**
+Every entry shows the broken pattern, the correct pattern, and (usually) the
+underlying reason so you can recognise variants of the same trap.
 
 ### 1. `page.waitForFunction` — Options Must Be the Third Argument
 
@@ -601,7 +741,7 @@ the current IDs/labels — then add the new variant to the selector array above.
 
 ---
 
-### 10. DOM Input vs Xrm Model — Commit with `attribute.setValue()` (Not `setEntityAttribute`)
+### 9. DOM Input vs Xrm Model — Commit with `attribute.setValue()` (Not `setEntityAttribute`)
 
 **Anti-pattern (broken — value typed into DOM but not committed to Xrm model):**
 
@@ -650,7 +790,7 @@ firing onChange handlers.
 
 ---
 
-### 11. Canvas PCF Form Inputs — Use `element.select()` to Clear Before Typing
+### 10. Canvas PCF Form Inputs — Use `element.select()` to Clear Before Typing
 
 Canvas custom page form inputs (`EditForm`) remove the `readonly` attribute when the user clicks
 the Edit command bar button. Once editable, Playwright can type into them — but standard approaches
@@ -715,7 +855,7 @@ await page.waitForFunction(
 
 ---
 
-### 9. Rebuild After Any Toolkit Change
+### 11. Rebuild After Any Toolkit Change
 
 The `e2e-tests` package imports the **compiled** toolkit (`dist/`). Editing TypeScript source files
 in `packages/power-platform-playwright-toolkit/src/` has NO effect on tests until rebuilt.
