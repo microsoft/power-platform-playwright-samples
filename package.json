@@ -3,6 +3,7 @@
   "version": "0.0.4",
   "private": true,
   "author": "Microsoft",
+  "packageManager": "pnpm@10.33.4",
   "repository": {
     "type": "git",
     "url": "https://github.com/microsoft/power-platform-playwright-samples.git"
