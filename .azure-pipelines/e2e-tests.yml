@@ -1,18 +1,20 @@
 name: pp-playwright-e2e-$(Rev:rrr)
 
 # https://dev.azure.com/dynamicscrm/OneCRM/_build?definitionId=31659&_a=summary DO NOT REMOVE
-# Run on schedule (weekdays 6 AM UTC) and allow manual trigger.
-# Not triggered on push — tests require a live Power Platform environment.
+# Manual-trigger only — tests require a live Power Platform environment and
+# should be run on demand rather than on a fixed schedule.
 trigger: none
 pr: none
 
-schedules:
-  - cron: '0 6 * * 1-5'
-    displayName: Daily E2E (weekdays 06:00 UTC)
-    branches:
-      include:
-        - main
-    always: true
+# Scheduled cron disabled — run manually via the ADO build UI ("Run pipeline").
+# To re-enable the daily run, uncomment the block below.
+# schedules:
+#   - cron: '0 6 * * 1-5'
+#     displayName: Daily E2E (weekdays 06:00 UTC)
+#     branches:
+#       include:
+#         - main
+#     always: true
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Pipeline-level variables.
