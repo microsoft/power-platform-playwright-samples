@@ -1,0 +1,10 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/rush/v5/pnpm-config.schema.json",
+
+  "strictPeerDependencies": true,
+  "useWorkspaces": true,
+
+  "globalOverrides": {
+    "tar": "7.5.11"
+  }
+}
