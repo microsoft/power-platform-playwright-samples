@@ -371,7 +371,7 @@ power-platform-playwright-samples/
 │   │   └── dist/               # Compiled output
 │   ├── e2e-tests/              # Sample test infrastructure
 │   │   ├── tests/              # Test files (mda/, canvas/, gen-ux/)
-│   │   ├── pages/              # Custom Page Object Models
+│   │   ├── pages/              # Page Object Models
 │   │   ├── utils/              # Test utilities and shared steps
 │   │   └── playwright.config.ts
 │├── common/                     # Rush configuration
