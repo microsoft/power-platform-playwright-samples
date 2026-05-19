@@ -13,154 +13,28 @@
 
 ---
 
-## Packages
+## Table of Contents
 
-This monorepo contains two packages:
-
-| Package                                                                                      | Description                                             |
-| -------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
-| [`packages/power-platform-playwright-toolkit/`](packages/power-platform-playwright-toolkit/) | Core library — clone the repo to use it in your project |
-| [`packages/e2e-tests/`](packages/e2e-tests/)                                                 | Sample tests demonstrating real-world usage patterns    |
-
----
-
-## API Reference
-
-### Core
-
-| Export                       | Description                                                     |
-| ---------------------------- | --------------------------------------------------------------- |
-| `AppProvider`                | Entry point — launch any app type, exposes typed page objects   |
-| `AppLauncherFactory`         | Lower-level factory for creating app launchers directly         |
-| `URLBuilder`                 | Construct Maker Portal URLs programmatically                    |
-| `PowerPlatformNavigator`     | Navigate between Power Platform sections                        |
-| `ConfigHelper`               | Read environment variables with defaults (`getBaseUrl()`, etc.) |
-| `getStorageStatePath(email)` | Resolve the storage state file path for a given user            |
-
-### Page Objects
-
-| Export               | App type                       | Key methods                                           |
-| -------------------- | ------------------------------ | ----------------------------------------------------- |
-| `ModelDrivenAppPage` | Model-Driven / Dynamics 365    | `.form`, `.grid`, `.commanding`                       |
-| `CanvasAppPage`      | Canvas Apps                    | `clickControl()`, `getLabelText()`, `waitForScreen()` |
-| `GenUxPage`          | Maker Portal / Gen UX designer | `waitForDesignerReady()`, `getPreviewFrame()`         |
-| `PowerAppsPage`      | Maker Portal general           | Navigation, solutions, app management                 |
-
-### Model-Driven components
-
-| Export                | Description                                                                                             |
-| --------------------- | ------------------------------------------------------------------------------------------------------- |
-| `FormComponent`       | `getEntityAttribute()`, `setEntityAttribute()`, `saveForm()`, `isFormDirty()`, `executeInFormContext()` |
-| `GridComponent`       | `navigateToGridView()`, `getRowCount()`, `openRow()`, `searchGrid()`                                    |
-| `CommandingComponent` | Interact with the ribbon / command bar                                                                  |
-
-### Locators
-
-| Export                               | Description                                      |
-| ------------------------------------ | ------------------------------------------------ |
-| `getCanvasDataTestId(id)`            | Selector for Canvas `data-testid` attributes     |
-| `getCanvasControlByName(name)`       | Selector for Canvas controls by name             |
-| `getCanvasScreenByName(name)`        | Selector for Canvas screens by name              |
-| `getModelDrivenDataAutomationId(id)` | Selector for MDA `data-automation-id` attributes |
-| `getModelDrivenTablePage(entity)`    | Selector for MDA entity grid pages               |
-| `getModelDrivenFormField(field)`     | Selector for MDA form fields                     |
-| `getModelDrivenNavItem(item)`        | Selector for MDA navigation items                |
-
-### Types and enums
-
-| Export              | Values                                                                                               |
-| ------------------- | ---------------------------------------------------------------------------------------------------- |
-| `AppType`           | `Canvas`, `ModelDriven`, `Portal`, `PowerApps`                                                       |
-| `AppLaunchMode`     | `play`, `edit`, `preview`                                                                            |
-| `CanvasControlType` | `Button`, `TextInput`, `Label`, `Dropdown`, `Gallery`, `Form`, `Checkbox`, `Toggle`, `DatePicker`, … |
-| `EndPointURL`       | `/home`, `/apps`, `/solutions`, `/flows`, `/connections`, …                                          |
-| `TimeOut`           | `DefaultWaitTime`, `OneMinuteTimeOut`, …                                                             |
-
-### Waiters
-
-| Export                | Waits for               |
-| --------------------- | ----------------------- |
-| `AppRuntimeWaiter`    | App runtime to be ready |
-| `HomePageWaiter`      | Maker Portal home page  |
-| `AppsPageWaiter`      | Apps listing page       |
-| `SolutionsPageWaiter` | Solutions page          |
-
-### Canvas Flakiness Helpers
-
-Utility functions in `src/utils/canvas-helpers.ts` that address the most common failure modes when automating Canvas Apps and Custom Pages.
-
-> **Why these exist:** Canvas Apps run a Power Fx engine inside a sandboxed iframe. Standard Playwright operations behave differently here — `fill()` bypasses `OnChange` handlers, gallery rows outside the viewport are absent from the DOM entirely, and invisible overlay elements intercept pointer events. These helpers encapsulate the correct patterns so every test benefits automatically.
-
-| Export                | Signature                                        | What it solves                                                                                                                   |
-| --------------------- | ------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------- |
-| `fillCanvasInput`     | `(page, locator, value, options?)`               | Types via keyboard events so Power Fx `OnChange` fires. `fill()` updates the DOM but the canvas engine never sees the new value. |
-| `clickCanvasButton`   | `(locator, options?)`                            | Retries with `{ force: true }` when an invisible overlay element intercepts the pointer event.                                   |
-| `scrollGalleryToItem` | `(page, gallerySelector, itemLocator, options?)` | Scrolls a virtualized gallery with mouse wheel until the target item is rendered in the DOM.                                     |
-| `retryAction`         | `(action, options?)`                             | Generic retry wrapper (configurable attempts + delay) for actions that fail transiently during Canvas engine initialization.     |
-| `waitForCanvasReady`  | `(page, readinessSelector, options?)`            | Waits for a sentinel element (e.g. the command bar) to appear, replacing bare `waitForTimeout` after navigation.                 |
-| `confirmCanvasDialog` | `(page, options)`                                | Waits for a custom Canvas confirmation dialog, clicks confirm, then waits for it to close — end-to-end.                          |
-
-**Usage example — Custom Page form input:**
-
-```typescript
-import {
-  fillCanvasInput,
-  clickCanvasButton,
-  scrollGalleryToItem,
-  waitForCanvasReady,
-  confirmCanvasDialog,
-} from 'power-platform-playwright-toolkit';
-
-// Navigate to a Custom Page and wait for Canvas engine to be ready
-await page.locator('[title="AccountsCustomPage"]').click();
-await waitForCanvasReady(page, '[title="New record"]');
-
-// Type into a Canvas input (triggers Power Fx OnChange)
-await page.locator('[title="New record"]').click();
-const input = page.locator('input[aria-label="Account Name"]');
-await fillCanvasInput(page, input, 'Contoso Ltd');
-
-// Click a button behind an overlay element
-await clickCanvasButton(page.locator('[data-control-name="Rectangle1"]'));
-
-// Scroll a virtualized gallery to find a specific item
-const item = page.locator('[role="listitem"]').filter({ hasText: 'Contoso Ltd' });
-await scrollGalleryToItem(page, '[role="listitem"]', item);
-
-// Accept a delete confirmation dialog
-await confirmCanvasDialog(page, {
-  dialogSelector: '[data-control-name="DeleteText1"]',
-  confirmSelector: '[data-control-name="DeleteConfirmBtn1"] [data-control-part="button"]',
-});
-```
-
-> **Custom Pages in Model-Driven Apps** are Canvas apps embedded in the MDA shell. The outer navigation (sidebar, URL routing) is MDA — use standard Playwright patterns there. The page content runs on the Canvas engine — use these helpers for all interactions inside the page.
-
----
-
-## Architecture
-
-```
-Your Test Project (clone this repo and reference the toolkit locally)
-      │
-      │  rush build → packages/power-platform-playwright-toolkit/dist/
-      ▼
-┌─────────────────────────────────────────────────────────┐
-│           power-platform-playwright-toolkit              │
-├──────────────────────────────┬──────────────────────────┤
-│  AppProvider (entry point)   │  Page Object Model        │
-│  AppLauncherFactory          │  • ModelDrivenAppPage     │
-│  Authentication helpers      │  • CanvasAppPage          │
-│  Page waiters                │  • GenUxPage              │
-│  Locator utilities           │  • FormComponent          │
-│  URL builders                │  • GridComponent          │
-│                              │  • CommandingComponent    │
-└──────────────────────────────┴──────────────────────────┘
-      │
-      │  uses
-      ▼
-playwright-ms-auth  +  @playwright/test
-```
+- [Getting Started](#getting-started)
+  - [Run the sample tests](#run-the-sample-tests)
+- [Packages](#packages)
+- [API Reference](#api-reference)
+  - [Core](#core)
+  - [Page Objects](#page-objects)
+  - [Model-Driven components](#model-driven-components)
+  - [Locators](#locators)
+  - [Types and enums](#types-and-enums)
+  - [Waiters](#waiters)
+  - [Canvas Flakiness Helpers](#canvas-flakiness-helpers)
+- [Architecture](#architecture)
+- [Monorepo Structure](#monorepo-structure)
+- [Documentation](#documentation)
+- [AI Assistance — Claude Code & GitHub Copilot](#ai-assistance--claude-code--github-copilot)
+- [Contributing](#contributing)
+- [Trademarks](#trademarks)
+- [License](#license)
+- [Security](#security)
+- [Support](#support)
 
 ---
 
@@ -324,6 +198,157 @@ npx playwright test
 npx playwright test --project=model-driven-app
 npx playwright test --project=default        # canvas + maker portal
 npx playwright test --project=gen-ux
+```
+
+---
+
+## Packages
+
+This monorepo contains two packages:
+
+| Package                                                                                      | Description                                             |
+| -------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| [`packages/power-platform-playwright-toolkit/`](packages/power-platform-playwright-toolkit/) | Core library — clone the repo to use it in your project |
+| [`packages/e2e-tests/`](packages/e2e-tests/)                                                 | Sample tests demonstrating real-world usage patterns    |
+
+---
+
+## API Reference
+
+### Core
+
+| Export                       | Description                                                     |
+| ---------------------------- | --------------------------------------------------------------- |
+| `AppProvider`                | Entry point — launch any app type, exposes typed page objects   |
+| `AppLauncherFactory`         | Lower-level factory for creating app launchers directly         |
+| `URLBuilder`                 | Construct Maker Portal URLs programmatically                    |
+| `PowerPlatformNavigator`     | Navigate between Power Platform sections                        |
+| `ConfigHelper`               | Read environment variables with defaults (`getBaseUrl()`, etc.) |
+| `getStorageStatePath(email)` | Resolve the storage state file path for a given user            |
+
+### Page Objects
+
+| Export               | App type                       | Key methods                                           |
+| -------------------- | ------------------------------ | ----------------------------------------------------- |
+| `ModelDrivenAppPage` | Model-Driven / Dynamics 365    | `.form`, `.grid`, `.commanding`                       |
+| `CanvasAppPage`      | Canvas Apps                    | `clickControl()`, `getLabelText()`, `waitForScreen()` |
+| `GenUxPage`          | Maker Portal / Gen UX designer | `waitForDesignerReady()`, `getPreviewFrame()`         |
+| `PowerAppsPage`      | Maker Portal general           | Navigation, solutions, app management                 |
+
+### Model-Driven components
+
+| Export                | Description                                                                                             |
+| --------------------- | ------------------------------------------------------------------------------------------------------- |
+| `FormComponent`       | `getEntityAttribute()`, `setEntityAttribute()`, `saveForm()`, `isFormDirty()`, `executeInFormContext()` |
+| `GridComponent`       | `navigateToGridView()`, `getRowCount()`, `openRow()`, `searchGrid()`                                    |
+| `CommandingComponent` | Interact with the ribbon / command bar                                                                  |
+
+### Locators
+
+| Export                               | Description                                      |
+| ------------------------------------ | ------------------------------------------------ |
+| `getCanvasDataTestId(id)`            | Selector for Canvas `data-testid` attributes     |
+| `getCanvasControlByName(name)`       | Selector for Canvas controls by name             |
+| `getCanvasScreenByName(name)`        | Selector for Canvas screens by name              |
+| `getModelDrivenDataAutomationId(id)` | Selector for MDA `data-automation-id` attributes |
+| `getModelDrivenTablePage(entity)`    | Selector for MDA entity grid pages               |
+| `getModelDrivenFormField(field)`     | Selector for MDA form fields                     |
+| `getModelDrivenNavItem(item)`        | Selector for MDA navigation items                |
+
+### Types and enums
+
+| Export              | Values                                                                                               |
+| ------------------- | ---------------------------------------------------------------------------------------------------- |
+| `AppType`           | `Canvas`, `ModelDriven`, `Portal`, `PowerApps`                                                       |
+| `AppLaunchMode`     | `play`, `edit`, `preview`                                                                            |
+| `CanvasControlType` | `Button`, `TextInput`, `Label`, `Dropdown`, `Gallery`, `Form`, `Checkbox`, `Toggle`, `DatePicker`, … |
+| `EndPointURL`       | `/home`, `/apps`, `/solutions`, `/flows`, `/connections`, …                                          |
+| `TimeOut`           | `DefaultWaitTime`, `OneMinuteTimeOut`, …                                                             |
+
+### Waiters
+
+| Export                | Waits for               |
+| --------------------- | ----------------------- |
+| `AppRuntimeWaiter`    | App runtime to be ready |
+| `HomePageWaiter`      | Maker Portal home page  |
+| `AppsPageWaiter`      | Apps listing page       |
+| `SolutionsPageWaiter` | Solutions page          |
+
+### Canvas Flakiness Helpers
+
+Utility functions in `src/utils/canvas-helpers.ts` that address the most common failure modes when automating Canvas Apps and Custom Pages.
+
+> **Why these exist:** Canvas Apps run a Power Fx engine inside a sandboxed iframe. Standard Playwright operations behave differently here — `fill()` bypasses `OnChange` handlers, gallery rows outside the viewport are absent from the DOM entirely, and invisible overlay elements intercept pointer events. These helpers encapsulate the correct patterns so every test benefits automatically.
+
+| Export                | Signature                                        | What it solves                                                                                                                   |
+| --------------------- | ------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------- |
+| `fillCanvasInput`     | `(page, locator, value, options?)`               | Types via keyboard events so Power Fx `OnChange` fires. `fill()` updates the DOM but the canvas engine never sees the new value. |
+| `clickCanvasButton`   | `(locator, options?)`                            | Retries with `{ force: true }` when an invisible overlay element intercepts the pointer event.                                   |
+| `scrollGalleryToItem` | `(page, gallerySelector, itemLocator, options?)` | Scrolls a virtualized gallery with mouse wheel until the target item is rendered in the DOM.                                     |
+| `retryAction`         | `(action, options?)`                             | Generic retry wrapper (configurable attempts + delay) for actions that fail transiently during Canvas engine initialization.     |
+| `waitForCanvasReady`  | `(page, readinessSelector, options?)`            | Waits for a sentinel element (e.g. the command bar) to appear, replacing bare `waitForTimeout` after navigation.                 |
+| `confirmCanvasDialog` | `(page, options)`                                | Waits for a custom Canvas confirmation dialog, clicks confirm, then waits for it to close — end-to-end.                          |
+
+**Usage example — Custom Page form input:**
+
+```typescript
+import {
+  fillCanvasInput,
+  clickCanvasButton,
+  scrollGalleryToItem,
+  waitForCanvasReady,
+  confirmCanvasDialog,
+} from 'power-platform-playwright-toolkit';
+
+// Navigate to a Custom Page and wait for Canvas engine to be ready
+await page.locator('[title="AccountsCustomPage"]').click();
+await waitForCanvasReady(page, '[title="New record"]');
+
+// Type into a Canvas input (triggers Power Fx OnChange)
+await page.locator('[title="New record"]').click();
+const input = page.locator('input[aria-label="Account Name"]');
+await fillCanvasInput(page, input, 'Contoso Ltd');
+
+// Click a button behind an overlay element
+await clickCanvasButton(page.locator('[data-control-name="Rectangle1"]'));
+
+// Scroll a virtualized gallery to find a specific item
+const item = page.locator('[role="listitem"]').filter({ hasText: 'Contoso Ltd' });
+await scrollGalleryToItem(page, '[role="listitem"]', item);
+
+// Accept a delete confirmation dialog
+await confirmCanvasDialog(page, {
+  dialogSelector: '[data-control-name="DeleteText1"]',
+  confirmSelector: '[data-control-name="DeleteConfirmBtn1"] [data-control-part="button"]',
+});
+```
+
+> **Custom Pages in Model-Driven Apps** are Canvas apps embedded in the MDA shell. The outer navigation (sidebar, URL routing) is MDA — use standard Playwright patterns there. The page content runs on the Canvas engine — use these helpers for all interactions inside the page.
+
+---
+
+## Architecture
+
+```
+Your Test Project (clone this repo and reference the toolkit locally)
+      │
+      │  rush build → packages/power-platform-playwright-toolkit/dist/
+      ▼
+┌─────────────────────────────────────────────────────────┐
+│           power-platform-playwright-toolkit              │
+├──────────────────────────────┬──────────────────────────┤
+│  AppProvider (entry point)   │  Page Object Model        │
+│  AppLauncherFactory          │  • ModelDrivenAppPage     │
+│  Authentication helpers      │  • CanvasAppPage          │
+│  Page waiters                │  • GenUxPage              │
+│  Locator utilities           │  • FormComponent          │
+│  URL builders                │  • GridComponent          │
+│                              │  • CommandingComponent    │
+└──────────────────────────────┴──────────────────────────┘
+      │
+      │  uses
+      ▼
+playwright-ms-auth  +  @playwright/test
 ```
 
 ---

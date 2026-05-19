@@ -113,6 +113,7 @@ stages:
         displayName: 'Northwind Custom Page Tests'
         timeoutInMinutes: 60
         pool: '1ES-UCI-Playwright-PME-V3'
+        enabled: false # Temporarily disabled due to custom page not available in the environment, re-enable when the custom page is added back to the environment
         steps:
           - template: /.azure-pipelines/steps/e2e-setup.yml@self
             parameters:
