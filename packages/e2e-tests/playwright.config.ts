@@ -198,6 +198,7 @@ export default defineConfig({
       name: 'default',
       testDir: getEnvironmentConfig().testDirectory,
       testMatch: '**/*.test.ts',
+      testIgnore: ['**/custom-page/**'],
       use: {
         // Use default storage state
         storageState: process.env.MS_AUTH_EMAIL
