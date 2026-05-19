@@ -410,7 +410,6 @@ After installation you will have:
 
 - **Northwind Orders (Canvas App)** — tested by `canvas-app` project
 - **Northwind Orders (Model-Driven App)** — tested by `model-driven-app` project
-- **Custom Pages** — tested by MDA custom page tests
 
 To find the correct IDs after installation:
 
