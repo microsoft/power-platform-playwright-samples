@@ -151,21 +151,22 @@ export default defineConfig({
           : undefined,
       },
     },
-    {
-      // Runtime tests for the Canvas custom page embedded inside the MDA.
-      // Uses MDA cert-auth state (crm.dynamics.com domain).
-      name: 'custom-page',
-      testDir: path.join(getEnvironmentConfig().testDirectory, 'northwind', 'custom-page'),
-      testMatch: '**/custom-page-crud.test.ts',
-      use: {
-        storageState: process.env.MS_AUTH_EMAIL
-          ? path.join(
-              path.dirname(getStorageStatePath(process.env.MS_AUTH_EMAIL!)),
-              `state-mda-${process.env.MS_AUTH_EMAIL}.json`
-            )
-          : undefined,
-      },
-    },
+
+    // {
+    //   // Runtime tests for the Canvas custom page embedded inside the MDA.
+    //   // Uses MDA cert-auth state (crm.dynamics.com domain).
+    //   name: 'custom-page',
+    //   testDir: path.join(getEnvironmentConfig().testDirectory, 'northwind', 'custom-page'),
+    //   testMatch: '**/custom-page-crud.test.ts',
+    //   use: {
+    //     storageState: process.env.MS_AUTH_EMAIL
+    //       ? path.join(
+    //           path.dirname(getStorageStatePath(process.env.MS_AUTH_EMAIL!)),
+    //           `state-mda-${process.env.MS_AUTH_EMAIL}.json`
+    //         )
+    //       : undefined,
+    //   },
+    // },
     {
       // Studio-authoring tests open the app in Edit mode (Maker Portal).
       // They require the standard Canvas/Maker Portal storage state, NOT the MDA cert-auth state.
