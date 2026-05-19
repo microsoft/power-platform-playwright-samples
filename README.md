@@ -59,7 +59,7 @@ rush build
 
 #### Step 1 — Install the Northwind Traders sample solution
 
-The sample tests target the **Northwind Traders** solution, which includes a Model-Driven App, a Canvas App, and a Custom Page. You must install it into your Power Platform environment before running any tests.
+The sample tests target the **Northwind Traders** solution, which includes a Model-Driven App and a Canvas App. You must install it into your Power Platform environment before running any tests.
 
 Follow the official installation guide: [Install Northwind Traders database and apps](https://learn.microsoft.com/en-us/power-apps/maker/canvas-apps/northwind-install)
 
@@ -67,7 +67,6 @@ Once installed you will have:
 
 - **Northwind Orders (MDA)** — used by the `model-driven-app` test project
 - **Northwind Orders (Canvas)** — used by the `default` test project
-- **Custom Page** — used by the MDA custom page tests
 
 #### Step 2 — Set up environment variables
 
