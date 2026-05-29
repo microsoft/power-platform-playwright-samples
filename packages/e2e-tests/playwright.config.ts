@@ -151,6 +151,23 @@ export default defineConfig({
           : undefined,
       },
     },
+    {
+      // Veltro Novo Code App smoke + CRUD tests.
+      // Code Apps are hosted at apps.powerapps.com/play/e/<env>/app/<id> and
+      // share auth with MDAs, so we use the MDA storage state.
+      // See: docs/CODE-APP-PAGE-OBJECT.md for the CodeAppPage Page Object pattern.
+      name: 'veltro-novo-codeapp',
+      testDir: path.join(getEnvironmentConfig().testDirectory, 'veltro-novo'),
+      testMatch: '**/*.test.ts',
+      use: {
+        storageState: process.env.MS_AUTH_EMAIL
+          ? path.join(
+              path.dirname(getStorageStatePath(process.env.MS_AUTH_EMAIL!)),
+              `state-mda-${process.env.MS_AUTH_EMAIL}.json`
+            )
+          : undefined,
+      },
+    },
 
     // {
     //   // Runtime tests for the Canvas custom page embedded inside the MDA.
