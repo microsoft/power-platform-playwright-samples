@@ -5,6 +5,7 @@
   "useWorkspaces": true,
 
   "globalOverrides": {
-    "tar": "7.5.11"
+    "tar": "7.5.16",
+    "@azure/msal-browser": "5.13.0"
   }
 }
