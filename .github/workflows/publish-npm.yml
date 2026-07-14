@@ -36,16 +36,13 @@ jobs:
           node-version: '20'
           registry-url: 'https://registry.npmjs.org'
 
-      - name: Install Rush
-        run: npm install -g @microsoft/rush
-
       - name: Configure Git
         run: |
           git config --local user.name "GitHub Actions"
           git config --local user.email "actions@github.com"
 
       - name: Install dependencies
-        run: rush install
+        run: npm ci
 
       - name: Install prettier
         run: npm install --no-save prettier
@@ -54,7 +51,7 @@ jobs:
         run: npm run format:check
 
       - name: Run linting
-        run: rush lint
+        run: npm run lint
 
       - name: Verify version matches release tag
         if: github.event_name == 'release'
@@ -76,7 +73,7 @@ jobs:
           cat package.json | grep version
 
       - name: Build package
-        run: rush build --to power-platform-playwright-toolkit
+        run: npm run build:toolkit
 
       - name: Verify build output
         run: |

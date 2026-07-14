@@ -21,18 +21,13 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
-      - name: Install Rush
-        run: npm install -g @microsoft/rush
-
       - name: Configure Git
         run: |
           git config --local user.name "GitHub Actions"
           git config --local user.email "actions@github.com"
 
       - name: Install dependencies
-        run: |
-          rush update
-          rush install
+        run: npm ci
 
       - name: Install prettier
         run: npm install --no-save prettier
@@ -48,10 +43,10 @@ jobs:
           echo "✅ No formatting issues found"
 
       - name: Run linting
-        run: rush lint
+        run: npm run lint
 
       - name: Build all packages
-        run: rush build
+        run: npm run build
 
       - name: Check package sizes
         run: |

@@ -23,18 +23,13 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
-      - name: Install Rush
-        run: npm install -g @microsoft/rush
-
       - name: Configure Git
         run: |
           git config --local user.name "GitHub Actions"
           git config --local user.email "actions@github.com"
 
       - name: Install dependencies
-        run: |
-          rush update
-          rush install
+        run: npm ci
 
       - name: Install prettier
         run: npm install --no-save prettier
@@ -50,10 +45,10 @@ jobs:
           echo "✅ No formatting issues found"
 
       - name: Run linting
-        run: rush lint
+        run: npm run lint
 
       - name: Build all packages
-        run: rush build
+        run: npm run build
 
       - name: Check package sizes
         run: |
@@ -72,7 +67,7 @@ jobs:
 
       - name: Check for dependency updates
         run: |
-          rush update --full
+          npm update --workspaces
 
           if git diff --quiet; then
             echo "" >> $GITHUB_STEP_SUMMARY
@@ -84,7 +79,7 @@ jobs:
             echo "---" >> $GITHUB_STEP_SUMMARY
             echo "## 📦 Dependency Updates Available" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
-            echo "There are dependency updates available. Run \`rush update\` locally." >> $GITHUB_STEP_SUMMARY
+            echo "There are dependency updates available. Run \`npm update --workspaces\` locally." >> $GITHUB_STEP_SUMMARY
           fi
 
       - name: Check for changes

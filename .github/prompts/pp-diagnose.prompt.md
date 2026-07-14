@@ -37,7 +37,7 @@ Match the error against the table below **before** opening any other file.
 | `No match found` in Studio data source pane                                | §6 — wrong Search input                             | Scope to `[class*="ms-Callout-main"]`                   |
 | Save succeeds but `getValue()` is null                                     | §9 — DOM updated, Xrm not                           | Use `attribute.setValue()` (NOT `setEntityAttribute`)   |
 | Canvas Edit text concatenates                                              | §10 — Control+A intercepted                         | `el.evaluate(e => e.select())`                          |
-| `Cannot find module 'power-platform-playwright-toolkit'`                   | §11 — toolkit not built                             | `rush build --to power-platform-playwright-toolkit`     |
+| `Cannot find module 'power-platform-playwright-toolkit'`                   | §11 — toolkit not built                             | `npm run build:toolkit`                                 |
 
 If a fragment matches:
 

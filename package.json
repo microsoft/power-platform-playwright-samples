@@ -3,27 +3,26 @@
   "version": "0.0.4",
   "private": true,
   "author": "Microsoft",
-  "packageManager": "pnpm@10.33.4",
+  "packageManager": "npm@10.9.4",
+  "workspaces": [
+    "packages/*"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/microsoft/power-platform-playwright-samples.git"
   },
   "scripts": {
-    "build": "node common/scripts/install-run-rush.js build",
-    "change": "node common/scripts/install-run-rush.js change",
-    "lint": "node common/scripts/install-run-rush.js lint",
+    "build": "npm run build --workspaces --if-present",
+    "build:toolkit": "npm run build --workspace power-platform-playwright-toolkit",
+    "build:e2e": "npm run build --workspace @power-platform-playwright/e2e-tests",
+    "lint": "npm run lint --workspaces --if-present",
+    "prettier": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,yml,yaml}\"",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,yml,yaml}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,yml,yaml}\"",
-    "rebuild": "node common/scripts/install-run-rush.js rebuild",
-    "update": "node common/scripts/install-run-rush.js update",
-    "prepare": "husky"
+    "rebuild": "npm run clean --workspaces --if-present && npm run build",
+    "update": "npm update --workspaces"
   },
   "devDependencies": {
-    "husky": "^9.1.7",
-    "lint-staged": "^15.2.11",
     "prettier": "^3.7.4"
-  },
-  "lint-staged": {
-    "*.{ts,tsx,js,jsx,json,md,yml,yaml}": "prettier --write"
   }
 }

@@ -17,8 +17,8 @@ Sample Playwright tests for Microsoft Power Platform applications, demonstrating
 From the repo root:
 
 ```bash
-rush install
-rush build
+npm install
+npm run build
 ```
 
 Or from this directory:
@@ -329,7 +329,7 @@ Defined in `playwright.config.ts`:
 | MDA tests fail auth                                      | Run `npm run auth:mda:headful`                                               |
 | `MODEL_DRIVEN_APP_URL` not set                           | Set it in `.env`                                                             |
 | Canvas app not loading                                   | Increase `timeout` in `playwright.config.ts`; Canvas apps take 5–10s to load |
-| `Cannot find module 'power-platform-playwright-toolkit'` | Run `rush build` from repo root                                              |
+| `Cannot find module 'power-platform-playwright-toolkit'` | Run `npm run build:toolkit` from repo root                                   |
 | Gen UX tests slow / timeout                              | AI generation takes up to 120s — this is expected                            |
 
 ## Learn More

@@ -76,7 +76,7 @@ For each new selector you need:
 - [ ] §8 — Gen UX `addNewPage` is a 3-step flow with `findWithFallback` on step 1
 - [ ] §9 — `attribute.setValue()` (NOT `setEntityAttribute` — fires onChange)
 - [ ] §10 — Canvas Edit fields: `el.evaluate(e => e.select())` then `pressSequentially`
-- [ ] §11 — toolkit changes need `rush build --to power-platform-playwright-toolkit`
+- [ ] §11 — toolkit changes need `npm run build:toolkit`
 
 ## Step 4 — File layout
 

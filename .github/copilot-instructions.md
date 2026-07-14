@@ -112,8 +112,8 @@ Extend toolkit page objects for app-specific methods. See:
 
 ```bash
 # Monorepo (from repo root)
-rush install              # install dependencies
-rush build                # build all packages
+npm install               # install dependencies
+npm run build             # build all packages
 
 # Tests (from packages/e2e-tests/)
 npm run auth:headful                        # authenticate Canvas / Maker Portal
@@ -171,12 +171,11 @@ Example prompts that work well in this repo:
 
 ## What NOT to Suggest
 
-- Do not suggest `npm install` at the repo root — this is a Rush monorepo; use `rush install`.
 - Do not suggest using `page.locator()` directly on canvas app content — it must be scoped via `page.frameLocator('iframe[name="fullscreen-app-host"]')`.
 - Do not suggest checking MSAL access token expiry (1h) to validate auth state — the project uses **file modification time (24h)** instead.
 - Do not suggest hardcoding environment IDs, app IDs, or URLs — all values must come from `.env` / environment variables.
 - Do not suggest committing `.env` — it is gitignored and contains credentials.
-- Do not suggest `rush build --to e2e-tests` — the e2e-tests package has `build: tsc --noEmit` only; build the toolkit with `rush build --to power-platform-playwright-toolkit`.
+- Do not suggest `npm run build:e2e` for toolkit compilation — the e2e-tests package has `build: tsc --noEmit` only; build the toolkit with `npm run build:toolkit`.
 
 ---
 
@@ -184,7 +183,7 @@ Example prompts that work well in this repo:
 
 When helping a customer set up this project for their environment:
 
-1. `rush install` + `rush build` from repo root
+1. `npm install` + `npm run build` from repo root
 2. `npx playwright install msedge --with-deps` inside `packages/e2e-tests/`
 3. Copy `.env.example` to `.env` inside `packages/e2e-tests/`
 4. Fill in: `POWER_APPS_ENVIRONMENT_ID`, `CANVAS_APP_ID`, `CANVAS_APP_TENANT_ID`, `MODEL_DRIVEN_APP_URL`, `MS_AUTH_EMAIL`, and credentials

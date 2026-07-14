@@ -33,9 +33,8 @@ For customers who just want to clone, run a green test, and start writing their 
 # 1. Clone and install
 git clone https://github.com/microsoft/power-platform-playwright-samples.git
 cd power-platform-playwright-samples
-npm install -g @microsoft/rush
-rush install
-rush build
+npm install
+npm run build
 
 # 2. Install the browser channel the tests use
 cd packages/e2e-tests
@@ -452,9 +451,9 @@ to the auth scripts via `MS_AUTH_LOCAL_FILE_PATH`.
 
 ```bash
 # Install / build
-rush install                          # Install all dependencies
-rush build                            # Build all packages
-rush build --to power-platform-playwright-toolkit  # Build toolkit only
+npm install                           # Install all dependencies
+npm run build                         # Build all packages
+npm run build:toolkit                 # Build toolkit only
 
 # From packages/e2e-tests/
 npm run auth:headful                  # Authenticate (Canvas + Gen UX)
@@ -478,7 +477,7 @@ npx playwright show-report            # Open last HTML report
 | `Storage state file does not exist`                      | Never authenticated                                  | Run `npm run auth:headful` (and `auth:mda:headful` for MDA)           |
 | `Sorry, we didn't find that app`                         | Wrong `CANVAS_APP_ID` or `POWER_APPS_ENVIRONMENT_ID` | Check app IDs in Maker Portal; verify env ID in URL                   |
 | `Describe a page` button missing                         | Gen UX not enabled in this environment               | Use a different `POWER_APPS_ENVIRONMENT_ID` with Gen UX feature       |
-| `Cannot find module 'power-platform-playwright-toolkit'` | Toolkit not built                                    | Run `rush build` from repo root                                       |
+| `Cannot find module 'power-platform-playwright-toolkit'` | Toolkit not built                                    | Run `npm run build:toolkit` from repo root                            |
 | MDA tests fail with cert error                           | Cert path wrong or missing                           | Check `MS_AUTH_LOCAL_FILE_PATH` and `MS_AUTH_CERTIFICATE_PASSWORD`    |
 | Canvas app stuck loading                                 | App takes 10–30s to initialize                       | Already handled in `beforeEach`; increase `waitFor` timeout if needed |
 | Gen UX tests time out (120s+)                            | AI generation is slow by design                      | This is expected — do not reduce `timeout` below 120s                 |
@@ -861,7 +860,7 @@ in `packages/power-platform-playwright-toolkit/src/` has NO effect on tests unti
 
 ```bash
 # After any change to the toolkit source:
-rush build --to power-platform-playwright-toolkit
+npm run build:toolkit
 ```
 
 Forgetting this is the most common source of "my fix didn't work" confusion.
