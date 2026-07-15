@@ -12,7 +12,7 @@
     "url": "https://github.com/microsoft/power-platform-playwright-samples.git"
   },
   "scripts": {
-    "build": "npm run build --workspaces --if-present",
+    "build": "npm run build:toolkit && npm run build:e2e",
     "build:toolkit": "npm run build --workspace power-platform-playwright-toolkit",
     "build:e2e": "npm run build --workspace @power-platform-playwright/e2e-tests",
     "lint": "npm run lint --workspaces --if-present",
