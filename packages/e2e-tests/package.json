@@ -30,7 +30,6 @@
     "@playwright/test": "^1.57.0",
     "@types/node": "^25.0.3",
     "dotenv": "^16.4.7",
-    "playwright-ai-reporter": "^0.0.9",
     "prettier": "^3.7.4",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3"
