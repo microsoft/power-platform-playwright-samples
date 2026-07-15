@@ -16,9 +16,9 @@
     "build:toolkit": "npm run build --workspace power-platform-playwright-toolkit",
     "build:e2e": "npm run build --workspace @power-platform-playwright/e2e-tests",
     "lint": "npm run lint --workspaces --if-present",
-    "prettier": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,yml,yaml}\"",
-    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,yml,yaml}\"",
-    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,yml,yaml}\"",
+    "prettier": "prettier --write \"**/*.{ts,tsx,js,jsx,json,yml,yaml}\"",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,yml,yaml}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,yml,yaml}\"",
     "rebuild": "npm run clean --workspaces --if-present && npm run build",
     "update": "npm update --workspaces"
   },
