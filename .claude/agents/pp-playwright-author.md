@@ -98,7 +98,7 @@ Before you write a single line of test code, walk this list. If you skip it, you
 - [ ] **§8 Gen UX `addNewPage`** — three-step flow with `findWithFallback` on step 1.
 - [ ] **§9 MDA field updates** — use raw `attribute.setValue()` (NOT `setEntityAttribute` — it fires onChange).
 - [ ] **§10 Canvas Edit fields** — `el.evaluate(e => e.select())` then `pressSequentially`.
-- [ ] **§11 Toolkit changes** — if you touch toolkit src, remind the user to `rush build --to power-platform-playwright-toolkit`.
+- [ ] **§11 Toolkit changes** — if you touch toolkit src, remind the user to `npm run build:toolkit`.
 
 ---
 

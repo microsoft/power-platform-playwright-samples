@@ -22,14 +22,14 @@ You must read [CLAUDE.md](../../CLAUDE.md) before deciding how to act — it doc
 1. `rush.json` exists at the workspace root
 2. `packages/e2e-tests/playwright.config.ts` exists
 3. Node.js ≥ 20 (`node --version`)
-4. Rush installed (`npm install -g @microsoft/rush` if missing)
+4. npm installed (Node.js 20+)
 5. Microsoft Edge installed (the tests use `channel: 'msedge'`)
-6. `packages/power-platform-playwright-toolkit/dist/` exists (run `rush install && rush build` if missing)
+6. `packages/power-platform-playwright-toolkit/dist/` exists (run `npm install && npm run build` if missing)
 7. `packages/e2e-tests/node_modules/@playwright/test` exists
 
 If anything fails, fix it (or instruct the user) before continuing.
 
-> **Reminder (CLAUDE.md §11):** the e2e-tests package imports the **compiled** toolkit. Any change to toolkit source needs `rush build --to power-platform-playwright-toolkit` before the change takes effect.
+> **Reminder (CLAUDE.md §11):** the e2e-tests package imports the **compiled** toolkit. Any change to toolkit source needs `npm run build:toolkit` before the change takes effect.
 
 ## Step 1 — Collect settings (single message)
 
@@ -113,7 +113,7 @@ npx playwright show-trace packages/e2e-tests/test-results/<folder>/trace.zip
 | `[role="row"]` count off by one                          | Anti-pattern §3                                 | Use `[role="row"][row-index]`                          |
 | `setEntityAttribute` saves null                          | Anti-pattern §9                                 | Use `attribute.setValue()` directly                    |
 | Canvas Edit field text concatenates                      | Anti-pattern §10                                | `el.evaluate(e => e.select())`                         |
-| `Cannot find module 'power-platform-playwright-toolkit'` | Anti-pattern §11                                | `rush build --to power-platform-playwright-toolkit`    |
+| `Cannot find module 'power-platform-playwright-toolkit'` | Anti-pattern §11                                | `npm run build:toolkit`                                |
 
 For unrecognised errors, suggest:
 

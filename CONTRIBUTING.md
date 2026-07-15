@@ -31,8 +31,7 @@ contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additio
 2. Install dependencies:
 
    ```bash
-   npm install -g @microsoft/rush
-   rush install
+   npm install
    ```
 
 3. Make your changes in the appropriate package:
@@ -49,14 +48,14 @@ contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additio
 5. Build and verify:
 
    ```bash
-   rush build
+   npm run build
    ```
 
 6. Run format and lint checks:
 
    ```bash
    npm run format:check
-   rush lint
+   npm run lint
    ```
 
 7. Submit a pull request to `main` with a clear description of the change.

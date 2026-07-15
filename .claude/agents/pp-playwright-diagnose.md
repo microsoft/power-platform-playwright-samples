@@ -42,7 +42,7 @@ Match the error against the anti-pattern table below **before** opening any othe
 | `No match found` in Studio data source pane                                | Tree view search vs Callout search                   | CLAUDE.md §6 — scope to `[class*="ms-Callout-main"]`                    |
 | Save succeeds but Xrm `getValue()` returns null                            | Updated DOM, not Xrm model                           | CLAUDE.md §9 — `attribute.setValue()` (NOT `setEntityAttribute`)        |
 | Canvas Edit field text concatenates                                        | `Control+A` intercepted by PCF layer                 | CLAUDE.md §10 — `el.evaluate(e => e.select())`                          |
-| `Cannot find module 'power-platform-playwright-toolkit'`                   | Toolkit not built                                    | CLAUDE.md §11 — `rush build --to power-platform-playwright-toolkit`     |
+| `Cannot find module 'power-platform-playwright-toolkit'`                   | Toolkit not built                                    | CLAUDE.md §11 — `npm run build:toolkit`                                 |
 
 If a fragment matches:
 

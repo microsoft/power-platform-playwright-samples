@@ -589,7 +589,7 @@ await page.waitForFunction(() => { ... }, undefined, { timeout: 30000 });
 ```bash
 # The e2e-tests package imports the compiled toolkit (dist/).
 # Editing .ts source files has NO effect until rebuilt.
-rush build --to power-platform-playwright-toolkit
+npm run build:toolkit
 ```
 
 ---
@@ -684,7 +684,7 @@ async fillInput(locator: Locator, value: string): Promise<void> {}
 
 Contributions are welcome. Before opening a PR:
 
-1. Run `rush build` from the repo root — compilation must pass.
+1. Run `npm run build` from the repo root — compilation must pass.
 2. Run relevant tests with `npx playwright test --project=<name>` — all must pass.
 3. Add or update JSDoc on any new public API.
 4. Do not break existing exports without a `@deprecated` migration path.

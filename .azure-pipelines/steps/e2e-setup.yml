@@ -1,5 +1,5 @@
 # Shared setup steps for all E2E test jobs.
-# Handles: Node install, Rush install, Playwright browser install,
+# Handles: Node install, npm workspace install, Playwright browser install,
 # and authentication state creation.
 #
 # MDA cert auth: AzureKeyVault@2 downloads the test user PFX from
@@ -26,22 +26,11 @@ steps:
     inputs:
       versionSpec: ${{ parameters.nodeVersion }}
 
-  - script: |
-      corepack enable
-      corepack prepare pnpm@10.33.4 --activate
-    displayName: Enable corepack + pnpm
+  - script: npm ci
+    displayName: Install npm workspaces
 
-  # Rush version pinned to match rushVersion in rush.json. The `rush` shim
-  # self-bootstraps to whatever rush.json declares, but pinning here keeps the
-  # pipeline transparent and avoids surprises if the global rush is upgraded.
-  - script: npm install -g @microsoft/rush@5.175.1
-    displayName: Install Rush
-
-  - script: node common/scripts/install-run-rush.js install --bypass-policy
-    displayName: Rush Install
-
-  - script: node common/scripts/install-run-rush.js build --to power-platform-playwright-toolkit
-    displayName: Rush Build (toolkit only)
+  - script: npm run build:toolkit
+    displayName: Build toolkit only
 
   # Install Playwright Chromium — used by all test jobs
   - script: npx playwright install chromium --with-deps
@@ -97,9 +86,8 @@ steps:
   # 3. Create canvas / maker-portal auth state (used by gen-ux and canvas jobs).
   #    Overrides MS_AUTH_CREDENTIAL_PROVIDER to use the locally decoded cert file
   #    instead of re-fetching from Key Vault at runtime.
-  - script: pnpm run auth:headful
+  - script: npm run auth:headful --workspace @power-platform-playwright/e2e-tests
     displayName: Authenticate — canvas / maker portal
-    workingDirectory: $(Build.SourcesDirectory)/packages/e2e-tests
     env:
       CI: true
       MS_AUTH_EMAIL: $(msAuthEmail)
@@ -111,10 +99,9 @@ steps:
   # ── MDA auth — only runs when authenticateMDA: true (NorthwindMDA job) ───────
   # Cert is already on disk from step 2; just run headful auth and verify state.
   - ${{ if eq(parameters.authenticateMDA, true) }}:
-      # 4. Run MDA headful auth with local cert (pnpm script: tsx scripts/authenticate.ts --headful --mda)
-      - script: pnpm run auth:mda:headful
+      # 4. Run MDA headful auth with local cert (npm workspace script)
+      - script: npm run auth:mda:headful --workspace @power-platform-playwright/e2e-tests
         displayName: Authenticate — Model-Driven App (headful + cert)
-        workingDirectory: $(Build.SourcesDirectory)/packages/e2e-tests
         env:
           CI: true
           MS_AUTH_EMAIL: $(msAuthEmail)

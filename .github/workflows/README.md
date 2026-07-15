@@ -10,7 +10,7 @@ Runs on every push to `main` and on pull requests.
 
 - Format check (Prettier)
 - Lint (ESLint)
-- Build all packages (`rush build`)
+- Build all packages (`npm run build`)
 
 ### `pr.yml` — Pull Request Validation
 

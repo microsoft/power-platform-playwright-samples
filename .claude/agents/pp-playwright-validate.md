@@ -90,13 +90,13 @@ If toolkit `dist/` is missing OR `node_modules` is missing, run install + build 
 
 ```powershell
 Set-Location $repoRoot
-rush install
-rush build
+npm install
+npm run build
 ```
 
-Report: `✅ rush install + rush build complete.`
+Report: `✅ npm install + npm run build complete.`
 
-> **Anti-pattern reminder (CLAUDE.md §11):** the e2e-tests package imports the **compiled** toolkit. Any change to toolkit source needs `rush build --to power-platform-playwright-toolkit` before tests will pick it up.
+> **Anti-pattern reminder (CLAUDE.md §11):** the e2e-tests package imports the **compiled** toolkit. Any change to toolkit source needs `npm run build:toolkit` before tests will pick it up.
 
 If Edge is missing:
 
@@ -429,7 +429,7 @@ Map each failure to the [CLAUDE.md anti-patterns section](../../CLAUDE.md#ai-age
 | `No match found` in Studio data source pane              | Wrong Search input — tree view vs Callout flyout    | Anti-pattern §6 — scope to `[class*="ms-Callout-main"]`                       |
 | `setEntityAttribute` saves null in MDA                   | `fireOnChange()` reset the value                    | Anti-pattern §9 — use raw `attribute.setValue()`                              |
 | Canvas Edit field text concatenates instead of replacing | `Control+A` intercepted by PCF layer                | Anti-pattern §10 — use `el.evaluate(e => e.select())`                         |
-| `Cannot find module 'power-platform-playwright-toolkit'` | Toolkit not built                                   | Anti-pattern §11 — `rush build --to power-platform-playwright-toolkit`        |
+| `Cannot find module 'power-platform-playwright-toolkit'` | Toolkit not built                                   | Anti-pattern §11 — `npm run build:toolkit`                                    |
 | Generic `TimeoutError` / `not visible`                   | Versioned UI selector drift                         | Re-run with `--headed`, then check anti-patterns §5 + §7 (`findWithFallback`) |
 
 For unrecognised errors, suggest:

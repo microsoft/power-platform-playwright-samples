@@ -6,7 +6,7 @@ on:
       - main
     paths:
       - 'packages/docs/**'
-      - 'packages/playwright-power-platform-toolkit/src/**'
+      - 'packages/power-platform-playwright-toolkit/src/**'
       - '.github/workflows/deploy-docs.yml'
   workflow_dispatch:
 
@@ -32,21 +32,13 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
-      - name: Install Rush
-        run: npm install -g @microsoft/rush
-
       - name: Configure Git
         run: |
           git config --local user.name "GitHub Actions"
           git config --local user.email "actions@github.com"
 
       - name: Install dependencies
-        run: |
-          rush update
-          rush install
-
-      - name: Install prettier
-        run: npm install --no-save prettier
+        run: npm ci
 
       - name: Run format check
         run: |
@@ -59,29 +51,29 @@ jobs:
           echo "✅ No formatting issues found"
 
       - name: Run linting
-        run: rush lint
+        run: npm run lint
 
       - name: Build toolkit
-        run: rush build --to playwright-power-platform-toolkit
+        run: npm run build:toolkit
 
       - name: Generate API documentation
         run: |
-          cd packages/playwright-power-platform-toolkit
+          cd packages/power-platform-playwright-toolkit
           npm run docs
 
       - name: Build documentation site
         run: |
           cd packages/docs
-          NEXT_PUBLIC_BASE_PATH=/playwright-power-platform-toolkit npm run build
+          NEXT_PUBLIC_BASE_PATH=/power-platform-playwright-samples npm run build
 
       - name: Check package sizes
         run: |
           echo "## 📦 Package Sizes" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
-          if [ -d "packages/playwright-power-platform-toolkit/dist" ]; then
-            toolkit_size=$(du -sh packages/playwright-power-platform-toolkit/dist | cut -f1)
-            echo "- **playwright-power-platform-toolkit**: \`$toolkit_size\`" >> $GITHUB_STEP_SUMMARY
+          if [ -d "packages/power-platform-playwright-toolkit/dist" ]; then
+            toolkit_size=$(du -sh packages/power-platform-playwright-toolkit/dist | cut -f1)
+            echo "- **power-platform-playwright-toolkit**: \`$toolkit_size\`" >> $GITHUB_STEP_SUMMARY
           fi
 
           if [ -d "packages/docs/out" ]; then

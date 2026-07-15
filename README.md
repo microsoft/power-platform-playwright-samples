@@ -45,14 +45,11 @@
 git clone https://github.com/microsoft/power-platform-playwright-samples.git
 cd power-platform-playwright-samples
 
-# Install Rush (monorepo manager)
-npm install -g @microsoft/rush
-
 # Install dependencies
-rush install
+npm install
 
 # Build all packages
-rush build
+npm run build
 ```
 
 ### Run the sample tests
@@ -331,7 +328,7 @@ await confirmCanvasDialog(page, {
 ```
 Your Test Project (clone this repo and reference the toolkit locally)
       │
-      │  rush build → packages/power-platform-playwright-toolkit/dist/
+      │  npm run build:toolkit → packages/power-platform-playwright-toolkit/dist/
       ▼
 ┌─────────────────────────────────────────────────────────┐
 │           power-platform-playwright-toolkit              │

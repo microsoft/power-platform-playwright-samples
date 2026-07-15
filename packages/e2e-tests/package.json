@@ -36,6 +36,6 @@
     "typescript": "^5.9.3"
   },
   "dependencies": {
-    "power-platform-playwright-toolkit": "workspace:*"
+    "power-platform-playwright-toolkit": "file:../power-platform-playwright-toolkit"
   }
 }
