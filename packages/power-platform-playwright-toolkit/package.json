@@ -49,6 +49,6 @@
   },
   "dependencies": {
     "dotenv": "^16.4.7",
-    "playwright-ms-auth": "^0.0.17"
+    "playwright-ms-auth": "0.0.19"
   }
 }
