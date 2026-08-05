@@ -102,6 +102,7 @@ steps:
       # 4. Run MDA headful auth with local cert (npm workspace script)
       - script: npm run auth:mda:headful --workspace @power-platform-playwright/e2e-tests
         displayName: Authenticate — Model-Driven App (headful + cert)
+        condition: false # Temporarily disabled together with Playwright test execution.
         env:
           CI: true
           MS_AUTH_EMAIL: $(msAuthEmail)
@@ -124,4 +125,5 @@ steps:
           }
           Write-Host "MDA auth state verified: $statePath"
         displayName: Verify MDA auth state
+        condition: false # MDA auth is disabled, so no state file is expected.
         failOnStderr: true
