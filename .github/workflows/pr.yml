@@ -5,6 +5,13 @@ on:
     branches: [main, develop]
     types: [opened, synchronize, reopened]
 
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-validate-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 jobs:
   validate:
     name: Validate PR
@@ -16,17 +23,13 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
-
-      - name: Configure Git
-        run: |
-          git config --local user.name "GitHub Actions"
-          git config --local user.email "actions@github.com"
 
       - name: Install dependencies
         run: npm ci
@@ -62,53 +65,53 @@ jobs:
             echo "- **docs**: \`$docs_size\`" >> $GITHUB_STEP_SUMMARY
           fi
 
-      - name: Check for dependency updates
-        run: |
-          npm update --workspaces
-
-          if git diff --quiet; then
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "---" >> $GITHUB_STEP_SUMMARY
-            echo "## 📦 Dependencies" >> $GITHUB_STEP_SUMMARY
-            echo "✅ No dependency changes needed" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "---" >> $GITHUB_STEP_SUMMARY
-            echo "## 📦 Dependency Updates Available" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "There are dependency updates available. Run \`npm update --workspaces\` locally." >> $GITHUB_STEP_SUMMARY
-          fi
-
       - name: Check for changes
         id: changes
+        env:
+          BASE_REF: ${{ github.base_ref }}
         run: |
-          echo "modified_files=$(git diff --name-only origin/${{ github.base_ref }}...HEAD | wc -l)" >> $GITHUB_OUTPUT
+          count="$(git diff --name-only "origin/${BASE_REF}...HEAD" | wc -l | tr -d ' ')"
+          echo "modified_files=${count}" >> "$GITHUB_OUTPUT"
 
       - name: PR summary
         if: always()
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+          BASE_REF: ${{ github.base_ref }}
+          PR_ACTOR: ${{ github.actor }}
+          MODIFIED_FILES: ${{ steps.changes.outputs.modified_files }}
+          JOB_STATUS: ${{ job.status }}
         run: |
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "---" >> $GITHUB_STEP_SUMMARY
-          echo "## 🔍 Pull Request Validation" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### PR Details" >> $GITHUB_STEP_SUMMARY
-          echo "- **Branch**: ${{ github.head_ref }} → ${{ github.base_ref }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Author**: @${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Modified files**: ${{ steps.changes.outputs.modified_files }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Validation Results" >> $GITHUB_STEP_SUMMARY
+          {
+            echo ""
+            echo "---"
+            echo "## 🔍 Pull Request Validation"
+            echo ""
+            echo "### PR Details"
+            echo "- **Branch**: \`${HEAD_REF}\` → \`${BASE_REF}\`"
+            echo "- **Author**: @${PR_ACTOR}"
+            echo "- **Modified files**: ${MODIFIED_FILES}"
+            echo ""
+            echo "### Validation Results"
+          } >> "$GITHUB_STEP_SUMMARY"
 
-          if [ "${{ job.status }}" == "success" ]; then
-            echo "✅ All validation checks passed" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "- ✅ Code formatting" >> $GITHUB_STEP_SUMMARY
-            echo "- ✅ Linting" >> $GITHUB_STEP_SUMMARY
-            echo "- ✅ Build" >> $GITHUB_STEP_SUMMARY
+          if [ "${JOB_STATUS}" = "success" ]; then
+            {
+              echo "✅ All validation checks passed"
+              echo ""
+              echo "- ✅ Code formatting"
+              echo "- ✅ Linting"
+              echo "- ✅ Build"
+            } >> "$GITHUB_STEP_SUMMARY"
           else
-            echo "❌ Some validation checks failed" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "Please fix the issues and push again." >> $GITHUB_STEP_SUMMARY
+            {
+              echo "❌ Some validation checks failed"
+              echo ""
+              echo "Please fix the issues and push again."
+            } >> "$GITHUB_STEP_SUMMARY"
           fi
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "---" >> $GITHUB_STEP_SUMMARY
-          echo "💡 **Note**: Playwright tests are not run automatically. Use the [Playwright Tests workflow](../../actions/workflows/playwright-tests.yml) to run tests manually." >> $GITHUB_STEP_SUMMARY
+          {
+            echo ""
+            echo "---"
+            echo "💡 **Note**: Playwright tests are not run automatically. Use the [Playwright Tests workflow](../../actions/workflows/playwright-tests.yml) to run tests manually."
+          } >> "$GITHUB_STEP_SUMMARY"

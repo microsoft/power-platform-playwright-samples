@@ -5,6 +5,13 @@ on:
     branches: [main, develop]
   workflow_dispatch:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     name: Build and Validate
@@ -14,17 +21,14 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
-
-      - name: Configure Git
-        run: |
-          git config --local user.name "GitHub Actions"
-          git config --local user.email "actions@github.com"
 
       - name: Install dependencies
         run: npm ci
@@ -62,22 +66,31 @@ jobs:
 
       - name: Build summary
         if: always()
+        env:
+          REF_NAME: ${{ github.ref_name }}
+          COMMIT_SHA: ${{ github.sha }}
+          EVENT_NAME: ${{ github.event_name }}
+          JOB_STATUS: ${{ job.status }}
         run: |
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "---" >> $GITHUB_STEP_SUMMARY
-          echo "## 🏗️ Build Results" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- **Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Triggered by**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
+          {
+            echo ""
+            echo "---"
+            echo "## 🏗️ Build Results"
+            echo ""
+            echo "- **Branch**: \`${REF_NAME}\`"
+            echo "- **Commit**: \`${COMMIT_SHA}\`"
+            echo "- **Triggered by**: ${EVENT_NAME}"
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
 
-          if [ "${{ job.status }}" == "success" ]; then
-            echo "✅ All checks passed successfully" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "- ✅ Code formatting" >> $GITHUB_STEP_SUMMARY
-            echo "- ✅ Linting" >> $GITHUB_STEP_SUMMARY
-            echo "- ✅ Build" >> $GITHUB_STEP_SUMMARY
+          if [ "${JOB_STATUS}" = "success" ]; then
+            {
+              echo "✅ All checks passed successfully"
+              echo ""
+              echo "- ✅ Code formatting"
+              echo "- ✅ Linting"
+              echo "- ✅ Build"
+            } >> "$GITHUB_STEP_SUMMARY"
           else
-            echo "❌ Some checks failed" >> $GITHUB_STEP_SUMMARY
+            echo "❌ Some checks failed" >> "$GITHUB_STEP_SUMMARY"
           fi
