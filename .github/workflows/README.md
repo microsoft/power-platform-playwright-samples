@@ -20,41 +20,6 @@ Runs on pull requests to `main`.
 - Package size report
 - PR summary with validation results
 
-### `playwright-tests.yml` — E2E Test Pipeline
-
-Nightly (2 AM UTC) and manual dispatch.
-
-- Certificate-based authentication
-- Test sharding across 4 parallel runners
-- Artifacts: HTML reports, traces, videos, screenshots
-- Merged report from all shards
-
-### `publish-npm.yml` — npm Package Release
-
-Triggered on GitHub Release publish or manual dispatch.
-
-- Builds `power-platform-playwright-toolkit`
-- Publishes to npm with provenance
-- Supports `latest` and `beta` dist-tags
-
-**Required secret:** `NPM_TOKEN`
-
-**Manual trigger:**
-
-```bash
-gh workflow run publish-npm.yml -f version=1.2.0 -f tag=latest
-```
-
-### `deploy-docs.yml` — Documentation Deployment
-
-Triggered on push to `main` when docs or toolkit source changes.
-
-- Regenerates TypeDoc API reference
-- Builds Nextra site with GitHub base path
-- Deploys to GitHub Pages
-
-**Required:** GitHub Pages enabled in Settings → Pages → Source: GitHub Actions.
-
 ## Required Secrets
 
 Configure in Settings → Secrets and variables → Actions:
@@ -64,7 +29,6 @@ Configure in Settings → Secrets and variables → Actions:
 | `MS_AUTH_EMAIL`             | Microsoft account email for E2E tests          |
 | `CERTIFICATE_BASE64`        | Certificate `.pfx` encoded as base64           |
 | `CERTIFICATE_PASSWORD`      | Certificate password                           |
-| `NPM_TOKEN`                 | npm publish token (for `publish-npm.yml` only) |
 | `MODEL_DRIVEN_APP_URL`      | MDA test URL                                   |
 | `CANVAS_APP_URL`            | Canvas app play URL                            |
 | `POWER_APPS_ENVIRONMENT_ID` | Environment GUID                               |
