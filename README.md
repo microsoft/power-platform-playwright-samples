@@ -3,7 +3,7 @@
 
 [![Build Status](https://github.com/microsoft/power-platform-playwright-samples/actions/workflows/ci.yml/badge.svg)](https://github.com/microsoft/power-platform-playwright-samples/actions/workflows/ci.yml)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9%2B-blue)](https://www.typescriptlang.org/)
-[![Playwright](https://img.shields.io/badge/Playwright-1.57%2B-green)](https://playwright.dev/)
+[![Playwright](https://img.shields.io/badge/Playwright-1.64.1%2B-green)](https://playwright.dev/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js](https://img.shields.io/badge/Node.js-20%2B-green)](https://nodejs.org/)
 
